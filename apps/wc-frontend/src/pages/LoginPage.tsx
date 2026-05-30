@@ -61,11 +61,14 @@ function RealAuth0Login() {
         appState: { returnTo },
         authorizationParams: screenHint ? { screen_hint: screenHint } : undefined,
       });
-      // If we reach here the SDK didn't navigate. Treat as an error.
-      setLocalError(
-        "Auth0 didn't redirect. Most likely cause: callback URLs aren't saved in your Auth0 SPA app's Settings."
-      );
-      setBusy(null);
+      // NOTE: loginWithRedirect resolves synchronously right after queuing
+      // window.location.assign(). We deliberately do NOT setLocalError("didn't
+      // redirect") here — that was a false positive on every successful call
+      // (microtask gap before the browser actually unloads the page). If the
+      // redirect genuinely fails to start, the SDK throws and we fall into
+      // catch. If the redirect happens and Auth0 returns an error in the
+      // callback (e.g. callback URL mismatch), useAuth0().error surfaces it
+      // on the next render of this page.
     } catch (e) {
       setBusy(null);
       const msg = e instanceof Error ? e.message : String(e);
