@@ -1,0 +1,369 @@
+/*
+ * Architecture site styles. Scoped under .arch-site to avoid bleeding into
+ * the host shell (HostHome inline styles) or the WC Module Federation remote
+ * (which carries its own Tailwind/Flowbite). Hand-written CSS, no Tailwind,
+ * keeps the host bundle lean.
+ */
+
+.arch-site {
+  --arch-bg: #f8fafc;
+  --arch-surface: #ffffff;
+  --arch-border: #e5e7eb;
+  --arch-border-soft: #f1f5f9;
+  --arch-fg: #0f172a;
+  --arch-fg-soft: #475569;
+  --arch-fg-muted: #94a3b8;
+  --arch-accent: #2563eb;
+  --arch-accent-soft: #eff6ff;
+  --arch-warn: #b45309;
+  --arch-warn-soft: #fffbeb;
+  --arch-ok: #047857;
+  --arch-ok-soft: #ecfdf5;
+  --arch-code-bg: #0f172a;
+  --arch-code-fg: #e2e8f0;
+  --arch-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  color: var(--arch-fg);
+  background: var(--arch-bg);
+  min-height: calc(100vh - 50px);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .arch-site {
+    --arch-bg: #020617;
+    --arch-surface: #0b1220;
+    --arch-border: #1e293b;
+    --arch-border-soft: #111827;
+    --arch-fg: #e2e8f0;
+    --arch-fg-soft: #94a3b8;
+    --arch-fg-muted: #64748b;
+    --arch-accent: #60a5fa;
+    --arch-accent-soft: #0c1a33;
+    --arch-warn: #fbbf24;
+    --arch-warn-soft: #1f1605;
+    --arch-ok: #34d399;
+    --arch-ok-soft: #051a13;
+    --arch-code-bg: #020617;
+    --arch-code-fg: #e2e8f0;
+  }
+}
+
+/* layout */
+.arch-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 50px);
+}
+
+.arch-sidebar {
+  border-right: 1px solid var(--arch-border);
+  background: var(--arch-surface);
+  padding: 32px 20px;
+  position: sticky;
+  top: 50px;
+  align-self: start;
+  height: calc(100vh - 50px);
+  overflow-y: auto;
+}
+
+.arch-sidebar-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--arch-fg-muted);
+  margin: 0 8px 12px;
+}
+
+.arch-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 24px;
+}
+
+.arch-nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--arch-fg-soft);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.arch-nav a:hover {
+  background: var(--arch-border-soft);
+  color: var(--arch-fg);
+}
+
+.arch-nav a.active {
+  background: var(--arch-accent-soft);
+  color: var(--arch-accent);
+  font-weight: 600;
+}
+
+.arch-nav-num {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--arch-border-soft);
+  color: var(--arch-fg-muted);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.arch-nav a.active .arch-nav-num {
+  background: var(--arch-accent);
+  color: white;
+}
+
+.arch-content {
+  padding: 40px 56px 80px;
+  max-width: 880px;
+}
+
+@media (max-width: 900px) {
+  .arch-shell { grid-template-columns: 1fr; }
+  .arch-sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--arch-border); }
+  .arch-content { padding: 32px 24px 64px; }
+}
+
+/* typography */
+.arch-content h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+
+.arch-content .arch-lead {
+  font-size: 17px;
+  color: var(--arch-fg-soft);
+  margin: 0 0 32px;
+  line-height: 1.55;
+}
+
+.arch-content h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 48px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--arch-border);
+  letter-spacing: -0.01em;
+}
+
+.arch-content h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 32px 0 8px;
+}
+
+.arch-content p { margin: 12px 0; }
+
+.arch-content ul, .arch-content ol {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.arch-content li { margin: 6px 0; }
+
+.arch-content code {
+  font-family: var(--arch-mono);
+  font-size: 0.88em;
+  background: var(--arch-border-soft);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.arch-content a {
+  color: var(--arch-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+/* code block */
+.arch-code {
+  display: block;
+  background: var(--arch-code-bg);
+  color: var(--arch-code-fg);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin: 16px 0;
+  font-family: var(--arch-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* callout */
+.arch-callout {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  border-radius: 10px;
+  border: 1px solid var(--arch-border);
+  background: var(--arch-surface);
+}
+
+.arch-callout-icon {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.arch-callout-title {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+}
+
+.arch-callout p { margin: 4px 0; font-size: 14px; }
+
+.arch-callout-info { background: var(--arch-accent-soft); border-color: transparent; }
+.arch-callout-info .arch-callout-title { color: var(--arch-accent); }
+
+.arch-callout-warn { background: var(--arch-warn-soft); border-color: transparent; }
+.arch-callout-warn .arch-callout-title { color: var(--arch-warn); }
+
+.arch-callout-ok { background: var(--arch-ok-soft); border-color: transparent; }
+.arch-callout-ok .arch-callout-title { color: var(--arch-ok); }
+
+/* file ref badge */
+.arch-fileref {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 8px 1px 6px;
+  border-radius: 5px;
+  background: var(--arch-border-soft);
+  color: var(--arch-fg-soft);
+  font-family: var(--arch-mono);
+  font-size: 12px;
+  border: 1px solid var(--arch-border);
+}
+
+.arch-fileref-icon {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+}
+
+/* mermaid wrapper */
+.arch-diagram {
+  margin: 24px 0;
+  padding: 24px;
+  background: var(--arch-surface);
+  border: 1px solid var(--arch-border);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.arch-diagram svg {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
+
+.arch-diagram-caption {
+  font-size: 13px;
+  color: var(--arch-fg-muted);
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* table */
+.arch-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 14px;
+}
+
+.arch-table th, .arch-table td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--arch-border);
+  vertical-align: top;
+}
+
+.arch-table th {
+  font-weight: 700;
+  background: var(--arch-border-soft);
+  color: var(--arch-fg-soft);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.arch-table tbody tr:hover { background: var(--arch-border-soft); }
+
+/* role chip */
+.arch-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.arch-chip-ic { background: #dbeafe; color: #1e40af; }
+.arch-chip-manager { background: #fef3c7; color: #92400e; }
+.arch-chip-admin { background: #f3e8ff; color: #6b21a8; }
+.arch-chip-system { background: #e2e8f0; color: #475569; }
+
+/* footer nav */
+.arch-pagefoot {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px solid var(--arch-border);
+}
+
+.arch-pagefoot a {
+  flex: 1;
+  padding: 16px 20px;
+  border: 1px solid var(--arch-border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--arch-fg);
+  background: var(--arch-surface);
+}
+
+.arch-pagefoot a:hover {
+  border-color: var(--arch-accent);
+  background: var(--arch-accent-soft);
+}
+
+.arch-pagefoot-dir {
+  font-size: 11px;
+  color: var(--arch-fg-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.arch-pagefoot-title { font-weight: 600; font-size: 15px; }
+
+.arch-pagefoot a:last-child { text-align: right; }

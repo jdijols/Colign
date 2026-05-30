@@ -1,22 +1,17 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Button, Label, Select, TextInput, Alert, Spinner } from "flowbite-react";
-import {
-  HiInformationCircle,
-  HiArrowRight,
-  HiLockClosed,
-  HiOutlineExternalLink,
-} from "react-icons/hi";
+import { HiArrowRight } from "react-icons/hi";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useAppDispatch } from "@/store/hooks";
 import { signIn } from "@/auth/authSlice";
 import { auth0Config, isReal } from "@/auth/auth0Config";
+import { ColignBrand } from "@/components/Brand";
 
 type Role = "IC" | "MANAGER" | "ADMIN";
 
 const DEMO_USERS: Array<{ email: string; role: Role; label: string }> = [
-  { email: "ada@st6.dev", role: "IC", label: "Ada — IC (engineer)" },
-  { email: "ben@st6.dev", role: "IC", label: "Ben — IC (engineer)" },
+  { email: "ada@st6.dev", role: "IC", label: "Ada — IC" },
+  { email: "ben@st6.dev", role: "IC", label: "Ben — IC" },
   { email: "manager@st6.dev", role: "MANAGER", label: "Sam — Manager" },
   { email: "admin@st6.dev", role: "ADMIN", label: "Admin" },
 ];
@@ -61,14 +56,6 @@ function RealAuth0Login() {
         appState: { returnTo },
         authorizationParams: screenHint ? { screen_hint: screenHint } : undefined,
       });
-      // NOTE: loginWithRedirect resolves synchronously right after queuing
-      // window.location.assign(). We deliberately do NOT setLocalError("didn't
-      // redirect") here — that was a false positive on every successful call
-      // (microtask gap before the browser actually unloads the page). If the
-      // redirect genuinely fails to start, the SDK throws and we fall into
-      // catch. If the redirect happens and Auth0 returns an error in the
-      // callback (e.g. callback URL mismatch), useAuth0().error surfaces it
-      // on the next render of this page.
     } catch (e) {
       setBusy(null);
       const msg = e instanceof Error ? e.message : String(e);
@@ -79,85 +66,51 @@ function RealAuth0Login() {
   };
 
   const issueAlert = error || localError;
-  const showCallbackHint = issueAlert
-    ? /callback|redirect|origin|allowed|mismatch/i.test(String(issueAlert))
-    : false;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl p-7 sm:p-8">
-          {/* Brand */}
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white">
-              <HiLockClosed className="h-5 w-5" />
-            </span>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
-                Weekly Commit Module
-              </h1>
-              <p className="text-[11px] uppercase tracking-wider text-gray-500">
-                ST6 · Strategic alignment for every commit
-              </p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-white dark:bg-neutral-950 flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-sm">
+        {/* Brand */}
+        <div className="flex justify-center text-neutral-900 dark:text-neutral-50">
+          <ColignBrand size="lg" />
+        </div>
 
-          <h2 className="mt-6 text-xl font-semibold text-gray-900 dark:text-white">
-            Sign in to plan your week
-          </h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            We use <strong>Auth0 Universal Login</strong> — clicking either button
-            below takes you to your tenant's secure login page, where you'll enter
-            your email and password (or sign up). On return, your plans and
-            commits sync to this account.
+        {/* Headline */}
+        <h1 className="mt-8 text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 text-center leading-tight">
+          Plan your week.
+          <br />
+          <span className="text-neutral-500 dark:text-neutral-400">
+            Aligned by default.
+          </span>
+        </h1>
+
+        {/* Auth card */}
+        <div className="mt-8 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+            Open source weekly planning that links every commit to a strategic
+            outcome. We use Auth0 for sign-in — clicking either button takes you
+            to your tenant's secure login.
           </p>
 
-          {/* Errors */}
           {issueAlert && (
-            <Alert color="failure" icon={HiInformationCircle} className="mt-4">
-              <div>
-                <p className="font-semibold mb-1">Auth0 redirect didn't go through</p>
-                <p className="text-sm">{String(issueAlert)}</p>
-                {showCallbackHint && (
-                  <ol className="mt-2 text-xs list-decimal list-inside space-y-1">
-                    <li>
-                      Open your Auth0 dashboard → <strong>Applications → Applications → WC SPA → Settings</strong>.
-                    </li>
-                    <li>
-                      Set <code className="bg-red-50 dark:bg-red-950 px-1">Allowed Callback URLs</code>,{" "}
-                      <code className="bg-red-50 dark:bg-red-950 px-1">Logout URLs</code>, and{" "}
-                      <code className="bg-red-50 dark:bg-red-950 px-1">Web Origins</code> to:{" "}
-                      <code className="block mt-1 bg-red-50 dark:bg-red-950 px-1 py-0.5">
-                        http://localhost:5174, http://localhost:4173
-                      </code>
-                    </li>
-                    <li>
-                      Click <strong>Save Changes</strong> at the bottom of the page.
-                    </li>
-                  </ol>
-                )}
-              </div>
-            </Alert>
+            <div className="mt-4 rounded-md border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 px-3 py-2.5 text-sm text-rose-700 dark:text-rose-300">
+              <p className="font-medium">Sign-in failed</p>
+              <p className="text-xs mt-0.5 leading-relaxed">{String(issueAlert)}</p>
+            </div>
           )}
 
-          {/* Buttons */}
-          <div className="mt-6 space-y-3">
+          <div className="mt-5 space-y-2">
             <button
               type="button"
               onClick={() => startLogin()}
               disabled={isLoading || busy !== null}
               data-cy="auth0-login"
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-3 text-base font-semibold text-white shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+              className="w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-medium text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900"
             >
-              {busy === "login" ? (
-                <>
-                  <Spinner size="sm" light />
-                  Redirecting…
-                </>
-              ) : (
+              {busy === "login" ? "Redirecting…" : (
                 <>
                   Continue with Auth0
-                  <HiArrowRight className="h-4 w-4" />
+                  <HiArrowRight className="h-3.5 w-3.5" aria-hidden />
                 </>
               )}
             </button>
@@ -167,70 +120,60 @@ function RealAuth0Login() {
               onClick={() => startLogin("signup")}
               disabled={isLoading || busy !== null}
               data-cy="auth0-signup"
-              className="w-full inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="w-full inline-flex items-center justify-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900"
             >
-              {busy === "signup" ? (
-                <>
-                  <Spinner size="sm" />
-                  <span className="ml-2">Redirecting…</span>
-                </>
-              ) : (
-                <>Create a new account</>
-              )}
+              {busy === "signup" ? "Redirecting…" : "Create an account"}
             </button>
           </div>
 
           {/* Divider */}
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-            <span className="text-xs uppercase tracking-wider text-gray-400">
+          <div className="my-5 flex items-center gap-2">
+            <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+            <span className="text-[10px] uppercase tracking-wider text-neutral-500">
               Demo tip
             </span>
-            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+            <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
           </div>
 
-          <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+          <p className="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
             Sign up with{" "}
-            <code className="rounded bg-gray-100 dark:bg-gray-800 px-1 py-0.5 text-[11px] text-gray-700 dark:text-gray-200">
+            <code className="rounded bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 text-[11px] text-neutral-700 dark:text-neutral-200 font-mono">
               manager@st6.dev
             </code>{" "}
-            to inherit the seeded manager role and unlock the Team view. Any other
-            email gets the IC view — Ada / Ben / Chris each have a pre-loaded
-            plan you can also impersonate.
+            to inherit the seeded manager role and see the team roll-up. Any other
+            email gets the IC view (Ada / Ben / Chris each have a pre-loaded
+            plan).
           </p>
         </div>
 
-        <p className="mt-3 text-center text-xs text-gray-400 flex items-center justify-center gap-1">
-          Auth handled by
+        {/* Footer */}
+        <div className="mt-6 flex items-center justify-center gap-3 text-xs text-neutral-500">
+          <span>open source · MIT</span>
+          <span className="text-neutral-300 dark:text-neutral-700">·</span>
           <a
-            href={`https://${auth0Config.domain}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-gray-600 dark:hover:text-gray-300 inline-flex items-center gap-0.5"
+            href="https://colign.org"
+            className="hover:text-neutral-900 dark:hover:text-neutral-100"
           >
-            {auth0Config.domain || "Auth0"}
-            <HiOutlineExternalLink className="h-3 w-3" />
+            colign.org
           </a>
-        </p>
+        </div>
       </div>
     </div>
   );
 }
 
 // ============================================================================
-// Mock JWT (dev-only, /__dev__/mint)
+// Mock JWT (dev-only)
 // ============================================================================
 
 function MockLogin() {
-  const [email, setEmail] = useState("ada@st6.dev");
-  const [role, setRole] = useState<Role>("IC");
-  const [loading, setLoading] = useState(false);
+  const [busyEmail, setBusyEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   async function mint(emailToUse: string, roleToUse: Role) {
-    setLoading(true);
+    setBusyEmail(emailToUse);
     setError(null);
     try {
       const res = await fetch(
@@ -243,76 +186,55 @@ function MockLogin() {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false);
+      setBusyEmail(null);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl p-6 sm:p-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Weekly Commit Module
+    <div className="min-h-screen bg-white dark:bg-neutral-950 flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-sm">
+        <div className="flex justify-center text-neutral-900 dark:text-neutral-50">
+          <ColignBrand size="lg" />
+        </div>
+
+        <h1 className="mt-8 text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 text-center">
+          Mock sign-in
         </h1>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Dev sign-in (mock mode). Mints a mock RS256 JWT against the backend's mock
-          public key. To use real Auth0 set <code>VITE_AUTH_MODE=real</code> in{" "}
-          <code>.env.local</code>.
+        <p className="mt-2 text-sm text-neutral-500 text-center">
+          Dev mode. RS256 JWTs minted locally.
+          <br />
+          Set <code className="font-mono">VITE_AUTH_MODE=real</code> to use Auth0.
         </p>
 
-        <div className="space-y-4 mt-6">
-          <div>
-            <Label htmlFor="demo" value="Quick demo users" />
-            <div className="mt-2 grid grid-cols-1 gap-2">
-              {DEMO_USERS.map((u) => (
-                <Button
-                  key={u.email}
-                  color={u.role === "MANAGER" ? "purple" : "blue"}
-                  disabled={loading}
-                  onClick={() => mint(u.email, u.role)}
-                >
-                  Sign in as {u.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-            <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">
-              Or custom
-            </p>
-            <Label htmlFor="email" value="Email" />
-            <TextInput
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1"
-            />
-            <Label htmlFor="role" value="Role" className="mt-3 block" />
-            <Select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-              className="mt-1"
+        <div className="mt-6 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 space-y-2">
+          {DEMO_USERS.map((u) => (
+            <button
+              key={u.email}
+              type="button"
+              disabled={busyEmail !== null}
+              onClick={() => mint(u.email, u.role)}
+              className="w-full inline-flex items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50 px-3 py-2 text-sm transition-colors"
             >
-              <option value="IC">IC</option>
-              <option value="MANAGER">MANAGER</option>
-              <option value="ADMIN">ADMIN</option>
-            </Select>
-            <Button
-              className="mt-4 w-full"
-              disabled={loading || !email}
-              onClick={() => mint(email, role)}
-            >
-              {loading ? "Minting…" : "Sign in"}
-            </Button>
-          </div>
+              <span className="font-medium text-neutral-900 dark:text-neutral-50">
+                {u.label}
+              </span>
+              <span className="text-xs text-neutral-500 font-mono">{u.email}</span>
+            </button>
+          ))}
+        </div>
 
-          {error && (
-            <Alert color="failure" icon={HiInformationCircle}>
-              {error}
-            </Alert>
-          )}
+        {error && (
+          <div className="mt-4 rounded-md border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 px-3 py-2.5 text-sm text-rose-700 dark:text-rose-300">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-6 flex items-center justify-center gap-3 text-xs text-neutral-500">
+          <span>open source · MIT</span>
+          <span className="text-neutral-300 dark:text-neutral-700">·</span>
+          <a href="https://colign.org" className="hover:text-neutral-900 dark:hover:text-neutral-100">
+            colign.org
+          </a>
         </div>
       </div>
     </div>

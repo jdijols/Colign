@@ -122,11 +122,11 @@ export declare const useGetTeamQuery: <R extends Record<string, any> = import("@
     isError: false;
 }, "error">>)> & {
     status: import("@reduxjs/toolkit/query").QueryStatus;
-}>(arg: {
+}>(arg: typeof import("@reduxjs/toolkit/query").skipToken | {
     page?: number;
     size?: number;
     sort?: string;
-} | typeof import("@reduxjs/toolkit/query").skipToken, options?: (import("@reduxjs/toolkit/query").SubscriptionOptions & {
+}, options?: (import("@reduxjs/toolkit/query").SubscriptionOptions & {
     skip?: boolean;
     refetchOnMountOrArgChange?: boolean | number;
 } & {
