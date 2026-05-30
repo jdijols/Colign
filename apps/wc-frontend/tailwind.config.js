@@ -6,7 +6,13 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{ts,tsx}",
-    "./node_modules/flowbite-react/lib/esm/**/*.{js,mjs}",
+    // flowbite-react is yarn-workspace-hoisted to the repo-root node_modules,
+    // and ships at dist/esm (not lib/esm) in the v0.10 line. Without these
+    // paths Tailwind never sees the utility classes Flowbite components use
+    // internally → buttons render unstyled. Both paths kept so this still
+    // works if a future yarn install de-hoists.
+    "../../node_modules/flowbite-react/dist/esm/**/*.{js,mjs}",
+    "./node_modules/flowbite-react/dist/esm/**/*.{js,mjs}",
   ],
   // Specificity scoping for when this remote is consumed by the PA host.
   // Tailwind utility prefix would break Flowbite-react's internal classes,
