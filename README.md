@@ -32,7 +32,10 @@ ST6/
 
 ## Quick start
 
-Requires Node 20+, Yarn 1.22+, Java 21, and Postgres 16 running locally. The Maven Wrapper (`./mvnw`) handles Maven for you — no separate install needed.
+Requires Node 20+, Yarn 1.22+, Java 21. The Maven Wrapper (`./mvnw`) handles Maven for you. For the backend, you have two options:
+
+- **Quick start (H2 in-memory, no Postgres setup):** `SPRING_PROFILES_ACTIVE=h2 ./mvnw spring-boot:run`
+- **Production-shaped (Postgres 16 — what the brief specifies):** install/start Postgres, create db `wc` + user `wc`, run `./mvnw spring-boot:run`
 
 ### Auth modes
 

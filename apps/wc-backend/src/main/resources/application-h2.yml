@@ -1,0 +1,30 @@
+# H2 in-memory dev profile.
+# Run with:  SPRING_PROFILES_ACTIVE=h2 ./mvnw spring-boot:run
+#
+# DEV-ONLY. Production uses the "local" or "prod" profile against Postgres 16
+# (see application.yml). The h2 profile lets a reviewer boot the demo
+# without setting up Postgres.
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:wcdev;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;INIT=CREATE SCHEMA IF NOT EXISTS wc
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        default_schema: wc
+  flyway:
+    enabled: true
+    schemas: wc
+    default-schema: wc
+    baseline-on-migrate: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console

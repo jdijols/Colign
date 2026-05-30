@@ -115,10 +115,15 @@
             <version>1.20.4</version>
             <scope>test</scope>
         </dependency>
+        <!--
+          H2 is on the main runtime classpath so the "h2" profile (see
+          application-h2.yml) lets developers boot without installing Postgres.
+          Production always uses the "local" or "prod" profile against
+          Postgres 16; the h2 profile is documented as dev-only in README.
+        -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
