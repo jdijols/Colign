@@ -32,7 +32,9 @@ export function LoginPage() {
       if (!res.ok) throw new Error(`Mint failed: HTTP ${res.status}`);
       const data = (await res.json()) as { token: string; email: string; role: Role };
       dispatch(signIn({ token: data.token, email: data.email, role: data.role }));
-      navigate(roleToUse === "MANAGER" ? "/manager" : "/", { replace: true });
+      // Relative paths so this works standalone (/login → /) AND when
+      // nested under the PA host (/weekly-commit/login → /weekly-commit/).
+      navigate(roleToUse === "MANAGER" ? "../manager" : "..", { replace: true });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {

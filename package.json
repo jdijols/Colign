@@ -7,6 +7,7 @@
     "apps/wc-frontend",
     "apps/pa-host"
   ],
+  "//": "wc-backend (Java) is not a Yarn workspace — managed by Maven.",
   "scripts": {
     "dev": "echo 'Run each app independently: yarn workspace wc-frontend dev, yarn workspace pa-host dev, (cd apps/wc-backend && mvn spring-boot:run)'",
     "dev:frontend": "yarn workspace wc-frontend dev",

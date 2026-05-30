@@ -1,23 +1,19 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { Provider } from "react-redux";
-import { store } from "@/store";
 import WeeklyCommitApp from "./WeeklyCommitApp";
 import "./index.css";
 
 /**
- * Standalone wrapper. When this app is consumed as a Module Federation REMOTE
- * by the PA host, the host owns Provider + BrowserRouter and lazy-imports
- * WeeklyCommitApp directly. This main.tsx only runs when wc-frontend is launched
- * on its own (`yarn dev` on port 5174).
+ * Standalone entry. Only runs when this app is launched on its own
+ * (`yarn dev` → :5174). When consumed as an MF remote by apps/pa-host,
+ * the host's App.tsx wraps WeeklyCommitApp in its own BrowserRouter and
+ * lazy-imports it directly — this main.tsx is not loaded.
  */
 ReactDOM.createRoot(document.getElementById("wc-root")!).render(
   <React.StrictMode>
-    <Provider store={store}>
-      <BrowserRouter>
-        <WeeklyCommitApp />
-      </BrowserRouter>
-    </Provider>
+    <BrowserRouter>
+      <WeeklyCommitApp />
+    </BrowserRouter>
   </React.StrictMode>
 );

@@ -159,7 +159,8 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
         c.setAllowedOrigins(List.of(
-                "http://localhost:5173",  // pa-host
+                "http://localhost:4173",  // pa-host
+                "http://localhost:5173",  // pa-host (legacy default — kept for flexibility)
                 "http://localhost:5174",  // wc-frontend standalone
                 "http://localhost:3000"));
         c.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

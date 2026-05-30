@@ -1,0 +1,83 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { federation } from "@module-federation/vite";
+import { execSync } from "node:child_process";
+import path from "node:path";
+import pkg from "./package.json" with { type: "json" };
+
+const WC_REMOTE_URL =
+  process.env.WC_REMOTE_URL ?? "http://localhost:5174/remoteEntry.js";
+
+export default defineConfig({
+  plugins: [
+    react(),
+    federation({
+      name: "pa_host",
+      remotes: {
+        wc: {
+          type: "module",
+          name: "wc",
+          entry: WC_REMOTE_URL,
+          entryGlobalName: "wc",
+          shareScope: "default",
+        },
+      },
+      shared: {
+        react: { singleton: true, requiredVersion: pkg.dependencies.react },
+        "react-dom": { singleton: true, requiredVersion: pkg.dependencies["react-dom"] },
+        "react-router-dom": {
+          singleton: true,
+          requiredVersion: pkg.dependencies["react-router-dom"],
+        },
+        "@reduxjs/toolkit": {
+          singleton: true,
+          requiredVersion: pkg.dependencies["@reduxjs/toolkit"],
+        },
+        "react-redux": { singleton: true, requiredVersion: pkg.dependencies["react-redux"] },
+      },
+    }),
+    // Mirror the wc-frontend dev-mint middleware so the WC remote's LoginPage
+    // can fetch("/__dev__/mint") even when running inside the host origin.
+    {
+      name: "pa-host-dev-mint-jwt",
+      apply: "serve",
+      configureServer(server) {
+        server.middlewares.use("/__dev__/mint", (req, res) => {
+          try {
+            const url = new URL(req.url ?? "", "http://localhost");
+            const email = url.searchParams.get("email") ?? "ada@st6.dev";
+            const role = url.searchParams.get("role") ?? "IC";
+            const ttl = url.searchParams.get("ttl") ?? "14400";
+            const audience = url.searchParams.get("audience") ?? "https://api.wc.local";
+            const scriptPath = path.resolve(__dirname, "../../scripts/mock-jwt.mjs");
+            const token = execSync(
+              `node "${scriptPath}" --email "${email}" --role "${role}" --ttl ${ttl} --audience "${audience}"`,
+              { encoding: "utf8" }
+            ).trim();
+            res.statusCode = 200;
+            res.setHeader("content-type", "application/json");
+            res.end(JSON.stringify({ token, email, role }));
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.statusCode = 500;
+            res.setHeader("content-type", "application/json");
+            res.end(JSON.stringify({ error: msg }));
+          }
+        });
+      },
+    },
+  ],
+  server: {
+    port: 4173,
+    strictPort: true,
+    cors: true,
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: { port: 4173, strictPort: true },
+  build: { target: "esnext", minify: "esbuild", manifest: true },
+});

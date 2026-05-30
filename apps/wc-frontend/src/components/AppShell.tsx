@@ -11,7 +11,9 @@ export function AppShell() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <Navbar fluid className="border-b border-gray-200 dark:border-gray-800">
-        <NavbarBrand as={Link} to="/">
+        {/* All `to` props are relative so the shell works correctly both
+            standalone (/) and when nested under the host (/weekly-commit/). */}
+        <NavbarBrand as={Link} to=".">
           <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
             Weekly Commit
           </span>
@@ -25,7 +27,7 @@ export function AppShell() {
             color="light"
             onClick={() => {
               dispatch(signOut());
-              navigate("/login", { replace: true });
+              navigate("login", { replace: true });
             }}
           >
             Sign out
@@ -33,14 +35,14 @@ export function AppShell() {
           <NavbarToggle />
         </div>
         <NavbarCollapse>
-          <NavbarLink as={NavLink} to="/" end>
+          <NavbarLink as={NavLink} to="." end>
             My week
           </NavbarLink>
-          <NavbarLink as={NavLink} to="/reconcile">
+          <NavbarLink as={NavLink} to="reconcile">
             Reconcile
           </NavbarLink>
           {auth.role === "MANAGER" || auth.role === "ADMIN" ? (
-            <NavbarLink as={NavLink} to="/manager">
+            <NavbarLink as={NavLink} to="manager">
               Team
             </NavbarLink>
           ) : null}

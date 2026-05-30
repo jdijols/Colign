@@ -11,7 +11,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const token = useAppSelector((s) => s.auth.token);
   const location = useLocation();
   if (!token) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    // "login" is relative to the WC tree root so it resolves correctly
+    // standalone AND when WC is mounted under the host at /weekly-commit/*.
+    return <Navigate to="login" replace state={{ from: location }} />;
   }
   return <>{children}</>;
 }

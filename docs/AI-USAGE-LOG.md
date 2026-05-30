@@ -98,6 +98,28 @@ Per the project brief, AI usage documentation is a required deliverable. The goa
 - **Verification:** `./mvnw test` clean — Spring context loads in 3.7s, 8 repositories registered, Flyway migrates, Hibernate validates entities, smoke test passes. Initial wiring bug caught and fixed inline: `OutcomeController` was constructor-injecting raw `JpaRepository<DefiningObjective, Long>` without concrete repo interfaces, so Spring had no bean — added `DefiningObjectiveRepository` + `RallyCryRepository`.
 - **Human judgment:** Two judgment calls worth recording: (a) lazy-provision the domain `User` from JWT on first hit rather than requiring pre-seeded users (faster demo, documented as production-harden item in `UserResolver` Javadoc); (b) hydrate FK names (`outcomeTitle`, `chessTagCode`, etc.) into commit DTOs in bulk via `Map<Long, Entity>` lookups, not per-row `@ManyToOne` fetches — predictable N+1-free behavior, and the FE gets everything it needs in one round-trip.
 
-### Slot 5 — Frontend bootstrap (wc-frontend)
+### Slot 5 (~1:30) — Frontend bootstrap (wc-frontend) ✅
+
+- **AI tool:** Claude Opus 4.7 main context.
+- **Output:** Full Vite 5 + React 18 + RTK Query + Flowbite + Tailwind scaffold for `apps/wc-frontend` exposed as MF remote on :5174. 4 RTK Query slices wired (plans, commits, outcomes, chessTags). Auth slice with localStorage persistence. Login page mints a dev JWT via a Vite middleware (`/__dev__/mint` that shells out to `scripts/mock-jwt.mjs`). Pages: WeeklyPlanPage (querying GET /plans/current), Reconcile + Manager placeholders for Sunday. AppShell with Navbar (role-conditional Team link).
+- **Verification:** `tsc --noEmit` clean. `vite` boots on :5174 in 674 ms. `/__dev__/mint` returns a valid 777-char JWT. `curl GET /plans/current` returns full DTO with audit columns.
+- **Wiring fixes inline:**
+  - Dropped Tailwind `prefix: "wc-"` and stripped `wc-` from every class — Tailwind utility prefix would have broken flowbite-react's internal class names. Kept `important: "#wc-root"` for host-isolation specificity.
+  - Yarn 1.22 wasn't installed (no global yarn binary). Installed via `npm install -g yarn`. Earlier "yarn install" had silently exited 0 because of `... | tail -25` shell-pipe masking the failure.
+  - TypeScript project-reference setup was wrong — `vite.config.ts` was in main tsconfig's include + the .node tsconfig had `noEmit:true` (illegal for composite). Simplified to two independent tsconfigs.
+- **Human judgment:** Built the dev-mint flow as a Vite middleware (shells out to the Node script) rather than (a) a Spring `/dev/mint` endpoint that would have duplicated the JWT signing logic in Java, or (b) pre-minted tokens with short TTLs. The middleware-based flow keeps the private key only in `scripts/`, mirrors the real Auth0 redirect pattern (call → get token), and supports any email/role/ttl combo without code changes.
+
+### Slot 6 (~1:30) — PA host bootstrap (apps/pa-host) ✅
+
+- **AI tool:** Claude Opus 4.7 main context.
+- **Output:** Minimal Vite + React app at `apps/pa-host` that consumes the WC remote at runtime via `@module-federation/vite` host config. No compile-time dep on wc-frontend. Lazy-imports `wc/WeeklyCommitApp` under `/weekly-commit/*`. Plain CSS-in-JS for host chrome (no Tailwind to avoid double Tailwind output). Mirrored the `/__dev__/mint` middleware so the WC remote's LoginPage works when running inside the host origin. `WeeklyCommitApp` now self-contains its Redux Provider so the host doesn't have to know about the WC store — host only owns BrowserRouter for shared URL/history context.
+- **Verification:** `tsc --noEmit` clean. Vite boots on :4173 in 1012 ms. MF "Federated types extraction completed" — wc/WeeklyCommitApp type contract was emitted by the remote and consumed by the host. Host HTML includes the MF runtime entry tag. `/__dev__/mint` works on host origin. WC remoteEntry.js reachable with CORS allow.
+- **Wiring fixes inline:**
+  - Port 5173 was squatted by another project ("React Pong") — moved PA host to :4173. Added :4173 to backend CORS allowed origins.
+  - WC remote's routes used leading-slash absolute paths (`/login`, `/manager`, `/reconcile`). Those would have matched at the host's root, not under `/weekly-commit/`. Switched all paths + Link `to=` + `navigate()` calls + Navigate `to=` props to relative form (`login`, `manager`, `..`, `..` etc.). Standalone case (where BrowserRouter mounts at /) is unchanged because relative resolves the same. Hosted case (mounted at /weekly-commit/) now resolves correctly too.
+  - WeeklyCommitApp's `<Provider>` moved out of `main.tsx` and into the exposed component, so the host doesn't need to set up its own Redux store. Tradeoff documented: shared state between host and remote is not supported under this layout — fine for the demo, would need shared scope plumbing for production.
+- **Human judgment:** Made the PA host deliberately minimal — plain CSS-in-JS, no Tailwind, single HostHome page + remote mount route. Demo emphasis is on "the WC remote can be embedded without modification", not on a polished host UI. The host's worth in the submission is the architecture proof, not its own visual surface.
+
+### Slot 7 — My Weekly Plan UI
 
 (In progress at next AI turn.)
