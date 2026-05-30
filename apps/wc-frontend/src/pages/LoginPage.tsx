@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button, Card, Label, Select, TextInput, Alert } from "flowbite-react";
-import { HiInformationCircle } from "react-icons/hi";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button, Card, Label, Select, TextInput, Alert, Spinner, HR } from "flowbite-react";
+import { HiInformationCircle, HiLockClosed } from "react-icons/hi";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useAppDispatch } from "@/store/hooks";
 import { signIn } from "@/auth/authSlice";
+import { isReal } from "@/auth/auth0Config";
 
 type Role = "IC" | "MANAGER" | "ADMIN";
 
@@ -15,6 +17,75 @@ const DEMO_USERS: Array<{ email: string; role: Role; label: string }> = [
 ];
 
 export function LoginPage() {
+  return isReal ? <RealAuth0Login /> : <MockLogin />;
+}
+
+// ===== Real Auth0 Universal Login =====
+
+function RealAuth0Login() {
+  const { loginWithRedirect, isLoading, error, isAuthenticated } = useAuth0();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const fromState = location.state as { from?: { pathname?: string } } | undefined;
+  const returnTo = fromState?.from?.pathname ?? location.pathname.replace(/\/login$/, "") ?? "/";
+
+  // If we returned to this page already authenticated, bounce to the app.
+  if (isAuthenticated) {
+    navigate("..", { replace: true });
+    return null;
+  }
+
+  const startLogin = (screenHint?: "signup" | "login") =>
+    loginWithRedirect({
+      appState: { returnTo },
+      authorizationParams: screenHint ? { screen_hint: screenHint } : undefined,
+    });
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
+      <Card className="w-full max-w-md">
+        <div className="flex items-center gap-2">
+          <HiLockClosed className="h-6 w-6 text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Weekly Commit Module
+          </h1>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Sign in via Auth0 Universal Login. Your weekly plan, commits, and reconciliations are tied to your account and persist across logins.
+        </p>
+
+        {error && (
+          <Alert color="failure" icon={HiInformationCircle} className="mt-2">
+            {error.message}
+          </Alert>
+        )}
+
+        <div className="space-y-3 mt-4">
+          <Button onClick={() => startLogin()} disabled={isLoading} data-cy="auth0-login">
+            {isLoading ? <Spinner size="sm" /> : null}
+            <span className={isLoading ? "ml-2" : ""}>
+              {isLoading ? "Loading…" : "Log in"}
+            </span>
+          </Button>
+          <Button color="light" onClick={() => startLogin("signup")} disabled={isLoading} data-cy="auth0-signup">
+            Sign up
+          </Button>
+        </div>
+
+        <HR className="my-4" />
+
+        <p className="text-xs text-gray-500">
+          Tip for the demo: signing up with <code>manager@st6.dev</code> matches
+          the seeded manager user and unlocks the Team view.
+        </p>
+      </Card>
+    </div>
+  );
+}
+
+// ===== Mock JWT (dev-only, /__dev__/mint) =====
+
+function MockLogin() {
   const [email, setEmail] = useState("ada@st6.dev");
   const [role, setRole] = useState<Role>("IC");
   const [loading, setLoading] = useState(false);
@@ -32,8 +103,6 @@ export function LoginPage() {
       if (!res.ok) throw new Error(`Mint failed: HTTP ${res.status}`);
       const data = (await res.json()) as { token: string; email: string; role: Role };
       dispatch(signIn({ token: data.token, email: data.email, role: data.role }));
-      // Relative paths so this works standalone (/login → /) AND when
-      // nested under the PA host (/weekly-commit/login → /weekly-commit/).
       navigate(roleToUse === "MANAGER" ? "../manager" : "..", { replace: true });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -49,7 +118,8 @@ export function LoginPage() {
           Weekly Commit Module
         </h1>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Dev sign-in. Mints a mock RS256 JWT against the backend's mock public key.
+          Dev sign-in (mock mode). Mints a mock RS256 JWT against the backend's mock public key.
+          To use real Auth0 set <code>VITE_AUTH_MODE=real</code> in <code>.env.local</code>.
         </p>
 
         <div className="space-y-4 mt-4">

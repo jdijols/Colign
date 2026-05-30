@@ -2,18 +2,22 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import WeeklyCommitApp from "./WeeklyCommitApp";
+import { Auth0ProviderWithRouter } from "@/auth/Auth0ProviderWithRouter";
 import "./index.css";
 
 /**
- * Standalone entry. Only runs when this app is launched on its own
- * (`yarn dev` → :5174). When consumed as an MF remote by apps/pa-host,
- * the host's App.tsx wraps WeeklyCommitApp in its own BrowserRouter and
- * lazy-imports it directly — this main.tsx is not loaded.
+ * Standalone entry. Wraps with BrowserRouter (always) and Auth0ProviderWithRouter
+ * (passthrough in mock mode, full Auth0 SDK in real mode). When this app is
+ * consumed as an MF remote by apps/pa-host, the host's main.tsx provides
+ * both wrappers and lazy-imports WeeklyCommitApp directly — this main.tsx
+ * is not loaded.
  */
 ReactDOM.createRoot(document.getElementById("wc-root")!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <WeeklyCommitApp />
+      <Auth0ProviderWithRouter>
+        <WeeklyCommitApp />
+      </Auth0ProviderWithRouter>
     </BrowserRouter>
   </React.StrictMode>
 );

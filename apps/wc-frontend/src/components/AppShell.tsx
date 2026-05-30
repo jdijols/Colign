@@ -1,12 +1,26 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Button, Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle } from "flowbite-react";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { signOut } from "@/auth/authSlice";
+import { isReal } from "@/auth/auth0Config";
 
 export function AppShell() {
   const auth = useAppSelector((s) => s.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { logout: auth0Logout } = useAuth0();
+
+  const handleSignOut = () => {
+    dispatch(signOut());
+    if (isReal) {
+      // Auth0 logout — clears the SDK session AND the upstream Auth0 cookie.
+      // returnTo must match an Allowed Logout URL in the Auth0 dashboard.
+      auth0Logout({ logoutParams: { returnTo: window.location.origin } });
+    } else {
+      navigate("login", { replace: true });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -22,14 +36,7 @@ export function AppShell() {
           <span className="text-xs text-gray-500 hidden md:inline">
             {auth.email} · {auth.role}
           </span>
-          <Button
-            size="xs"
-            color="light"
-            onClick={() => {
-              dispatch(signOut());
-              navigate("login", { replace: true });
-            }}
-          >
+          <Button size="xs" color="light" onClick={handleSignOut} data-cy="sign-out">
             Sign out
           </Button>
           <NavbarToggle />

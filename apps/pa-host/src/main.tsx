@@ -2,20 +2,22 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
+import { Auth0ProviderWithRouter } from "./auth/Auth0ProviderWithRouter";
 
 /**
- * Host owns BrowserRouter so the WC remote and the host's own routes share
- * one URL/history context. The wc-frontend remote provides its own Redux
- * Provider, so the host doesn't need one for itself unless it adds host-only
- * state (none today).
+ * Host owns BrowserRouter + Auth0ProviderWithRouter so the embedded WC remote
+ * inherits both contexts. The WC remote brings its own Redux Provider and an
+ * Auth0Bridge that syncs Auth0 state into the WC store.
  *
- * Mounted into #pa-root, not #wc-root. The WC remote mounts its own UI tree
- * under the host's element when rendered.
+ * Auth0Provider is a passthrough in mock mode (controlled by VITE_AUTH_MODE
+ * in apps/pa-host/.env.local).
  */
 ReactDOM.createRoot(document.getElementById("pa-root")!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <Auth0ProviderWithRouter>
+        <App />
+      </Auth0ProviderWithRouter>
     </BrowserRouter>
   </React.StrictMode>
 );
