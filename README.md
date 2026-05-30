@@ -32,7 +32,11 @@ ST6/
 
 ## Quick start
 
-Requires Node 20+, Yarn 1.22+, Java 21, Maven 3.9+, and Postgres 16 running locally.
+Requires Node 20+, Yarn 1.22+, Java 21, and Postgres 16 running locally. The Maven Wrapper (`./mvnw`) handles Maven for you — no separate install needed.
+
+### Auth modes
+
+By default the backend runs in `wc.auth.mode=mock` and validates demo RS256 JWTs signed by the keypair in `scripts/`. Mint a token via `node scripts/mock-jwt.mjs --email ada@st6.dev --role IC`. For real Auth0 tenant setup, see [docs/AUTH0_SETUP.md](docs/AUTH0_SETUP.md).
 
 ```bash
 # 1. Backend
@@ -56,7 +60,7 @@ yarn dev                          # → http://localhost:5173 (consumes wc remot
 
 ```bash
 # Backend unit + JaCoCo
-cd apps/wc-backend && ./mvnw verify
+cd apps/wc-backend && ./mvnw verify    # runs unit tests + JaCoCo gate
 
 # Frontend unit (Vitest)
 yarn workspace wc-frontend test

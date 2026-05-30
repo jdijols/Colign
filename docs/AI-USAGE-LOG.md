@@ -72,6 +72,25 @@ Per the project brief, AI usage documentation is a required deliverable. The goa
 
 ## 2026-05-30 (Saturday) — Day 1: Build
 
-### Slot 1 (~0:30) — Repo scaffold
+### Slot 1 (~0:30) — Repo scaffold ✅
 
-(In progress at time of this log entry.)
+- **AI tool:** Claude Opus 4.7 main context, Bash + Write tools.
+- **Output:** Created `apps/{wc-frontend,wc-backend,pa-host}` + `scripts/`, root `package.json` (Yarn Workspaces), `README.md`, initial git commit `65abcbf`.
+- **Human judgment:** Pre-approved at the gate.
+
+### Slot 2 (~1:30) — Backend bootstrap ✅
+
+- **AI tool:** Claude Opus 4.7 main context. Decisions informed by `research/04-spring-boot-stack.md`.
+- **Output:** `pom.xml` (Spring Boot 3.3.5, Java 21, JPA, Validation, Security, OAuth2-RS, Postgres, Flyway 10, Lombok, springdoc, Testcontainers, JaCoCo 0.8.12 with 80% line rule). `WcApplication`, `lombok.config`, `application.yml` (with `wc.auth.mode` switch), `application-local.example.yml`, `application-test.yml`. `V1__init.sql` with 9 tables (chess_tag seeded, FK chain in safe order, unique constraints on plan(user_id, week_start_date) + reconciliation(weekly_commit_id), outcome self-FK, **weekly_commit.outcome_id NOT NULL** — the structural-alignment guarantee). 9 entities (`User`, `Team`, `ChessTag`, `RallyCry`, `DefiningObjective`, `Outcome`, `Plan`, `WeeklyCommit`, `Reconciliation`) + 3 enums (`PlanState`, `CommitStatus`, `UserRole`). `AbstractAuditingEntity` with `@Version`, `AuditorAwareImpl` reading JWT email → sub → "system". Temporary permit-all `SecurityConfig` with real CORS. Commit `be59282`.
+- **Human judgment:** Two decisions worth recording: (a) plain Long FK columns instead of `@ManyToOne` — predictable Hibernate behavior, no lazy-load surprises, DTO projection later; (b) chess_tag as a lookup table (not Postgres enum), seeded in the migration, so labels can be tuned per tenant without schema migration (per `research/02`).
+
+### Slot 3 (~2:00) — Auth0 dual-mode SecurityConfig ✅
+
+- **AI tool:** Claude Opus 4.7 main context. Decisions informed by `research/04-spring-boot-stack.md`.
+- **Output:** Replaced the temporary permit-all `SecurityConfig` with a dual-mode `JwtDecoder`: `wc.auth.mode=real` builds from the Auth0 issuer URI (via `JwtDecoders.fromIssuerLocation` + 60s clock-skew leeway + audience validator + roles converter for the namespaced `https://wc/roles` claim); `wc.auth.mode=mock` parses `classpath:keys/wc-mock-public.pem` and validates RS256 against it. Shared `JwtAuthenticationConverter` reads roles + scopes. `CurrentUser` static helper for controllers (`email()`, `sub()`, `roles()`, `hasRole()`). Generated a real RSA 2048 keypair via `openssl`; public key is at `apps/wc-backend/src/main/resources/keys/wc-mock-public.pem`, private key at `scripts/wc-mock-private.pem` — both committed deliberately, marked DEMO-ONLY in `scripts/README.md`. Wrote `scripts/mock-jwt.mjs` (dep-free Node script using built-in `crypto` + RS256) — mints tokens with configurable email/role/ttl. Wrote `docs/AUTH0_SETUP.md` for the user's one-time Auth0 dashboard configuration when flipping to `mode=real`. Added H2 test dep + `open-in-view: false` + Maven Wrapper for portability. Test fixed: lowercase schema name, dropped a moved Spring Boot 3.3 class reference.
+- **Verification:** `./mvnw test` passes — Flyway migrated V1 against H2-Postgres mode, Hibernate validated all 9 entities against the schema, Spring context loaded in 3.4s. `node scripts/mock-jwt.mjs` mints a valid 777-char JWT with the expected `email`, `https://wc/roles`, and `scope` claims.
+- **Human judgment:** The user's choice in §12 was real Auth0 tenant; the AI built dual-mode + documented the dashboard setup so the user can switch via a single config flag once their tenant is ready. The 2-hour timebox in `PLAN.md` is preserved: if real-tenant setup blocks Saturday's progress, the mock path remains live for the demo. The committed mock private key is a deliberate trade-off — it lets a reviewer run the demo immediately without setting up Auth0, and the file is plastered with DEMO-ONLY warnings in code, README, and PEM-adjacent docs.
+
+### Slot 4 (~1:00) — Repositories + PlanController
+
+(In progress at next AI turn.)
