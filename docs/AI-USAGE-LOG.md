@@ -120,6 +120,19 @@ Per the project brief, AI usage documentation is a required deliverable. The goa
   - WeeklyCommitApp's `<Provider>` moved out of `main.tsx` and into the exposed component, so the host doesn't need to set up its own Redux store. Tradeoff documented: shared state between host and remote is not supported under this layout — fine for the demo, would need shared scope plumbing for production.
 - **Human judgment:** Made the PA host deliberately minimal — plain CSS-in-JS, no Tailwind, single HostHome page + remote mount route. Demo emphasis is on "the WC remote can be embedded without modification", not on a polished host UI. The host's worth in the submission is the architecture proof, not its own visual surface.
 
-### Slot 7 — My Weekly Plan UI
+### Slot 7 (~2:00) — My Weekly Plan UI ✅
+
+- **AI tool:** Claude Opus 4.7 main context.
+- **Output:** `V2__demo_seed.sql` migration (1 Team, 1 RallyCry, 2 DefiningObjectives, 5 Outcomes spanning P0/P1/P2 priorities). Full WeeklyPlanPage rewrite with CommitForm, CommitRow, PlanStatePill, AlignmentBar components. CommitForm groups outcomes by RallyCry → DefiningObjective in an `<optgroup>` so the IC sees the strategy chain when picking. Chess-tag selector is a three-button radio group with semantic colors (OFFENSE = green, DEFENSE = amber, MAINTENANCE = gray). AlignmentBar renders the same tier coloring (green ≥70, amber 40–69, red <40) recommended in `research/05`. Lock button is disabled until ≥1 commit exists; empty-state messaging tells the IC why each commit must link to an Outcome.
+- **Verification (live, end-to-end against running backend + frontend):**
+  - Mint IC JWT → GET /plans/current auto-creates plan (id=1) for week 2026-05-25, state=DRAFT, alignment 0%.
+  - POST commit with P0 outcome + OFFENSE tag → alignment 100% (1/1 on P0/P1).
+  - POST second commit with P2 outcome + DEFENSE tag → alignment 50% (1/2 on P0/P1). Recomputed correctly.
+  - PATCH /plans/1/lock → state=LOCKED, lockedAt timestamp written.
+  - PATCH /plans/1/lock (again) → 409 Conflict with `{"type":"about:blank","title":"Conflict","status":409,"detail":"Illegal plan transition LOCKED -> LOCKED: lock only valid from DRAFT", "instance":"/api/v1/plans/1/lock", "timestamp":"2026-05-30T17:38:52.383630Z"}`. RFC 7807 ProblemDetail from `GlobalExceptionHandler` works exactly as designed.
+- **TypeScript wiring fix inline:** Initial `CommitForm` used a clever conditional type `typeof outcomesPage extends { content: infer A } ? ...` to derive the grouped-outcome shape. TS narrowed it to `never`. Replaced with explicit `Map<string, OutcomeRefDto[]>`.
+- **Human judgment:** Two pragmatic shape calls: (a) `<optgroup>` UX in plain HTML rather than a fancy combobox library (saves a dep, the strategy chain is what matters), (b) optional chess tag and effort hours instead of required — required-everything friction would have made the demo recording slower without adding signal.
+
+### Slot 8 — Day-1 polish
 
 (In progress at next AI turn.)
