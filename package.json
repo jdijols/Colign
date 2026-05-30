@@ -1,0 +1,22 @@
+{
+  "name": "st6-weekly-commit-module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ST6 Weekly Commit Module — production-ready replacement for 15-Five weekly planning with structural RCDO alignment. Monorepo: wc-backend (Spring Boot 3.3) + wc-frontend (Vite 5 MF remote) + pa-host (Vite 5 MF host shell).",
+  "workspaces": [
+    "apps/wc-frontend",
+    "apps/pa-host"
+  ],
+  "scripts": {
+    "dev": "echo 'Run each app independently: yarn workspace wc-frontend dev, yarn workspace pa-host dev, (cd apps/wc-backend && ./mvnw spring-boot:run)'",
+    "dev:frontend": "yarn workspace wc-frontend dev",
+    "dev:host": "yarn workspace pa-host dev",
+    "build": "yarn workspace wc-frontend build && yarn workspace pa-host build",
+    "test:frontend": "yarn workspace wc-frontend test",
+    "cy:run": "yarn workspace wc-frontend cy:run"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "yarn": ">=1.22.0"
+  }
+}
