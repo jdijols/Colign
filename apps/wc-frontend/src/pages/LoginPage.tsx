@@ -4,14 +4,13 @@ import { Button, Label, Select, TextInput, Alert, Spinner } from "flowbite-react
 import {
   HiInformationCircle,
   HiArrowRight,
-  HiOutlineFlag,
-  HiOutlineCheckCircle,
-  HiOutlineChartBar,
+  HiLockClosed,
+  HiOutlineExternalLink,
 } from "react-icons/hi";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useAppDispatch } from "@/store/hooks";
 import { signIn } from "@/auth/authSlice";
-import { isReal } from "@/auth/auth0Config";
+import { auth0Config, isReal } from "@/auth/auth0Config";
 
 type Role = "IC" | "MANAGER" | "ADMIN";
 
@@ -38,166 +37,180 @@ function RealAuth0Login() {
   const returnTo =
     fromState?.from?.pathname ?? location.pathname.replace(/\/login$/, "") ?? "/";
 
+  const [busy, setBusy] = useState<null | "login" | "signup">(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+
   if (isAuthenticated) {
     navigate("..", { replace: true });
     return null;
   }
 
-  const startLogin = (screenHint?: "signup" | "login") =>
-    loginWithRedirect({
-      appState: { returnTo },
-      authorizationParams: screenHint ? { screen_hint: screenHint } : undefined,
-    });
+  const startLogin = async (screenHint?: "signup" | "login") => {
+    setLocalError(null);
+    setBusy(screenHint === "signup" ? "signup" : "login");
+    try {
+      // eslint-disable-next-line no-console
+      console.info("[Auth0] redirecting →", {
+        domain: auth0Config.domain,
+        clientId: auth0Config.clientId,
+        audience: auth0Config.audience,
+        redirect_uri: window.location.origin,
+        screenHint,
+      });
+      await loginWithRedirect({
+        appState: { returnTo },
+        authorizationParams: screenHint ? { screen_hint: screenHint } : undefined,
+      });
+      // If we reach here the SDK didn't navigate. Treat as an error.
+      setLocalError(
+        "Auth0 didn't redirect. Most likely cause: callback URLs aren't saved in your Auth0 SPA app's Settings."
+      );
+      setBusy(null);
+    } catch (e) {
+      setBusy(null);
+      const msg = e instanceof Error ? e.message : String(e);
+      setLocalError(msg);
+      // eslint-disable-next-line no-console
+      console.error("[Auth0] loginWithRedirect failed", e);
+    }
+  };
+
+  const issueAlert = error || localError;
+  const showCallbackHint = issueAlert
+    ? /callback|redirect|origin|allowed|mismatch/i.test(String(issueAlert))
+    : false;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950">
-      <div className="mx-auto max-w-6xl px-6 py-12 sm:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-10 items-center">
-          {/* ---- Hero / value props ---- */}
-          <div className="md:col-span-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-blue-100 dark:bg-blue-950 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500" />
-              Weekly Commit Module
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl p-7 sm:p-8">
+          {/* Brand */}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white">
+              <HiLockClosed className="h-5 w-5" />
+            </span>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                Weekly Commit Module
+              </h1>
+              <p className="text-[11px] uppercase tracking-wider text-gray-500">
+                ST6 · Strategic alignment for every commit
+              </p>
             </div>
-
-            <h1 className="mt-4 text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 dark:text-white leading-tight">
-              Plan the week.
-              <br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">
-                Linked to strategy by default.
-              </span>
-            </h1>
-
-            <p className="mt-5 text-lg text-gray-600 dark:text-gray-300 max-w-xl">
-              A replacement for 15-Five where every weekly commit has a
-              structural link to a Rally Cry → Defining Objective → Outcome.
-              Drift becomes visible the moment it happens.
-            </p>
-
-            <ul className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl">
-              <ValueProp
-                icon={<HiOutlineFlag className="h-5 w-5" />}
-                title="RCDO-linked commits"
-                body="Every commit picks a leaf Outcome. No optional fields."
-              />
-              <ValueProp
-                icon={<HiOutlineCheckCircle className="h-5 w-5" />}
-                title="Lock → reconcile"
-                body="State machine carries missed commits to next week."
-              />
-              <ValueProp
-                icon={<HiOutlineChartBar className="h-5 w-5" />}
-                title="Manager roll-up"
-                body="Alignment % per IC. Drill into any week."
-              />
-            </ul>
-
-            <p className="mt-8 text-xs text-gray-500 dark:text-gray-400">
-              Built for ST6 · Spring Boot 3.3 · Vite Module Federation ·
-              Auth0 OAuth2 · PostgreSQL 16
-            </p>
           </div>
 
-          {/* ---- Auth card ---- */}
-          <div className="md:col-span-2">
-            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl p-6 sm:p-8">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Sign in to plan your week
-              </h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Your plan, commits, and reconciliations are tied to your account.
-              </p>
+          <h2 className="mt-6 text-xl font-semibold text-gray-900 dark:text-white">
+            Sign in to plan your week
+          </h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            We use <strong>Auth0 Universal Login</strong> — clicking either button
+            below takes you to your tenant's secure login page, where you'll enter
+            your email and password (or sign up). On return, your plans and
+            commits sync to this account.
+          </p>
 
-              {error && (
-                <Alert color="failure" icon={HiInformationCircle} className="mt-4">
-                  {error.message}
-                </Alert>
+          {/* Errors */}
+          {issueAlert && (
+            <Alert color="failure" icon={HiInformationCircle} className="mt-4">
+              <div>
+                <p className="font-semibold mb-1">Auth0 redirect didn't go through</p>
+                <p className="text-sm">{String(issueAlert)}</p>
+                {showCallbackHint && (
+                  <ol className="mt-2 text-xs list-decimal list-inside space-y-1">
+                    <li>
+                      Open your Auth0 dashboard → <strong>Applications → Applications → WC SPA → Settings</strong>.
+                    </li>
+                    <li>
+                      Set <code className="bg-red-50 dark:bg-red-950 px-1">Allowed Callback URLs</code>,{" "}
+                      <code className="bg-red-50 dark:bg-red-950 px-1">Logout URLs</code>, and{" "}
+                      <code className="bg-red-50 dark:bg-red-950 px-1">Web Origins</code> to:{" "}
+                      <code className="block mt-1 bg-red-50 dark:bg-red-950 px-1 py-0.5">
+                        http://localhost:5174, http://localhost:4173
+                      </code>
+                    </li>
+                    <li>
+                      Click <strong>Save Changes</strong> at the bottom of the page.
+                    </li>
+                  </ol>
+                )}
+              </div>
+            </Alert>
+          )}
+
+          {/* Buttons */}
+          <div className="mt-6 space-y-3">
+            <button
+              type="button"
+              onClick={() => startLogin()}
+              disabled={isLoading || busy !== null}
+              data-cy="auth0-login"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-3 text-base font-semibold text-white shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            >
+              {busy === "login" ? (
+                <>
+                  <Spinner size="sm" light />
+                  Redirecting…
+                </>
+              ) : (
+                <>
+                  Continue with Auth0
+                  <HiArrowRight className="h-4 w-4" />
+                </>
               )}
+            </button>
 
-              <div className="mt-6 space-y-3">
-                <button
-                  type="button"
-                  onClick={() => startLogin()}
-                  disabled={isLoading}
-                  data-cy="auth0-login"
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-3 text-base font-semibold text-white shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                >
-                  {isLoading ? (
-                    <Spinner size="sm" light />
-                  ) : (
-                    <>
-                      Continue with Auth0
-                      <HiArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => startLogin("signup")}
-                  disabled={isLoading}
-                  data-cy="auth0-signup"
-                  className="w-full inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                >
-                  New here? Create an account
-                </button>
-              </div>
-
-              <div className="my-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-                <span className="text-xs uppercase tracking-wider text-gray-400">
-                  Demo tip
-                </span>
-                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-              </div>
-
-              <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                Sign up with{" "}
-                <code className="rounded bg-gray-100 dark:bg-gray-800 px-1 py-0.5 text-[11px] text-gray-700 dark:text-gray-200">
-                  manager@st6.dev
-                </code>{" "}
-                to inherit the seeded manager role and see the team roll-up.
-                Any other email gets the IC view (Ada / Ben / Chris each have
-                a pre-loaded plan).
-              </p>
-            </div>
-
-            <p className="mt-3 text-center text-xs text-gray-400">
-              Auth handled by{" "}
-              <a
-                href="https://auth0.com"
-                className="underline hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                Auth0
-              </a>{" "}
-              · open standards (OIDC + OAuth2)
-            </p>
+            <button
+              type="button"
+              onClick={() => startLogin("signup")}
+              disabled={isLoading || busy !== null}
+              data-cy="auth0-signup"
+              className="w-full inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              {busy === "signup" ? (
+                <>
+                  <Spinner size="sm" />
+                  <span className="ml-2">Redirecting…</span>
+                </>
+              ) : (
+                <>Create a new account</>
+              )}
+            </button>
           </div>
+
+          {/* Divider */}
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+            <span className="text-xs uppercase tracking-wider text-gray-400">
+              Demo tip
+            </span>
+            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+          </div>
+
+          <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+            Sign up with{" "}
+            <code className="rounded bg-gray-100 dark:bg-gray-800 px-1 py-0.5 text-[11px] text-gray-700 dark:text-gray-200">
+              manager@st6.dev
+            </code>{" "}
+            to inherit the seeded manager role and unlock the Team view. Any other
+            email gets the IC view — Ada / Ben / Chris each have a pre-loaded
+            plan you can also impersonate.
+          </p>
         </div>
+
+        <p className="mt-3 text-center text-xs text-gray-400 flex items-center justify-center gap-1">
+          Auth handled by
+          <a
+            href={`https://${auth0Config.domain}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-600 dark:hover:text-gray-300 inline-flex items-center gap-0.5"
+          >
+            {auth0Config.domain || "Auth0"}
+            <HiOutlineExternalLink className="h-3 w-3" />
+          </a>
+        </p>
       </div>
     </div>
-  );
-}
-
-function ValueProp({
-  icon,
-  title,
-  body,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-}) {
-  return (
-    <li className="flex flex-col gap-1.5">
-      <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-        {icon}
-      </span>
-      <span className="text-sm font-semibold text-gray-900 dark:text-white">{title}</span>
-      <span className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-        {body}
-      </span>
-    </li>
   );
 }
 
@@ -232,7 +245,7 @@ function MockLogin() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
       <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl p-6 sm:p-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Weekly Commit Module
