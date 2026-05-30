@@ -17,7 +17,23 @@ export const plansApi = wcApi.injectEndpoints({
       invalidatesTags: (result) =>
         result ? [{ type: "Plan", id: result.id }, { type: "Plan", id: "CURRENT" }] : [],
     }),
+    startReconciliation: build.mutation<PlanDto, number>({
+      query: (id) => ({ url: `plans/${id}/start-reconciliation`, method: "PATCH" }),
+      invalidatesTags: (result) =>
+        result ? [{ type: "Plan", id: result.id }, { type: "Plan", id: "CURRENT" }] : [],
+    }),
+    finalizeReconciliation: build.mutation<PlanDto, number>({
+      query: (id) => ({ url: `plans/${id}/finalize-reconciliation`, method: "PATCH" }),
+      invalidatesTags: (result) =>
+        result ? [{ type: "Plan", id: result.id }, { type: "Plan", id: "CURRENT" }] : [],
+    }),
   }),
 });
 
-export const { useGetCurrentPlanQuery, useGetPlanQuery, useLockPlanMutation } = plansApi;
+export const {
+  useGetCurrentPlanQuery,
+  useGetPlanQuery,
+  useLockPlanMutation,
+  useStartReconciliationMutation,
+  useFinalizeReconciliationMutation,
+} = plansApi;

@@ -5,6 +5,23 @@ export interface AlignmentSummary {
     linkedToHighPriority: number;
     alignmentPct: number;
 }
+export type ReconcileStatus = "DONE" | "PARTIAL" | "MISSED" | "DROPPED";
+export interface ReconciliationDto {
+    id: number;
+    weeklyCommitId: number;
+    actualStatus: ReconcileStatus;
+    actualOutcomeNote: string | null;
+    actualEffortHours: number | null;
+    outcomeDelta: number | null;
+    reconciledAt: string;
+    reconciledBy: string;
+}
+export interface ReconcileCommitRequest {
+    actualStatus: ReconcileStatus;
+    actualOutcomeNote?: string;
+    actualEffortHours?: number;
+    outcomeDelta?: number;
+}
 export interface WeeklyCommitDto {
     id: number;
     planId: number;
@@ -19,6 +36,7 @@ export interface WeeklyCommitDto {
     status: CommitStatus;
     ordinal: number;
     carriedFromCommitId: number | null;
+    reconciliation: ReconciliationDto | null;
 }
 export interface PlanDto {
     id: number;

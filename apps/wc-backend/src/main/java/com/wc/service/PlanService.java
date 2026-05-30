@@ -4,12 +4,15 @@ import com.wc.config.exception.IllegalTransitionException;
 import com.wc.config.exception.NotFoundException;
 import com.wc.domain.Plan;
 import com.wc.domain.PlanState;
+import com.wc.domain.Reconciliation;
 import com.wc.domain.WeeklyCommit;
 import com.wc.dto.PlanDto;
+import com.wc.dto.ReconciliationDto;
 import com.wc.dto.WeeklyCommitDto;
 import com.wc.repository.ChessTagRepository;
 import com.wc.repository.OutcomeRepository;
 import com.wc.repository.PlanRepository;
+import com.wc.repository.ReconciliationRepository;
 import com.wc.repository.WeeklyCommitRepository;
 import java.time.DayOfWeek;
 import java.time.Instant;
@@ -34,16 +37,19 @@ public class PlanService {
     private final WeeklyCommitRepository commits;
     private final OutcomeRepository outcomes;
     private final ChessTagRepository chessTags;
+    private final ReconciliationRepository reconciliations;
 
     public PlanService(
             PlanRepository plans,
             WeeklyCommitRepository commits,
             OutcomeRepository outcomes,
-            ChessTagRepository chessTags) {
+            ChessTagRepository chessTags,
+            ReconciliationRepository reconciliations) {
         this.plans = plans;
         this.commits = commits;
         this.outcomes = outcomes;
         this.chessTags = chessTags;
+        this.reconciliations = reconciliations;
     }
 
     /** Monday-of-this-week, UTC. The demo's canonical week-start convention. */
@@ -98,10 +104,22 @@ public class PlanService {
         rows.stream().map(WeeklyCommit::getChessTagId).filter(java.util.Objects::nonNull).distinct()
                 .forEach(id -> chessTags.findById(id).ifPresent(t -> tagById.put(id, t)));
 
+        Map<Long, Reconciliation> reconciliationById = new HashMap<>();
+        List<Long> commitIds = rows.stream().map(WeeklyCommit::getId).toList();
+        if (!commitIds.isEmpty()) {
+            reconciliations.findByWeeklyCommitIdIn(commitIds)
+                    .forEach(r -> reconciliationById.put(r.getWeeklyCommitId(), r));
+        }
+
         List<WeeklyCommitDto> commitDtos = rows.stream()
                 .map(c -> {
                     var o = outcomeById.get(c.getOutcomeId());
                     var t = c.getChessTagId() == null ? null : tagById.get(c.getChessTagId());
+                    var r = reconciliationById.get(c.getId());
+                    ReconciliationDto rDto = r == null ? null : new ReconciliationDto(
+                            r.getId(), r.getWeeklyCommitId(), r.getActualStatus(),
+                            r.getActualOutcomeNote(), r.getActualEffortHours(),
+                            r.getOutcomeDelta(), r.getReconciledAt(), r.getReconciledBy());
                     return new WeeklyCommitDto(
                             c.getId(), c.getPlanId(), c.getOutcomeId(),
                             o == null ? null : o.getTitle(),
@@ -110,7 +128,8 @@ public class PlanService {
                             t == null ? null : t.getCode(),
                             c.getTitle(), c.getDescription(),
                             c.getPlannedEffortHours(), c.getStatus(), c.getOrdinal(),
-                            c.getCarriedFromCommitId());
+                            c.getCarriedFromCommitId(),
+                            rDto);
                 })
                 .toList();
 

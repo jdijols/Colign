@@ -16,5 +16,6 @@ public record WeeklyCommitDto(
         BigDecimal plannedEffortHours,
         CommitStatus status,
         Integer ordinal,
-        Long carriedFromCommitId
+        Long carriedFromCommitId,
+        ReconciliationDto reconciliation
 ) {}

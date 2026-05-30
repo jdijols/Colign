@@ -133,6 +133,26 @@ Per the project brief, AI usage documentation is a required deliverable. The goa
 - **TypeScript wiring fix inline:** Initial `CommitForm` used a clever conditional type `typeof outcomesPage extends { content: infer A } ? ...` to derive the grouped-outcome shape. TS narrowed it to `never`. Replaced with explicit `Map<string, OutcomeRefDto[]>`.
 - **Human judgment:** Two pragmatic shape calls: (a) `<optgroup>` UX in plain HTML rather than a fancy combobox library (saves a dep, the strategy chain is what matters), (b) optional chess tag and effort hours instead of required — required-everything friction would have made the demo recording slower without adding signal.
 
-### Slot 8 — Day-1 polish
+### Sunday Slot — Reconciliation + Carry-forward ✅ (pulled forward from Sunday)
 
-(In progress at next AI turn.)
+- **AI tool:** Claude Opus 4.7 main context.
+- **Backend:**
+  - `ReconciliationService` owns the LOCKED → RECONCILING → RECONCILED transitions plus the carry-forward step that materializes next week's plan with `status=CARRIED` clones of any MISSED commits (linked via `carried_from_commit_id` for lineage).
+  - `ReconciliationController`: PATCH /plans/{id}/start-reconciliation, POST /commits/{id}/reconciliation, GET /commits/{id}/reconciliation, PATCH /plans/{id}/finalize-reconciliation.
+  - `ReconciliationDto` + `ReconcileCommitRequest` (with bean-validation `@Pattern` on `actualStatus`).
+  - `PlanService.toDto` updated to bulk-fetch reconciliations into the commit DTOs (no N+1).
+- **Frontend:**
+  - `reconciliations` RTK Query slice with `useReconcileCommitMutation`.
+  - `plans` slice extended with `useStartReconciliationMutation` + `useFinalizeReconciliationMutation`.
+  - `ReconcilePage` rewrite: rendering depends on state (DRAFT shows "lock first" hint, LOCKED shows Start button, RECONCILING shows the diff list, RECONCILED shows success banner). Per-commit row expands inline into a 4-button status radio (DONE/PARTIAL/MISSED/DROPPED) + actual hours + outcome note. Submit only enabled once every commit has a reconciliation row.
+- **Verification (live, end-to-end through running backend):**
+  - Plan id=1 created, 2 commits added (P0 + P2), alignment 50%.
+  - Lock → LOCKED. Start reconciliation → RECONCILING.
+  - Reconcile commit 1 as DONE with note "Shipped on time", commit 2 as MISSED with note "Blocked by infra outage".
+  - Finalize → state=RECONCILED, reconciledAt timestamp.
+  - **Carry-forward**: GET next week's plan (week=2026-06-01) returned a brand-new plan id=2 in DRAFT containing 1 commit titled "Tune auth cache hit rate" with `status=CARRIED` and `carriedFromCommitId=2`. This is the product's headline narrative — verified working end-to-end.
+- **Human judgment:** Decided to **keep commits referencing the ORIGINAL outcome on carry-forward** rather than re-prompting the IC to re-pick. Rationale: the strategic context (which outcome it supports) is the part that doesn't change between weeks; the IC may want to re-prioritize but the alignment FK should persist. Also: PARTIAL maps to commit.status=MISSED in the denormalized status mirror (because part-done = not-done from a carry-forward perspective). Logged so a reviewer can argue with the choice.
+
+### Slot 8 — Day-1 polish + Sunday slots
+
+(In progress at next AI turn — Manager dashboard next.)
