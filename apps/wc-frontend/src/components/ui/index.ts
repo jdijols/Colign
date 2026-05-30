@@ -1,0 +1,22 @@
+// Single import surface for the design system primitives.
+// Usage:  import { Button, Card, Badge } from "@/components/ui";
+
+export { Button } from "./Button";
+export { Card, CardHeader, CardTitle, CardBody, CardFooter } from "./Card";
+export { Badge } from "./Badge";
+export { Alert } from "./Alert";
+export { Input, Textarea, Select } from "./Input";
+export { Label, Field } from "./Label";
+export { Drawer } from "./Drawer";
+export { Spinner } from "./Spinner";
+export { Pagination } from "./Pagination";
+export { ThemeToggle } from "./ThemeToggle";
+export {
+  TableScroller,
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+} from "./Table";

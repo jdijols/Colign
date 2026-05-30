@@ -1,13 +1,26 @@
 import { useState } from "react";
-import { Button, Card, Spinner, Alert, Tooltip } from "flowbite-react";
-import { HiPlus, HiLockClosed, HiInformationCircle, HiArrowRight } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
+import {
+  HiArrowRight,
+  HiInformationCircle,
+  HiLockClosed,
+  HiPlus,
+} from "react-icons/hi";
 import {
   useGetCurrentPlanQuery,
   useLockPlanMutation,
   useStartReconciliationMutation,
 } from "@/api/plans";
 import { useDeleteCommitMutation } from "@/api/commits";
+import {
+  Alert,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  CardTitle,
+  Spinner,
+} from "@/components/ui";
 import { CommitForm } from "@/components/CommitForm";
 import { CommitRow } from "@/components/CommitRow";
 import { PlanStatePill } from "@/components/PlanStatePill";
@@ -24,22 +37,22 @@ export function WeeklyPlanPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex items-center justify-center" data-cy="plan-loading">
-        <Spinner aria-label="Loading current plan" />
+      <div className="p-12 flex items-center justify-center" data-cy="plan-loading">
+        <Spinner size="lg" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <Card className="m-8">
-        <Alert color="failure" icon={HiInformationCircle}>
-          Failed to load current plan. Make sure the backend is running on :8080.
+      <div className="p-6 max-w-3xl mx-auto">
+        <Alert tone="danger" title="Failed to load current plan">
+          Make sure the backend is running on :8080.
+          <pre className="mt-2 max-h-40 overflow-auto font-mono text-[10px]">
+            {JSON.stringify(error, null, 2)}
+          </pre>
         </Alert>
-        <pre className="text-xs text-gray-500 mt-3 max-h-40 overflow-auto">
-          {JSON.stringify(error, null, 2)}
-        </pre>
-      </Card>
+      </div>
     );
   }
 
@@ -47,8 +60,9 @@ export function WeeklyPlanPage() {
   const canLock = canEdit && data.commits.length > 0;
 
   function handleErr(e: unknown, fallback: string) {
-    const msg = (e as { data?: { detail?: string } })?.data?.detail
-      ?? (e instanceof Error ? e.message : fallback);
+    const msg =
+      (e as { data?: { detail?: string } })?.data?.detail ??
+      (e instanceof Error ? e.message : fallback);
     setActionError(msg);
   }
 
@@ -61,12 +75,6 @@ export function WeeklyPlanPage() {
     }
   }
 
-  /**
-   * Compound: lock the plan THEN immediately move into reconciliation.
-   * Shortcut for demos / Friday-night flows that skip the "wait for the
-   * week to end" hop. Frontend-sequential is intentional — if start-recon
-   * fails after lock succeeded, the plan stays LOCKED (recoverable).
-   */
   async function lockAndReconcile() {
     setActionError(null);
     try {
@@ -89,50 +97,56 @@ export function WeeklyPlanPage() {
   }
 
   return (
-    <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
+    <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-wider text-gray-500">
-            My weekly plan
-          </p>
-          <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white" data-cy="plan-heading">
-            Week of {data.weekStartDate}
+          <p className="text-[10px] uppercase tracking-wider text-neutral-500">My weekly plan</p>
+          <h1
+            className="mt-1 text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50"
+            data-cy="plan-heading"
+          >
+            Week of <span className="tabular-nums">{data.weekStartDate}</span>
           </h1>
         </div>
         <div className="flex flex-col sm:items-end gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Status:</span>
-            <span data-cy="plan-state"><PlanStatePill state={data.state} /></span>
+            <span className="text-xs text-neutral-500">Status</span>
+            <span data-cy="plan-state">
+              <PlanStatePill state={data.state} />
+            </span>
           </div>
           <AlignmentBar alignment={data.alignment} />
         </div>
       </header>
 
-      {/* Commits */}
       <Card>
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Commits ({data.commits.length})</h2>
+        <CardHeader>
+          <CardTitle>Commits · {data.commits.length}</CardTitle>
           {canEdit && !adding && (
             <Button
               size="sm"
               onClick={() => setAdding(true)}
+              leftIcon={<HiPlus className="h-3.5 w-3.5" />}
               data-cy="add-commit"
             >
-              <HiPlus className="mr-1 h-4 w-4" /> Add commit
+              Add commit
             </Button>
           )}
-        </div>
+        </CardHeader>
 
-        {data.commits.length === 0 && !adding && (
-          <p className="text-sm text-gray-500 mt-2">
-            No commits yet. Click <strong>Add commit</strong> to start your week —
-            each commit must link to a strategic Outcome.
-          </p>
-        )}
-
-        {data.commits.length > 0 && (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700 -my-2" data-cy="commit-list">
+        {data.commits.length === 0 && !adding ? (
+          <CardBody>
+            <p className="text-sm text-neutral-500">
+              No commits yet. Click{" "}
+              <strong className="text-neutral-700 dark:text-neutral-300">Add commit</strong> to
+              start your week — each commit must link to a strategic Outcome.
+            </p>
+          </CardBody>
+        ) : data.commits.length > 0 ? (
+          <ul
+            className="divide-y divide-neutral-200 dark:divide-neutral-800 px-4"
+            data-cy="commit-list"
+          >
             {data.commits.map((c) => (
               <CommitRow
                 key={c.id}
@@ -142,74 +156,88 @@ export function WeeklyPlanPage() {
               />
             ))}
           </ul>
-        )}
-
-        {adding && (
-          <div className="mt-4">
-            <CommitForm
-              planId={data.id}
-              onDone={() => setAdding(false)}
-              onCancel={() => setAdding(false)}
-            />
-          </div>
-        )}
+        ) : null}
       </Card>
 
-      {/* Lock footer */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          {canEdit ? (
-            <>
-              When you're done editing, <strong>lock the plan</strong> for the week —
-              or skip ahead and reconcile in one step.
-            </>
-          ) : data.state === "LOCKED" ? (
-            <>This week is locked. Reconcile when the week is done.</>
-          ) : (
-            <>This week has been reconciled. See it under <a href="reconcile">Reconcile</a>.</>
-          )}
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {canLock ? (
-            <>
-              <Button color="blue" onClick={lock} disabled={locking || startingRecon} data-cy="lock-plan">
-                <HiLockClosed className="mr-1 h-4 w-4" />
-                {locking && !startingRecon ? "Locking…" : "Lock plan"}
+      {adding && (
+        <CommitForm
+          planId={data.id}
+          onDone={() => setAdding(false)}
+          onCancel={() => setAdding(false)}
+        />
+      )}
+
+      <Card variant="muted">
+        <div className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            {canEdit ? (
+              <>
+                When you're done editing,{" "}
+                <strong className="text-neutral-900 dark:text-neutral-100">lock the plan</strong>{" "}
+                for the week — or skip ahead and reconcile in one step.
+              </>
+            ) : data.state === "LOCKED" ? (
+              <>This week is locked. Reconcile when the week is done.</>
+            ) : (
+              <>
+                This week has been reconciled.{" "}
+                <a className="underline" href="reconcile">
+                  See it under Reconcile
+                </a>
+                .
+              </>
+            )}
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            {canLock ? (
+              <>
+                <Button
+                  onClick={lock}
+                  disabled={locking || startingRecon}
+                  data-cy="lock-plan"
+                  leftIcon={<HiLockClosed className="h-3.5 w-3.5" />}
+                >
+                  {locking && !startingRecon ? "Locking…" : "Lock plan"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={lockAndReconcile}
+                  disabled={locking || startingRecon}
+                  data-cy="lock-and-reconcile"
+                  rightIcon={<HiArrowRight className="h-3.5 w-3.5" />}
+                >
+                  {startingRecon ? "Starting…" : "Lock & start reconciling"}
+                </Button>
+              </>
+            ) : canEdit ? (
+              <Button disabled leftIcon={<HiLockClosed className="h-3.5 w-3.5" />}>
+                Lock plan
               </Button>
+            ) : data.state === "LOCKED" ? (
               <Button
-                color="light"
-                onClick={lockAndReconcile}
-                disabled={locking || startingRecon}
-                data-cy="lock-and-reconcile"
+                onClick={startReconciliationOnly}
+                disabled={startingRecon}
+                data-cy="goto-reconcile"
+                rightIcon={<HiArrowRight className="h-3.5 w-3.5" />}
               >
-                {startingRecon ? "Starting…" : "Lock & start reconciling"}
-                <HiArrowRight className="ml-1 h-4 w-4" />
+                {startingRecon ? "Starting…" : "Start reconciliation"}
               </Button>
-            </>
-          ) : canEdit ? (
-            <Tooltip content="Add at least one commit before locking.">
-              <Button color="blue" disabled>
-                <HiLockClosed className="mr-1 h-4 w-4" /> Lock plan
-              </Button>
-            </Tooltip>
-          ) : data.state === "LOCKED" ? (
-            <Button
-              color="blue"
-              onClick={startReconciliationOnly}
-              disabled={startingRecon}
-              data-cy="goto-reconcile"
-            >
-              {startingRecon ? "Starting…" : "Start reconciliation"}
-              <HiArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          ) : null}
+            ) : null}
+          </div>
         </div>
-      </div>
+      </Card>
 
       {actionError && (
-        <Alert color="failure" icon={HiInformationCircle}>
+        <Alert tone="danger" title="Action failed">
           {actionError}
         </Alert>
+      )}
+
+      {data.commits.length === 0 && !adding && (
+        <div className="text-xs text-neutral-500 dark:text-neutral-500 flex items-center gap-1.5">
+          <HiInformationCircle className="h-3.5 w-3.5" aria-hidden />
+          The brief calls this structural alignment — every commit links to a leaf Outcome.
+        </div>
       )}
     </div>
   );

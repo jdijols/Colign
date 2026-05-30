@@ -1,4 +1,7 @@
 import type { PlanState } from "@/api/types";
-export declare function PlanStatePill({ state }: {
+interface PlanStatePillProps {
     state: PlanState;
-}): import("react/jsx-runtime").JSX.Element;
+    size?: "xs" | "sm";
+}
+export declare function PlanStatePill({ state, size }: PlanStatePillProps): import("react/jsx-runtime").JSX.Element;
+export {};

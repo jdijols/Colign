@@ -7,17 +7,17 @@ import { navLink } from "../nav";
 export function RoutesPage() {
   return (
     <article>
-      <h1>Routes & Screens</h1>
+      <h1>Routes & screens.</h1>
       <p className="arch-lead">
         Five user-facing screens on the frontend, eleven REST endpoints on the
-        backend. The frontend routes are defined in{" "}
-        <FileRef path="apps/wc-frontend/src/WeeklyCommitApp.tsx" />; the backend
+        backend. Frontend routes are defined in{" "}
+        <FileRef path="apps/wc-frontend/src/WeeklyCommitApp.tsx" />; backend
         endpoints live under <code>com.wc.controller</code>.
       </p>
 
       <h2>Frontend routes</h2>
       <p>
-        The WC remote owns its own internal router. The same code runs
+        The colign remote owns its own internal router. The same code runs
         standalone on <code>:5174</code> and mounted inside pa-host at{" "}
         <code>/weekly-commit/*</code> — relative paths make both work.
       </p>

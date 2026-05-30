@@ -1,11 +1,20 @@
 import { useMemo, useState } from "react";
-import { Alert, Button, Card, Spinner } from "flowbite-react";
-import { HiCheck, HiInformationCircle, HiPlay } from "react-icons/hi";
+import { HiArrowRight, HiCheck } from "react-icons/hi";
 import {
   useFinalizeReconciliationMutation,
   useGetCurrentPlanQuery,
   useStartReconciliationMutation,
 } from "@/api/plans";
+import {
+  Alert,
+  Button,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Spinner,
+} from "@/components/ui";
 import { PlanStatePill } from "@/components/PlanStatePill";
 import { ReconcileRow } from "@/components/ReconcileRow";
 
@@ -25,19 +34,17 @@ export function ReconcilePage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex items-center justify-center">
-        <Spinner aria-label="Loading plan for reconciliation" />
+      <div className="p-12 flex items-center justify-center">
+        <Spinner size="lg" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <Card className="m-8">
-        <Alert color="failure" icon={HiInformationCircle}>
-          Failed to load current plan.
-        </Alert>
-      </Card>
+      <div className="p-6 max-w-3xl mx-auto">
+        <Alert tone="danger" title="Failed to load current plan." />
+      </div>
     );
   }
 
@@ -46,60 +53,73 @@ export function ReconcilePage() {
     try {
       await fn();
     } catch (e) {
-      const msg = (e as { data?: { detail?: string } })?.data?.detail
-        ?? (e instanceof Error ? e.message : `${label} failed`);
+      const msg =
+        (e as { data?: { detail?: string } })?.data?.detail ??
+        (e instanceof Error ? e.message : `${label} failed`);
       setActionError(msg);
     }
   }
 
   return (
-    <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-wider text-gray-500">Reconciliation</p>
-          <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
-            Week of {data.weekStartDate}
+          <p className="text-[10px] uppercase tracking-wider text-neutral-500">Reconciliation</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
+            Week of <span className="tabular-nums">{data.weekStartDate}</span>
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">Status:</span>
+          <span className="text-xs text-neutral-500">Status</span>
           <PlanStatePill state={data.state} />
         </div>
       </header>
 
       {data.state === "DRAFT" && (
-        <Alert color="info" icon={HiInformationCircle}>
-          This week is still in DRAFT. Lock it on <a href=".">My Week</a> first to start reconciliation.
+        <Alert tone="info" title="This week is still in DRAFT.">
+          Lock it on{" "}
+          <a className="underline" href=".">
+            My Week
+          </a>{" "}
+          first to start reconciliation.
         </Alert>
       )}
 
       {data.state === "LOCKED" && (
         <Card>
-          <p className="text-gray-700 dark:text-gray-300">
-            Plan locked on {data.lockedAt ? new Date(data.lockedAt).toLocaleString() : "Mon"}.
-            Ready to walk through each commit and record what actually happened.
-          </p>
-          <div className="mt-3">
+          <CardBody>
+            <p className="text-sm text-neutral-700 dark:text-neutral-300">
+              Plan locked on{" "}
+              <span className="font-mono tabular-nums">
+                {data.lockedAt ? new Date(data.lockedAt).toLocaleString() : "—"}
+              </span>
+              . Ready to walk through each commit and record what actually happened.
+            </p>
+          </CardBody>
+          <CardFooter>
+            <div />
             <Button
               onClick={() => action(() => startRecon(data.id).unwrap(), "Start reconciliation")}
               disabled={starting}
               data-cy="start-reconciliation"
+              rightIcon={<HiArrowRight className="h-3.5 w-3.5" />}
             >
-              <HiPlay className="mr-1 h-4 w-4" />
               {starting ? "Starting…" : "Start reconciliation"}
             </Button>
-          </div>
+          </CardFooter>
         </Card>
       )}
 
-      {(data.state === "RECONCILING" || data.state === "RECONCILED" || data.state === "CARRIED_FORWARD") && (
+      {(data.state === "RECONCILING" ||
+        data.state === "RECONCILED" ||
+        data.state === "CARRIED_FORWARD") && (
         <Card>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold">
-              Planned vs. actual ({reconciledCount}/{data.commits.length} reconciled)
-            </h2>
-          </div>
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+          <CardHeader>
+            <CardTitle>
+              Planned vs. actual · {reconciledCount}/{data.commits.length} reconciled
+            </CardTitle>
+          </CardHeader>
+          <ul className="divide-y divide-neutral-200 dark:divide-neutral-800 px-4">
             {data.commits.map((c) => (
               <ReconcileRow
                 key={c.id}
@@ -111,37 +131,39 @@ export function ReconcilePage() {
           </ul>
 
           {data.state === "RECONCILING" && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <CardFooter>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 {allReconciled
                   ? "All commits reconciled — submit to finalize. Missed commits will carry forward into next week."
                   : `${data.commits.length - reconciledCount} commit(s) still need a reconciliation.`}
               </p>
               <Button
-                color="success"
-                disabled={!allReconciled || finalizing}
                 onClick={() =>
                   action(() => finalize(data.id).unwrap(), "Finalize reconciliation")
                 }
+                disabled={!allReconciled || finalizing}
                 data-cy="finalize-reconciliation"
+                leftIcon={<HiCheck className="h-3.5 w-3.5" />}
               >
-                <HiCheck className="mr-1 h-4 w-4" />
                 {finalizing ? "Submitting…" : "Submit reconciliation"}
               </Button>
-            </div>
+            </CardFooter>
           )}
 
           {(data.state === "RECONCILED" || data.state === "CARRIED_FORWARD") && (
-            <Alert color="success" icon={HiCheck} className="mt-4">
-              Reconciliation complete for week of {data.weekStartDate}. Missed commits
-              were carried forward to next week's plan.
-            </Alert>
+            <CardBody className="border-t border-neutral-200 dark:border-neutral-800">
+              <Alert tone="success" title="Reconciliation complete.">
+                Reconciliation complete for week of{" "}
+                <span className="font-mono tabular-nums">{data.weekStartDate}</span>. Missed commits
+                were carried forward to next week's plan.
+              </Alert>
+            </CardBody>
           )}
         </Card>
       )}
 
       {actionError && (
-        <Alert color="failure" icon={HiInformationCircle}>
+        <Alert tone="danger" title="Action failed">
           {actionError}
         </Alert>
       )}

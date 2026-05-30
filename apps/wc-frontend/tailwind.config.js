@@ -3,6 +3,9 @@ import flowbite from "flowbite/plugin";
 import forms from "@tailwindcss/forms";
 
 export default {
+  // Class-strategy dark mode so the ThemeToggle's `.dark` on <html> drives the
+  // entire app — overrides the default media-query behavior. See src/lib/theme.ts.
+  darkMode: "class",
   content: [
     "./index.html",
     "./src/**/*.{ts,tsx}",

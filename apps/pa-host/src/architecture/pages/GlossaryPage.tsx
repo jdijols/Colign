@@ -6,14 +6,28 @@ import { navLink } from "../nav";
 export function GlossaryPage() {
   return (
     <article>
-      <h1>Glossary & Where to Start</h1>
+      <h1>Glossary & where to start.</h1>
       <p className="arch-lead">
-        Two things on this page: a short dictionary so the rest of the docs
-        make sense end-to-end, and a list of concretely-shaped first
+        Two things on this page: a short dictionary so the rest of the colign
+        docs make sense end-to-end, and a list of concretely-shaped first
         contributions you could take on.
       </p>
 
       <h2>Vocabulary</h2>
+
+      <h3>colign</h3>
+      <p>
+        The product name. The codebase calls it the Weekly Commit module
+        (paths like <code>apps/wc-frontend</code>, package names like{" "}
+        <code>wc-backend</code>) — that's the brief's terminology and stays
+        in the file tree because renaming Maven artifacts and federated
+        remote module names mid-flight is more cost than value. In docs,
+        prose, the host UI, and{" "}
+        <a href="https://colign.org" target="_blank" rel="noopener noreferrer">
+          colign.org
+        </a>
+        , it's "colign." MIT-licensed.
+      </p>
 
       <h3>RCDO</h3>
       <p>
@@ -166,6 +180,7 @@ export function GlossaryPage() {
         <li>The full RTK Query tag-invalidation diagram (which mutation invalidates which query).</li>
         <li>Production deploy topology (CloudFront, EKS, etc.) — the current setup is local-only.</li>
         <li>LogRocket / Loki monitoring (intentionally out of scope per the brief).</li>
+        <li>colign.org marketing surface — separate from this engineering site.</li>
       </ul>
       <p>
         If you fix one of these gaps, this is the right page to add it to.

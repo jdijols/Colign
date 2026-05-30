@@ -1,4 +1,7 @@
 import type { AlignmentSummary } from "@/api/types";
-export declare function AlignmentBar({ alignment }: {
+interface AlignmentBarProps {
     alignment: AlignmentSummary;
-}): import("react/jsx-runtime").JSX.Element;
+    size?: "sm" | "md";
+}
+export declare function AlignmentBar({ alignment, size }: AlignmentBarProps): import("react/jsx-runtime").JSX.Element;
+export {};

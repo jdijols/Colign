@@ -32,7 +32,7 @@ sequenceDiagram
 export function AuthPage() {
   return (
     <article>
-      <h1>Auth Flow</h1>
+      <h1>Auth flow.</h1>
       <p className="arch-lead">
         A signed JWT identifies the caller. The backend validates it on every
         request, the frontend keeps it in Redux state, and a thin resolver

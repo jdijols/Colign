@@ -50,7 +50,7 @@ sequenceDiagram
 export function LifecyclePage() {
   return (
     <article>
-      <h1>The Weekly Lifecycle</h1>
+      <h1>The weekly lifecycle.</h1>
       <p className="arch-lead">
         A <code>Plan</code> moves through five states. Each transition is a
         specific endpoint with specific guards. The state machine is enforced in

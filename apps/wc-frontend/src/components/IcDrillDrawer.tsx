@@ -1,29 +1,15 @@
-import {
-  Avatar,
-  Badge,
-  Button,
-  Drawer,
-  DrawerHeader,
-  DrawerItems,
-  HR,
-} from "flowbite-react";
-import { HiX } from "react-icons/hi";
+import { HiOutlineSwitchHorizontal } from "react-icons/hi";
 import type { TeamMemberDto } from "@/api/types";
+import { Badge, Drawer } from "@/components/ui";
 import { PlanStatePill } from "@/components/PlanStatePill";
 import { AlignmentBar } from "@/components/AlignmentBar";
-
-const chessColor: Record<string, string> = {
-  OFFENSE: "success",
-  DEFENSE: "warning",
-  MAINTENANCE: "gray",
-};
-
-const priorityColor: Record<string, string> = {
-  P0: "failure",
-  P1: "warning",
-  P2: "info",
-  P3: "gray",
-};
+import {
+  chessTagTone,
+  commitStatusLabel,
+  commitStatusTone,
+  priorityTone,
+  reconcileStatusTone,
+} from "@/lib/tokens";
 
 interface Props {
   member: TeamMemberDto | null;
@@ -32,103 +18,110 @@ interface Props {
 
 export function IcDrillDrawer({ member, onClose }: Props) {
   return (
-    <Drawer open={!!member} onClose={onClose} position="right" className="!w-full sm:!w-[640px]">
-      {member ? (
-        <>
-          <DrawerHeader title={member.displayName} titleIcon={() => <Avatar size="xs" rounded />} />
-          <DrawerItems>
-            <div className="space-y-4 -mt-2">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {member.email} · {member.role}
-                </div>
-                <Button size="xs" color="light" onClick={onClose}>
-                  <HiX className="mr-1 h-3.5 w-3.5" /> Close
-                </Button>
-              </div>
-
-              {!member.currentPlan ? (
-                <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 p-6 text-sm text-gray-500 text-center">
-                  No plan recorded yet.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-gray-500">
-                        Week of
-                      </p>
-                      <p className="text-lg font-semibold">{member.currentPlan.weekStartDate}</p>
-                    </div>
-                    <PlanStatePill state={member.currentPlan.state} />
-                  </div>
-
-                  <AlignmentBar alignment={member.currentPlan.alignment} />
-
-                  <HR className="my-2" />
-
-                  <div>
-                    <h3 className="text-sm font-semibold mb-2">
-                      Commits ({member.currentPlan.commits.length})
-                    </h3>
-                    {member.currentPlan.commits.length === 0 ? (
-                      <p className="text-sm text-gray-500">No commits in this plan.</p>
-                    ) : (
-                      <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {member.currentPlan.commits.map((c) => (
-                          <li key={c.id} className="py-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium">{c.title}</span>
-                              {c.chessTagCode ? (
-                                <Badge size="xs" color={chessColor[c.chessTagCode] ?? "gray"}>
-                                  {c.chessTagCode}
-                                </Badge>
-                              ) : null}
-                              <Badge size="xs" color={priorityColor[c.outcomePriority ?? "P3"] ?? "gray"}>
-                                {c.outcomePriority ?? "—"}
-                              </Badge>
-                              {c.carriedFromCommitId != null ? (
-                                <Badge size="xs" color="purple">carried</Badge>
-                              ) : null}
-                            </div>
-                            <div className="mt-1 text-xs text-gray-500">
-                              {c.outcomeTitle ?? `Outcome #${c.outcomeId}`}
-                              {c.plannedEffortHours != null
-                                ? ` · planned ${c.plannedEffortHours}h`
-                                : null}
-                            </div>
-                            {c.reconciliation ? (
-                              <div className="mt-2 text-xs rounded bg-gray-50 dark:bg-gray-800 p-2">
-                                <span className="font-semibold">{c.reconciliation.actualStatus}</span>
-                                {c.reconciliation.actualEffortHours != null
-                                  ? ` · ${c.reconciliation.actualEffortHours}h actual`
-                                  : null}
-                                {c.reconciliation.actualOutcomeNote
-                                  ? <span className="block text-gray-600 dark:text-gray-300 mt-1">
-                                      "{c.reconciliation.actualOutcomeNote}"
-                                    </span>
-                                  : null}
-                              </div>
-                            ) : null}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-
-                  <HR className="my-2" />
-
-                  <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 p-4 text-xs text-gray-500">
-                    <strong>Coming Sunday:</strong> Approve / Request changes / Comment actions.
-                    For now this drawer is read-only — managers see the full plan + reconciliation
-                    state at a glance.
-                  </div>
-                </div>
-              )}
+    <Drawer
+      open={!!member}
+      onClose={onClose}
+      width="xl"
+      title={member?.displayName ?? ""}
+      description={member ? `${member.email} · ${member.role}` : undefined}
+    >
+      {!member ? null : !member.currentPlan ? (
+        <div className="rounded-md border border-dashed border-neutral-300 dark:border-neutral-700 p-8 text-sm text-neutral-500 text-center">
+          No plan recorded yet.
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-neutral-500">Week of</p>
+              <p className="text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 tabular-nums">
+                {member.currentPlan.weekStartDate}
+              </p>
             </div>
-          </DrawerItems>
-        </>
-      ) : null}
+            <PlanStatePill state={member.currentPlan.state} />
+          </div>
+
+          <AlignmentBar alignment={member.currentPlan.alignment} size="md" />
+
+          <div className="h-px bg-neutral-200 dark:bg-neutral-800" />
+
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-3">
+              Commits · {member.currentPlan.commits.length}
+            </h3>
+            {member.currentPlan.commits.length === 0 ? (
+              <p className="text-sm text-neutral-500">No commits in this plan.</p>
+            ) : (
+              <ul className="space-y-3">
+                {member.currentPlan.commits.map((c) => (
+                  <li
+                    key={c.id}
+                    className="rounded-md border border-neutral-200 dark:border-neutral-800 p-3"
+                  >
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-medium text-sm text-neutral-900 dark:text-neutral-50">
+                        {c.title}
+                      </span>
+                      <Badge tone={priorityTone(c.outcomePriority)} size="xs">
+                        {c.outcomePriority ?? "—"}
+                      </Badge>
+                      {c.chessTagCode ? (
+                        <Badge tone={chessTagTone(c.chessTagCode)} size="xs">
+                          {c.chessTagCode}
+                        </Badge>
+                      ) : null}
+                      {c.carriedFromCommitId != null ? (
+                        <Badge tone="neutral" size="xs" variant="outline">
+                          <HiOutlineSwitchHorizontal className="h-2.5 w-2.5 mr-0.5" aria-hidden />
+                          carried
+                        </Badge>
+                      ) : null}
+                      <Badge tone={commitStatusTone(c.status)} size="xs" className="ml-auto">
+                        {commitStatusLabel(c.status)}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                      {c.outcomeTitle ?? `Outcome #${c.outcomeId}`}
+                      {c.plannedEffortHours != null ? ` · planned ${c.plannedEffortHours}h` : ""}
+                    </p>
+
+                    {c.reconciliation ? (
+                      <div className="mt-2 rounded-md bg-neutral-50 dark:bg-neutral-900 p-2.5 text-xs space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            tone={reconcileStatusTone(c.reconciliation.actualStatus)}
+                            size="xs"
+                          >
+                            {c.reconciliation.actualStatus}
+                          </Badge>
+                          {c.reconciliation.actualEffortHours != null ? (
+                            <span className="text-neutral-600 dark:text-neutral-400 tabular-nums">
+                              {c.reconciliation.actualEffortHours}h actual
+                            </span>
+                          ) : null}
+                        </div>
+                        {c.reconciliation.actualOutcomeNote ? (
+                          <p className="text-neutral-600 dark:text-neutral-400 italic">
+                            "{c.reconciliation.actualOutcomeNote}"
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="rounded-md border border-dashed border-neutral-300 dark:border-neutral-700 p-3 text-xs text-neutral-500 dark:text-neutral-500">
+            <strong className="text-neutral-700 dark:text-neutral-300 font-semibold">
+              Coming next.
+            </strong>{" "}
+            Approve / Request changes / Comment actions. Read-only for now — managers see the full
+            plan + reconciliation state at a glance.
+          </div>
+        </div>
+      )}
     </Drawer>
   );
 }

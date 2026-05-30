@@ -1,14 +1,40 @@
 import { useState } from "react";
-import { Badge, Button, Label, Textarea, TextInput, Spinner } from "flowbite-react";
-import { HiCheck, HiX } from "react-icons/hi";
-import type { ReconcileStatus, WeeklyCommitDto } from "@/api/types";
+import { HiCheck, HiChevronDown, HiChevronRight, HiX } from "react-icons/hi";
 import { useReconcileCommitMutation } from "@/api/reconciliations";
+import type { ReconcileStatus, WeeklyCommitDto } from "@/api/types";
+import { Badge, Button, Field, Input, Spinner, Textarea } from "@/components/ui";
+import { cn } from "@/lib/cn";
+import { reconcileStatusTone } from "@/lib/tokens";
 
-const OPTIONS: Array<{ value: ReconcileStatus; label: string; color: string; activeColor: string }> = [
-  { value: "DONE",    label: "Done",     color: "bg-green-50 text-green-800 hover:bg-green-100 dark:bg-green-950 dark:text-green-200",    activeColor: "bg-green-600 text-white" },
-  { value: "PARTIAL", label: "Partial",  color: "bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-200",    activeColor: "bg-amber-600 text-white" },
-  { value: "MISSED",  label: "Missed",   color: "bg-red-50 text-red-800 hover:bg-red-100 dark:bg-red-950 dark:text-red-200",              activeColor: "bg-red-600 text-white" },
-  { value: "DROPPED", label: "Dropped",  color: "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200",        activeColor: "bg-gray-700 text-white" },
+const OPTIONS: Array<{ value: ReconcileStatus; label: string; activeClass: string; inactiveClass: string }> = [
+  {
+    value: "DONE",
+    label: "Done",
+    activeClass: "bg-emerald-600 text-white border-emerald-600 dark:bg-emerald-500 dark:border-emerald-500",
+    inactiveClass:
+      "border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:border-emerald-800 dark:text-emerald-300 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70",
+  },
+  {
+    value: "PARTIAL",
+    label: "Partial",
+    activeClass: "bg-amber-500 text-white border-amber-500",
+    inactiveClass:
+      "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-300 dark:bg-amber-950/40 dark:hover:bg-amber-950/70",
+  },
+  {
+    value: "MISSED",
+    label: "Missed",
+    activeClass: "bg-rose-600 text-white border-rose-600 dark:bg-rose-500 dark:border-rose-500",
+    inactiveClass:
+      "border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 dark:border-rose-800 dark:text-rose-300 dark:bg-rose-950/40 dark:hover:bg-rose-950/70",
+  },
+  {
+    value: "DROPPED",
+    label: "Dropped",
+    activeClass: "bg-neutral-700 text-white border-neutral-700 dark:bg-neutral-300 dark:text-neutral-900 dark:border-neutral-300",
+    inactiveClass:
+      "border-neutral-200 text-neutral-700 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:bg-neutral-900 dark:hover:bg-neutral-800",
+  },
 ];
 
 interface Props {
@@ -45,29 +71,39 @@ export function ReconcileRow({ commit, expanded, onToggle }: Props) {
         aria-expanded={expanded}
       >
         <div className="flex items-center gap-2 min-w-0">
+          {expanded ? (
+            <HiChevronDown className="h-3.5 w-3.5 text-neutral-400 shrink-0" aria-hidden />
+          ) : (
+            <HiChevronRight className="h-3.5 w-3.5 text-neutral-400 shrink-0" aria-hidden />
+          )}
           {existing ? (
-            <Badge size="xs" color={existing.actualStatus === "DONE" ? "success" : existing.actualStatus === "PARTIAL" ? "warning" : "failure"}>
+            <Badge tone={reconcileStatusTone(existing.actualStatus)} size="xs">
               {existing.actualStatus}
             </Badge>
           ) : (
-            <Badge size="xs" color="gray">unreconciled</Badge>
+            <Badge tone="neutral" size="xs" variant="outline">
+              unreconciled
+            </Badge>
           )}
-          <span className="font-medium text-gray-900 dark:text-white truncate group-hover:underline">
+          <span className="font-medium text-sm text-neutral-900 dark:text-neutral-50 truncate group-hover:underline">
             {commit.title}
           </span>
         </div>
-        <div className="text-xs text-gray-500 shrink-0 hidden sm:flex gap-3">
+        <div className="text-xs text-neutral-500 shrink-0 hidden sm:flex gap-3 items-center">
           <span>{commit.outcomePriority ?? "—"}</span>
-          {commit.plannedEffortHours != null ? <span>planned {commit.plannedEffortHours}h</span> : null}
-          {existing?.actualEffortHours != null ? <span>actual {existing.actualEffortHours}h</span> : null}
+          {commit.plannedEffortHours != null ? (
+            <span className="tabular-nums">planned {commit.plannedEffortHours}h</span>
+          ) : null}
+          {existing?.actualEffortHours != null ? (
+            <span className="tabular-nums">actual {existing.actualEffortHours}h</span>
+          ) : null}
         </div>
       </button>
 
       {expanded && (
-        <div className="mt-3 ml-2 pl-4 border-l-2 border-gray-200 dark:border-gray-700 space-y-3">
-          <div>
-            <Label value="What actually happened?" />
-            <div className="mt-1 flex flex-wrap gap-2" role="radiogroup">
+        <div className="mt-3 ml-5 pl-4 border-l-2 border-neutral-200 dark:border-neutral-800 space-y-3">
+          <Field label="What actually happened?">
+            <div className="flex flex-wrap gap-1.5" role="radiogroup">
               {OPTIONS.map((o) => {
                 const active = status === o.value;
                 return (
@@ -77,50 +113,51 @@ export function ReconcileRow({ commit, expanded, onToggle }: Props) {
                     role="radio"
                     aria-checked={active}
                     onClick={() => setStatus(o.value)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition ${active ? o.activeColor : o.color}`}
+                    className={cn(
+                      "inline-flex items-center rounded-md border text-xs font-medium px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-1",
+                      active ? o.activeClass : o.inactiveClass
+                    )}
                   >
                     {o.label}
                   </button>
                 );
               })}
             </div>
-          </div>
+          </Field>
 
-          <div>
-            <Label htmlFor={`note-${commit.id}`} value="Note (optional)" />
+          <Field label="Note" htmlFor={`note-${commit.id}`} hint="optional">
             <Textarea
               id={`note-${commit.id}`}
               rows={2}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="mt-1"
               placeholder="What was the actual outcome / what blocked you?"
             />
-          </div>
+          </Field>
 
           <div className="flex items-end gap-3">
-            <div>
-              <Label htmlFor={`hours-${commit.id}`} value="Actual hours" />
-              <TextInput
+            <Field label="Actual hours" htmlFor={`hours-${commit.id}`} className="w-32">
+              <Input
                 id={`hours-${commit.id}`}
                 type="number"
                 min={0}
                 step={0.5}
                 value={hours}
                 onChange={(e) => setHours(e.target.value)}
-                className="mt-1 max-w-32"
+                className="tabular-nums"
               />
-            </div>
-            <Button color="light" size="sm" onClick={onToggle}>
-              <HiX className="mr-1 h-4 w-4" /> Close
+            </Field>
+            <div className="flex-1" />
+            <Button variant="secondary" size="sm" onClick={onToggle} leftIcon={<HiX className="h-3 w-3" />}>
+              Close
             </Button>
             <Button
               size="sm"
               onClick={save}
               disabled={!status || submitting}
               data-cy="save-reconciliation"
+              leftIcon={submitting ? <Spinner size="sm" /> : <HiCheck className="h-3 w-3" />}
             >
-              {submitting ? <Spinner size="sm" /> : <HiCheck className="mr-1 h-4 w-4" />}
               {existing ? "Update" : "Save"}
             </Button>
           </div>

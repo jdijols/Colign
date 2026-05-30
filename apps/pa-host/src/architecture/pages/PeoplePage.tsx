@@ -26,12 +26,12 @@ flowchart TB
 export function PeoplePage() {
   return (
     <article>
-      <h1>People & Permissions</h1>
+      <h1>People & permissions.</h1>
       <p className="arch-lead">
         Three concepts: an individual <code>User</code>, a <code>Team</code> that
         groups users, and a self-FK on the User table that points each report at
-        their manager. Permissions fall out of that shape rather than being
-        defined separately.
+        their manager. Permissions in colign fall out of that shape rather than
+        being defined separately.
       </p>
 
       <h2>The three roles</h2>
@@ -49,7 +49,7 @@ export function PeoplePage() {
         <thead>
           <tr>
             <th>Role</th>
-            <th>What they do in WC</th>
+            <th>What they do in colign</th>
             <th>Can see</th>
           </tr>
         </thead>
@@ -134,9 +134,9 @@ public Page<TeamMemberDto> team(@PageableDefault(...) Pageable pageable) {
 
       <h2>How a user gets created in the first place</h2>
       <p>
-        WC does not have a "create user" form. The first time someone logs in
-        with a valid JWT, the backend lazy-provisions a <code>User</code> row
-        for them. This lives in{" "}
+        colign does not have a "create user" form. The first time someone logs
+        in with a valid JWT, the backend lazy-provisions a <code>User</code>
+        row for them. This lives in{" "}
         <FileRef path="apps/wc-backend/src/main/java/com/wc/service/UserResolver.java" />:
       </p>
       <Code>{`@Transactional

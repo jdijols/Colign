@@ -35,7 +35,7 @@ flowchart LR
 export function StackPage() {
   return (
     <article>
-      <h1>Stack & Module Federation</h1>
+      <h1>Stack & module federation.</h1>
       <p className="arch-lead">
         Three apps, three roles, one runtime contract. The host has no
         compile-time dependency on the remote — the remote's entry script is
@@ -45,10 +45,10 @@ export function StackPage() {
 
       <h2>Why this exists</h2>
       <p>
-        The fictional PA platform already has its own shell and login. WC is
-        one of several modules that should plug into that shell without forcing
-        a coordinated re-deploy. Module Federation gives each module its own
-        repo, its own build, and its own deploy cadence, while still
+        The fictional PA platform already has its own shell and login. colign
+        is one of several modules that should plug into that shell without
+        forcing a coordinated re-deploy. Module Federation gives each module
+        its own repo, its own build, and its own deploy cadence, while still
         composing into one URL at runtime.
       </p>
 

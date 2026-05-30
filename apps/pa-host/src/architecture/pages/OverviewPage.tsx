@@ -25,17 +25,21 @@ flowchart LR
 export function OverviewPage() {
   return (
     <article>
-      <h1>Welcome — start here.</h1>
+      <h1>colign / onboarding.</h1>
       <p className="arch-lead">
-        This site is an onboarding guide for the Weekly Commit Module (WC). It
-        explains the app from the level of a new engineer joining the team —
-        what it does, how the pieces fit, who can see what, and where to make
-        your first contribution.
+        A guided tour for engineers joining colign — the Weekly Commit module
+        built for the ST6 partnership submission and opened up as an
+        MIT-licensed project at{" "}
+        <a href="https://colign.org" target="_blank" rel="noopener noreferrer">
+          colign.org
+        </a>
+        . The pages below cover what the app does, how the pieces fit, who can
+        see what, and where to make your first contribution.
       </p>
 
-      <h2>What WC is, in one paragraph</h2>
+      <h2>What colign is, in one paragraph</h2>
       <p>
-        WC is a replacement for the weekly planning surface of 15-Five. The
+        colign replaces the weekly planning surface of 15-Five. The
         differentiator is structural: every weekly commitment carries a
         non-nullable foreign key to a leaf <code>Outcome</code> in the
         organization's strategy hierarchy. You cannot save a commit that
@@ -47,7 +51,7 @@ export function OverviewPage() {
 
       <h2>The three apps</h2>
       <p>
-        WC is a small monorepo with three apps. They run independently in dev:
+        colign is a small monorepo with three apps. They run independently in dev:
       </p>
 
       <table className="arch-table">
@@ -135,6 +139,14 @@ export function OverviewPage() {
         Every fact here is grounded in real files in the repo — file paths are
         shown with a badge like the ones above. If the code changes and the
         site drifts, fix the page. Treat it like any other piece of code.
+      </Callout>
+
+      <Callout tone="info" title="A note on naming">
+        The brief and most of the source files refer to the product as the
+        Weekly Commit module, or <code>wc</code>. The public-facing name is
+        <strong> colign</strong>. They mean the same thing — the rest of this
+        site uses "colign" where humans would talk about it and{" "}
+        <code>wc-*</code> where the file paths and module names do.
       </Callout>
 
       <PageFooter next={navLink("people")} />

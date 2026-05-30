@@ -94,7 +94,7 @@ flowchart TB
 export function DataModelPage() {
   return (
     <article>
-      <h1>Data Model</h1>
+      <h1>Data model.</h1>
       <p className="arch-lead">
         Nine tables. The shape is "people on the left, strategy in the middle,
         weekly work on the right" — and a non-nullable foreign key chains them

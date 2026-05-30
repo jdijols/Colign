@@ -1,26 +1,16 @@
-import { Badge } from "flowbite-react";
 import type { PlanState } from "@/api/types";
+import { Badge } from "@/components/ui";
+import { planStateLabel, planStateTone } from "@/lib/tokens";
 
-const COLOR: Record<PlanState, string> = {
-  DRAFT: "gray",
-  LOCKED: "info",
-  RECONCILING: "warning",
-  RECONCILED: "success",
-  CARRIED_FORWARD: "purple",
-};
+interface PlanStatePillProps {
+  state: PlanState;
+  size?: "xs" | "sm";
+}
 
-const LABEL: Record<PlanState, string> = {
-  DRAFT: "Draft",
-  LOCKED: "Locked",
-  RECONCILING: "Reconciling",
-  RECONCILED: "Reconciled",
-  CARRIED_FORWARD: "Carried forward",
-};
-
-export function PlanStatePill({ state }: { state: PlanState }) {
+export function PlanStatePill({ state, size = "sm" }: PlanStatePillProps) {
   return (
-    <Badge color={COLOR[state]} className="px-2.5 py-1 text-xs font-semibold tracking-wide">
-      {LABEL[state]}
+    <Badge tone={planStateTone(state)} size={size}>
+      {planStateLabel(state)}
     </Badge>
   );
 }

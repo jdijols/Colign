@@ -1,16 +1,42 @@
 import { useMemo, useState } from "react";
-import { Button, Label, Select, TextInput, Textarea, Alert } from "flowbite-react";
-import { HiInformationCircle, HiX, HiCheck } from "react-icons/hi";
+import { HiCheck, HiX } from "react-icons/hi";
 import { useAddCommitMutation } from "@/api/commits";
 import { useListOutcomesQuery } from "@/api/outcomes";
 import { useListChessTagsQuery } from "@/api/chessTags";
 import type { OutcomeRefDto } from "@/api/types";
+import {
+  Alert,
+  Button,
+  Card,
+  Field,
+  Input,
+  Select,
+  Spinner,
+  Textarea,
+} from "@/components/ui";
+import { cn } from "@/lib/cn";
 
 interface Props {
   planId: number;
   onDone: () => void;
   onCancel: () => void;
 }
+
+const CHESS_TONES: Record<string, string> = {
+  OFFENSE:
+    "border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:border-emerald-800 dark:text-emerald-300 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70",
+  DEFENSE:
+    "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-300 dark:bg-amber-950/40 dark:hover:bg-amber-950/70",
+  MAINTENANCE:
+    "border-neutral-200 text-neutral-700 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:bg-neutral-900 dark:hover:bg-neutral-800",
+};
+
+const CHESS_ACTIVE: Record<string, string> = {
+  OFFENSE: "bg-emerald-600 text-white border-emerald-600 dark:bg-emerald-500 dark:border-emerald-500",
+  DEFENSE: "bg-amber-500 text-white border-amber-500",
+  MAINTENANCE:
+    "bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white",
+};
 
 export function CommitForm({ planId, onDone, onCancel }: Props) {
   const [title, setTitle] = useState("");
@@ -24,14 +50,18 @@ export function CommitForm({ planId, onDone, onCancel }: Props) {
   const { data: outcomesPage, isLoading: loadingOutcomes } = useListOutcomesQuery({ size: 200 });
   const { data: chessTags, isLoading: loadingTags } = useListChessTagsQuery();
 
-  // Group outcomes by RallyCry → DefiningObjective so the dropdown shows
-  // the full strategy chain to help the IC pick the right leaf.
   const grouped = useMemo(() => {
-    const map = new Map<string, { rallyCry: string; objectives: Map<string, OutcomeRefDto[]> }>();
+    const map = new Map<
+      string,
+      { rallyCry: string; objectives: Map<string, OutcomeRefDto[]> }
+    >();
     (outcomesPage?.content ?? []).forEach((o) => {
       const rcKey = o.rallyCryTitle ?? "(no rally cry)";
       if (!map.has(rcKey)) {
-        map.set(rcKey, { rallyCry: rcKey, objectives: new Map<string, OutcomeRefDto[]>() });
+        map.set(rcKey, {
+          rallyCry: rcKey,
+          objectives: new Map<string, OutcomeRefDto[]>(),
+        });
       }
       const rc = map.get(rcKey)!;
       const doKey = o.definingObjectiveTitle ?? "(no objective)";
@@ -70,125 +100,133 @@ export function CommitForm({ planId, onDone, onCancel }: Props) {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="space-y-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4"
-      aria-label="Add a weekly commit"
-    >
-      <div>
-        <Label htmlFor="commit-title" value="What are you committing to?" />
-        <TextInput
-          id="commit-title"
-          data-cy="commit-input"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={200}
-          required
-          placeholder="e.g. Ship the onboarding redesign"
-          className="mt-1"
-        />
-        <p className="mt-1 text-xs text-gray-500">{title.length}/200</p>
-      </div>
+    <Card>
+      <form onSubmit={submit} aria-label="Add a weekly commit">
+        <div className="px-5 py-4 space-y-4">
+          <Field
+            label="What are you committing to?"
+            htmlFor="commit-title"
+            required
+            hint={`${title.length}/200`}
+          >
+            <Input
+              id="commit-title"
+              data-cy="commit-input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={200}
+              required
+              placeholder="e.g. Ship the onboarding redesign"
+            />
+          </Field>
 
-      <div>
-        <Label htmlFor="commit-description" value="Details (optional)" />
-        <Textarea
-          id="commit-description"
-          rows={2}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="What does done look like?"
-          className="mt-1"
-        />
-      </div>
+          <Field label="Details" htmlFor="commit-description" hint="optional">
+            <Textarea
+              id="commit-description"
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What does done look like?"
+            />
+          </Field>
 
-      <div>
-        <Label htmlFor="commit-outcome" value="Which Outcome does this support?" />
-        <Select
-          id="commit-outcome"
-          value={outcomeId}
-          onChange={(e) => setOutcomeId(e.target.value === "" ? "" : Number(e.target.value))}
-          required
-          disabled={loadingOutcomes}
-          className="mt-1"
-        >
-          <option value="">
-            {loadingOutcomes ? "Loading outcomes…" : "— Select an Outcome —"}
-          </option>
-          {grouped.map((rc) => (
-            <optgroup key={rc.rallyCry} label={`Rally Cry: ${rc.rallyCry}`}>
-              {Array.from(rc.objectives.entries()).flatMap(([doTitle, outcomes]) =>
-                outcomes.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    [{o.priorityTier}] {o.title} — {doTitle}
-                  </option>
-                ))
-              )}
-            </optgroup>
-          ))}
-        </Select>
-        <p className="mt-1 text-xs text-gray-500">
-          Every commit must link to a leaf Outcome. This is the structural alignment
-          that 15-Five doesn't enforce.
-        </p>
-      </div>
+          <Field
+            label="Which Outcome does this support?"
+            htmlFor="commit-outcome"
+            required
+            helpText="Every commit must link to a leaf Outcome — the structural alignment 15-Five doesn't enforce."
+          >
+            <Select
+              id="commit-outcome"
+              value={outcomeId}
+              onChange={(e) =>
+                setOutcomeId(e.target.value === "" ? "" : Number(e.target.value))
+              }
+              required
+              disabled={loadingOutcomes}
+            >
+              <option value="">
+                {loadingOutcomes ? "Loading outcomes…" : "— Select an Outcome —"}
+              </option>
+              {grouped.map((rc) => (
+                <optgroup key={rc.rallyCry} label={`Rally Cry: ${rc.rallyCry}`}>
+                  {Array.from(rc.objectives.entries()).flatMap(([doTitle, outcomes]) =>
+                    outcomes.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        [{o.priorityTier}] {o.title} — {doTitle}
+                      </option>
+                    ))
+                  )}
+                </optgroup>
+              ))}
+            </Select>
+          </Field>
 
-      <div>
-        <Label htmlFor="commit-chess" value="Chess layer (posture)" />
-        <div className="mt-1 flex flex-wrap gap-2" role="radiogroup" aria-label="Chess layer">
-          {(chessTags ?? []).map((t) => {
-            const active = chessTagId === t.id;
-            const colorMap: Record<string, string> = {
-              OFFENSE: active ? "bg-green-600 text-white" : "bg-green-50 text-green-800 hover:bg-green-100 dark:bg-green-950 dark:text-green-200",
-              DEFENSE: active ? "bg-amber-600 text-white" : "bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-200",
-              MAINTENANCE: active ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200",
-            };
-            return (
-              <button
-                type="button"
-                key={t.id}
-                role="radio"
-                aria-checked={active}
-                onClick={() => setChessTagId(active ? "" : t.id)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition ${colorMap[t.code] ?? colorMap.MAINTENANCE}`}
-              >
-                {t.label}
-              </button>
-            );
-          })}
-          {loadingTags ? <span className="text-xs text-gray-500">Loading…</span> : null}
+          <Field label="Chess layer" hint="posture">
+            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Chess layer">
+              {(chessTags ?? []).map((t) => {
+                const active = chessTagId === t.id;
+                const base = CHESS_TONES[t.code] ?? CHESS_TONES.MAINTENANCE;
+                const activeClass = CHESS_ACTIVE[t.code] ?? CHESS_ACTIVE.MAINTENANCE;
+                return (
+                  <button
+                    type="button"
+                    key={t.id}
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setChessTagId(active ? "" : t.id)}
+                    className={cn(
+                      "inline-flex items-center rounded-md border text-xs font-medium px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-1",
+                      active ? activeClass : base
+                    )}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+              {loadingTags ? (
+                <span className="text-xs text-neutral-500 self-center">
+                  <Spinner size="sm" />
+                </span>
+              ) : null}
+            </div>
+          </Field>
+
+          <Field label="Planned effort" htmlFor="commit-hours" hint="hours, optional">
+            <Input
+              id="commit-hours"
+              type="number"
+              min={0}
+              max={80}
+              step={0.5}
+              value={plannedHours}
+              onChange={(e) => setPlannedHours(e.target.value)}
+              className="max-w-32 tabular-nums"
+            />
+          </Field>
+
+          {submitError && <Alert tone="danger">{submitError}</Alert>}
         </div>
-      </div>
 
-      <div>
-        <Label htmlFor="commit-hours" value="Planned effort (hours, optional)" />
-        <TextInput
-          id="commit-hours"
-          type="number"
-          min={0}
-          max={80}
-          step={0.5}
-          value={plannedHours}
-          onChange={(e) => setPlannedHours(e.target.value)}
-          className="mt-1 max-w-32"
-        />
-      </div>
-
-      {submitError && (
-        <Alert color="failure" icon={HiInformationCircle}>
-          {submitError}
-        </Alert>
-      )}
-
-      <div className="flex justify-end gap-2 pt-1">
-        <Button color="light" onClick={onCancel} type="button">
-          <HiX className="mr-1 h-4 w-4" /> Cancel
-        </Button>
-        <Button type="submit" disabled={submitting || !valid()} data-cy="save-commit">
-          <HiCheck className="mr-1 h-4 w-4" />
-          {submitting ? "Adding…" : "Save commit"}
-        </Button>
-      </div>
-    </form>
+        <div className="px-5 py-3 border-t border-neutral-200 dark:border-neutral-800 flex justify-end gap-2">
+          <Button
+            variant="secondary"
+            onClick={onCancel}
+            type="button"
+            leftIcon={<HiX className="h-3.5 w-3.5" />}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={submitting || !valid()}
+            data-cy="save-commit"
+            leftIcon={submitting ? <Spinner size="sm" /> : <HiCheck className="h-3.5 w-3.5" />}
+          >
+            {submitting ? "Adding…" : "Save commit"}
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
 }

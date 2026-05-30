@@ -1,30 +1,26 @@
 import { useState } from "react";
-import {
-  Avatar,
-  Badge,
-  Button,
-  Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeadCell,
-  TableRow,
-  Pagination,
-} from "flowbite-react";
 import { HiOutlineEye, HiArrowSmUp, HiArrowSmDown } from "react-icons/hi";
 import { useGetTeamQuery } from "@/api/team";
 import type { TeamMemberDto } from "@/api/types";
 import { PlanStatePill } from "@/components/PlanStatePill";
+import {
+  Badge,
+  Button,
+  Pagination,
+  Spinner,
+  TableScroller,
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+} from "@/components/ui";
+import { alignmentTier } from "@/lib/tokens";
+import { cn } from "@/lib/cn";
 
 type SortKey = "displayName" | "weekStartDate";
 type SortDir = "asc" | "desc";
-
-function alignmentTier(pct: number): { bar: string; label: string } {
-  if (pct >= 70) return { bar: "bg-green-500", label: "text-green-700 dark:text-green-400" };
-  if (pct >= 40) return { bar: "bg-amber-400", label: "text-amber-700 dark:text-amber-300" };
-  return { bar: "bg-red-500", label: "text-red-700 dark:text-red-400" };
-}
 
 interface Props {
   onSelectMember: (m: TeamMemberDto) => void;
@@ -62,124 +58,147 @@ export function TeamRollupTable({ onSelectMember }: Props) {
   const to = data ? Math.min((page + 1) * perPage, data.totalElements) : 0;
 
   return (
-    <div className="relative overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-      <Table hoverable className="text-sm">
-        <TableHead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
-          <TableHeadCell
-            className="py-2 cursor-pointer"
-            onClick={() => toggleSort("displayName")}
-            aria-sort={sort === "displayName" ? (dir === "asc" ? "ascending" : "descending") : "none"}
-          >
-            Direct report <SortIcon k="displayName" />
-          </TableHeadCell>
-          <TableHeadCell className="py-2">Week of</TableHeadCell>
-          <TableHeadCell className="py-2">Status</TableHeadCell>
-          <TableHeadCell className="py-2">Alignment</TableHeadCell>
-          <TableHeadCell className="py-2">Commits</TableHeadCell>
-          <TableHeadCell className="py-2">
-            <span className="sr-only">Open</span>
-          </TableHeadCell>
-        </TableHead>
-        <TableBody className="divide-y">
-          {isFetching && !data ? (
-            <TableRow>
-              <TableCell colSpan={6} className="py-6 text-center">
-                <Spinner size="sm" aria-label="Loading team" />
-              </TableCell>
-            </TableRow>
-          ) : (data?.content ?? []).length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="py-6 text-center text-sm text-gray-500">
-                No direct reports linked to your account. (Seeded as
-                manager@st6.dev → Ada / Ben / Chris in the H2 demo profile.)
-              </TableCell>
-            </TableRow>
-          ) : (
-            data?.content.map((m) => {
-              const plan = m.currentPlan;
-              const tier = alignmentTier(plan?.alignment.alignmentPct ?? 0);
-              return (
-                <TableRow
-                  key={m.userId}
-                  className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                  onClick={() => onSelectMember(m)}
-                  data-cy="team-row"
-                >
-                  <TableCell className="py-2 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                    <div className="flex items-center gap-2">
-                      <Avatar rounded size="xs" alt="" img={m.avatarUrl ?? undefined} />
-                      <div className="leading-tight">
-                        <div>{m.displayName}</div>
-                        <div className="text-xs text-gray-500">{m.email}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-2 whitespace-nowrap text-xs text-gray-600 dark:text-gray-300">
-                    {plan?.weekStartDate ?? <span className="text-gray-400">—</span>}
-                  </TableCell>
-                  <TableCell className="py-2">
-                    {plan ? <PlanStatePill state={plan.state} /> : <Badge color="gray">No plan</Badge>}
-                  </TableCell>
-                  <TableCell className="py-2 w-48">
-                    {plan ? (
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-24 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                          <div
-                            className={`h-1.5 rounded ${tier.bar}`}
-                            style={{ width: `${Math.max(0, Math.min(100, plan.alignment.alignmentPct))}%` }}
-                            role="progressbar"
-                            aria-valuenow={plan.alignment.alignmentPct}
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                            aria-label={`${m.displayName} alignment ${plan.alignment.alignmentPct}%`}
-                          />
+    <div className="space-y-3">
+      <TableScroller>
+        <Table>
+          <THead>
+            <tr>
+              <TH
+                onClick={() => toggleSort("displayName")}
+                aria-sort={
+                  sort === "displayName" ? (dir === "asc" ? "ascending" : "descending") : "none"
+                }
+                className="cursor-pointer"
+              >
+                Direct report <SortIcon k="displayName" />
+              </TH>
+              <TH>Week of</TH>
+              <TH>Status</TH>
+              <TH>Alignment</TH>
+              <TH>Commits</TH>
+              <TH className="text-right">
+                <span className="sr-only">Open</span>
+              </TH>
+            </tr>
+          </THead>
+          <TBody>
+            {isFetching && !data ? (
+              <TR hover={false}>
+                <TD colSpan={6} className="py-8 text-center text-neutral-500">
+                  <Spinner size="sm" /> Loading team…
+                </TD>
+              </TR>
+            ) : (data?.content ?? []).length === 0 ? (
+              <TR hover={false}>
+                <TD colSpan={6} className="py-8 text-center text-sm text-neutral-500">
+                  No direct reports linked to your account. (Seeded as
+                  manager@st6.dev → Ada / Ben / Chris in the H2 demo profile.)
+                </TD>
+              </TR>
+            ) : (
+              data?.content.map((m) => {
+                const plan = m.currentPlan;
+                const tier = alignmentTier(plan?.alignment.alignmentPct ?? 0);
+                return (
+                  <TR
+                    key={m.userId}
+                    onClick={() => onSelectMember(m)}
+                    className="cursor-pointer"
+                    data-cy="team-row"
+                  >
+                    <TD className="whitespace-nowrap">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-7 w-7 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-semibold text-neutral-600 dark:text-neutral-300">
+                          {initials(m.displayName)}
                         </div>
-                        <span className={`tabular-nums text-xs font-medium ${tier.label}`}>
-                          {plan.alignment.alignmentPct}%
-                        </span>
+                        <div className="leading-tight">
+                          <div className="font-medium text-sm text-neutral-900 dark:text-neutral-50">
+                            {m.displayName}
+                          </div>
+                          <div className="text-xs text-neutral-500 dark:text-neutral-500 font-mono">
+                            {m.email}
+                          </div>
+                        </div>
                       </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="py-2 tabular-nums text-sm">
-                    {plan ? `${plan.commits.length}` : <span className="text-gray-400">—</span>}
-                  </TableCell>
-                  <TableCell className="py-2 text-right">
-                    <Button
-                      size="xs"
-                      color="light"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectMember(m);
-                      }}
-                      aria-label={`Review ${m.displayName}'s week`}
-                    >
-                      <HiOutlineEye className="mr-1 h-3.5 w-3.5" /> Review
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
+                    </TD>
+                    <TD className="whitespace-nowrap text-xs text-neutral-600 dark:text-neutral-400 tabular-nums">
+                      {plan?.weekStartDate ?? <span className="text-neutral-400">—</span>}
+                    </TD>
+                    <TD>
+                      {plan ? (
+                        <PlanStatePill state={plan.state} size="xs" />
+                      ) : (
+                        <Badge tone="neutral" size="xs">
+                          No plan
+                        </Badge>
+                      )}
+                    </TD>
+                    <TD className="w-52">
+                      {plan ? (
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-24 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                            <div
+                              className={cn("h-1.5 rounded-full", tier.bar)}
+                              style={{
+                                width: `${Math.max(0, Math.min(100, plan.alignment.alignmentPct))}%`,
+                              }}
+                              role="progressbar"
+                              aria-valuenow={plan.alignment.alignmentPct}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-label={`${m.displayName} alignment ${plan.alignment.alignmentPct}%`}
+                            />
+                          </div>
+                          <span className={cn("text-xs font-medium tabular-nums", tier.label)}>
+                            {plan.alignment.alignmentPct}%
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-neutral-400">—</span>
+                      )}
+                    </TD>
+                    <TD className="tabular-nums text-sm">
+                      {plan ? plan.commits.length : <span className="text-neutral-400">—</span>}
+                    </TD>
+                    <TD className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectMember(m);
+                        }}
+                        leftIcon={<HiOutlineEye className="h-3.5 w-3.5" />}
+                        aria-label={`Review ${m.displayName}'s week`}
+                      >
+                        Review
+                      </Button>
+                    </TD>
+                  </TR>
+                );
+              })
+            )}
+          </TBody>
+        </Table>
+      </TableScroller>
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-3 py-2 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-        <span className="text-xs text-gray-600 dark:text-gray-400">
-          Showing <span className="font-medium">{from}</span>–
-          <span className="font-medium">{to}</span> of{" "}
-          <span className="font-medium">{data?.totalElements ?? 0}</span>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-1">
+        <span className="text-xs text-neutral-500 dark:text-neutral-400">
+          Showing <span className="font-medium tabular-nums">{from}</span>–
+          <span className="font-medium tabular-nums">{to}</span> of{" "}
+          <span className="font-medium tabular-nums">{data?.totalElements ?? 0}</span>
         </span>
-        <Pagination
-          currentPage={page + 1}
-          totalPages={totalPages}
-          onPageChange={(p) => setPage(p - 1)}
-          showIcons
-          previousLabel="Prev"
-          nextLabel="Next"
-        />
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </div>
   );
+}
+
+function initials(name: string): string {
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }

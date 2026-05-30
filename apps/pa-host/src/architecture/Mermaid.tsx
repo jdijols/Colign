@@ -8,17 +8,73 @@ function loadMermaid() {
       const isDark =
         typeof window !== "undefined" &&
         window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+
+      // Tuned to match the colign aesthetic: monochromatic, weight 500-600,
+      // light borders, no heavy fills. Lives outside the .arch-site cascade
+      // because mermaid renders to inline SVG with its own theme vars.
+      const palette = isDark
+        ? {
+            fg: "#f1f5f9",
+            muted: "#94a3b8",
+            border: "#1f2937",
+            surface: "#0b1220",
+            bg: "#030712",
+            soft: "rgba(226, 232, 240, 0.06)",
+          }
+        : {
+            fg: "#0f172a",
+            muted: "#64748b",
+            border: "#e5e7eb",
+            surface: "#ffffff",
+            bg: "#f9fafb",
+            soft: "rgba(15, 23, 42, 0.04)",
+          };
+
       m.default.initialize({
         startOnLoad: false,
-        theme: isDark ? "dark" : "default",
+        theme: "base",
         themeVariables: {
           fontFamily:
             'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-          fontSize: "14px",
+          fontSize: "13px",
+          primaryColor: palette.surface,
+          primaryTextColor: palette.fg,
+          primaryBorderColor: palette.border,
+          lineColor: palette.muted,
+          secondaryColor: palette.soft,
+          tertiaryColor: palette.bg,
+          background: palette.surface,
+          mainBkg: palette.surface,
+          secondBkg: palette.soft,
+          tertiaryBkg: palette.bg,
+          nodeBorder: palette.border,
+          clusterBkg: palette.bg,
+          clusterBorder: palette.border,
+          edgeLabelBackground: palette.bg,
+          // sequence diagram
+          actorBkg: palette.surface,
+          actorBorder: palette.border,
+          actorTextColor: palette.fg,
+          actorLineColor: palette.muted,
+          signalColor: palette.fg,
+          signalTextColor: palette.fg,
+          labelBoxBkgColor: palette.soft,
+          labelBoxBorderColor: palette.border,
+          labelTextColor: palette.fg,
+          loopTextColor: palette.fg,
+          noteBkgColor: palette.soft,
+          noteBorderColor: palette.border,
+          noteTextColor: palette.fg,
+          // state diagram
+          labelColor: palette.fg,
+          // ER diagram
+          relationLabelBackground: palette.bg,
+          relationLabelColor: palette.fg,
         },
-        flowchart: { htmlLabels: true, curve: "basis" },
-        sequence: { actorMargin: 50, boxMargin: 10 },
+        flowchart: { htmlLabels: true, curve: "basis", padding: 12 },
+        sequence: { actorMargin: 56, boxMargin: 12, messageMargin: 36 },
         er: { useMaxWidth: true },
+        state: { useMaxWidth: true },
       });
       return m.default;
     });

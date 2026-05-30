@@ -1,19 +1,23 @@
 import type { AlignmentSummary } from "@/api/types";
+import { alignmentTier } from "@/lib/tokens";
+import { cn } from "@/lib/cn";
 
-function tier(pct: number) {
-  if (pct >= 70) return { bar: "bg-green-500", label: "text-green-700 dark:text-green-400" };
-  if (pct >= 40) return { bar: "bg-amber-400", label: "text-amber-700 dark:text-amber-300" };
-  return { bar: "bg-red-500", label: "text-red-700 dark:text-red-400" };
+interface AlignmentBarProps {
+  alignment: AlignmentSummary;
+  size?: "sm" | "md";
 }
 
-export function AlignmentBar({ alignment }: { alignment: AlignmentSummary }) {
+export function AlignmentBar({ alignment, size = "sm" }: AlignmentBarProps) {
   const { totalCommits, linkedToHighPriority, alignmentPct } = alignment;
-  const t = tier(alignmentPct);
+  const tier = alignmentTier(alignmentPct);
+  const barH = size === "md" ? "h-2" : "h-1.5";
+  const barW = size === "md" ? "w-40" : "w-32";
+
   return (
     <div className="flex items-center gap-3" aria-label="Strategic alignment">
-      <div className="h-1.5 w-32 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden">
+      <div className={cn("rounded-full overflow-hidden bg-neutral-200 dark:bg-neutral-800", barH, barW)}>
         <div
-          className={`h-1.5 rounded ${t.bar}`}
+          className={cn("rounded-full", barH, tier.bar)}
           style={{ width: `${Math.max(0, Math.min(100, alignmentPct))}%` }}
           role="progressbar"
           aria-valuenow={alignmentPct}
@@ -22,10 +26,8 @@ export function AlignmentBar({ alignment }: { alignment: AlignmentSummary }) {
           aria-label={`Alignment ${alignmentPct}%`}
         />
       </div>
-      <span className={`text-xs tabular-nums font-medium ${t.label}`}>
-        {alignmentPct}% aligned
-      </span>
-      <span className="text-xs text-gray-500">
+      <span className={cn("text-xs font-medium tabular-nums", tier.label)}>{alignmentPct}%</span>
+      <span className="text-xs text-neutral-500 dark:text-neutral-500 tabular-nums">
         {linkedToHighPriority}/{totalCommits} on P0/P1
       </span>
     </div>
