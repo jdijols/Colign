@@ -1,73 +1,157 @@
-import { Badge, Card, Spinner } from "flowbite-react";
-import { useGetCurrentPlanQuery } from "@/api/plans";
+import { useState } from "react";
+import { Button, Card, Spinner, Alert, Tooltip } from "flowbite-react";
+import { HiPlus, HiLockClosed, HiInformationCircle } from "react-icons/hi";
+import { useGetCurrentPlanQuery, useLockPlanMutation } from "@/api/plans";
+import { useDeleteCommitMutation } from "@/api/commits";
+import { CommitForm } from "@/components/CommitForm";
+import { CommitRow } from "@/components/CommitRow";
+import { PlanStatePill } from "@/components/PlanStatePill";
+import { AlignmentBar } from "@/components/AlignmentBar";
 
-/**
- * Slot 7 fills this in (add commit form, outcome picker, lock button,
- * commit list with chess-tag badges + alignment indicators).
- * Slot 5 just confirms RTK Query talks to the backend.
- */
 export function WeeklyPlanPage() {
   const { data, isLoading, error } = useGetCurrentPlanQuery();
+  const [lockPlan, { isLoading: locking }] = useLockPlanMutation();
+  const [deleteCommit] = useDeleteCommitMutation();
+  const [adding, setAdding] = useState(false);
+  const [lockError, setLockError] = useState<string | null>(null);
 
   if (isLoading) {
     return (
-      <div className="p-8 flex items-center justify-center">
+      <div className="p-8 flex items-center justify-center" data-cy="plan-loading">
         <Spinner aria-label="Loading current plan" />
       </div>
     );
   }
 
-  if (error) {
+  if (error || !data) {
     return (
       <Card className="m-8">
-        <p className="text-red-600">Failed to load current plan.</p>
-        <pre className="text-xs text-gray-500">{JSON.stringify(error, null, 2)}</pre>
+        <Alert color="failure" icon={HiInformationCircle}>
+          Failed to load current plan. Make sure the backend is running on :8080.
+        </Alert>
+        <pre className="text-xs text-gray-500 mt-3 max-h-40 overflow-auto">
+          {JSON.stringify(error, null, 2)}
+        </pre>
       </Card>
     );
   }
 
-  if (!data) return null;
+  const canEdit = data.state === "DRAFT";
+  const canLock = canEdit && data.commits.length > 0;
+
+  async function lock() {
+    setLockError(null);
+    try {
+      await lockPlan(data!.id).unwrap();
+    } catch (e) {
+      const msg = (e as { data?: { detail?: string } })?.data?.detail
+        ?? (e instanceof Error ? e.message : "Lock failed");
+      setLockError(msg);
+    }
+  }
 
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-6">
+      {/* Header */}
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <p className="text-xs uppercase tracking-wider text-gray-500">
+            My weekly plan
+          </p>
+          <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white" data-cy="plan-heading">
             Week of {data.weekStartDate}
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Alignment {data.alignment.alignmentPct}% · {data.alignment.linkedToHighPriority}/
-            {data.alignment.totalCommits} commits on P0/P1 outcomes
-          </p>
         </div>
-        <Badge size="sm" color={data.state === "LOCKED" ? "info" : "gray"}>
-          {data.state}
-        </Badge>
-      </div>
+        <div className="flex flex-col sm:items-end gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">Status:</span>
+            <span data-cy="plan-state"><PlanStatePill state={data.state} /></span>
+          </div>
+          <AlignmentBar alignment={data.alignment} />
+        </div>
+      </header>
 
+      {/* Commits */}
       <Card>
-        <h2 className="text-lg font-semibold">Commits</h2>
-        {data.commits.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No commits yet — the add-commit form lands in Slot 7.
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Commits ({data.commits.length})</h2>
+          {canEdit && !adding && (
+            <Button
+              size="sm"
+              onClick={() => setAdding(true)}
+              data-cy="add-commit"
+            >
+              <HiPlus className="mr-1 h-4 w-4" /> Add commit
+            </Button>
+          )}
+        </div>
+
+        {data.commits.length === 0 && !adding && (
+          <p className="text-sm text-gray-500 mt-2">
+            No commits yet. Click <strong>Add commit</strong> to start your week —
+            each commit must link to a strategic Outcome.
           </p>
-        ) : (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+        )}
+
+        {data.commits.length > 0 && (
+          <ul className="divide-y divide-gray-200 dark:divide-gray-700 -my-2" data-cy="commit-list">
             {data.commits.map((c) => (
-              <li key={c.id} className="py-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{c.title}</span>
-                  <Badge size="xs">{c.status}</Badge>
-                </div>
-                <div className="text-xs text-gray-500">
-                  Outcome: {c.outcomeTitle ?? c.outcomeId} ({c.outcomePriority ?? "—"}) ·
-                  Chess: {c.chessTagCode ?? "—"}
-                </div>
-              </li>
+              <CommitRow
+                key={c.id}
+                commit={c}
+                canEdit={canEdit}
+                onDelete={() => deleteCommit(c.id)}
+              />
             ))}
           </ul>
         )}
+
+        {adding && (
+          <div className="mt-4">
+            <CommitForm
+              planId={data.id}
+              onDone={() => setAdding(false)}
+              onCancel={() => setAdding(false)}
+            />
+          </div>
+        )}
       </Card>
+
+      {/* Lock footer */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          {canEdit ? (
+            <>
+              When you're done editing, <strong>lock the plan</strong> for the week.
+              Locked plans are read-only until you reconcile on Friday.
+            </>
+          ) : data.state === "LOCKED" ? (
+            <>This week is locked. Reconciliation opens automatically Friday evening.</>
+          ) : (
+            <>This week has been reconciled. See it under <a href="reconcile">Reconcile</a>.</>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {canLock ? (
+            <Button color="blue" onClick={lock} disabled={locking} data-cy="lock-plan">
+              <HiLockClosed className="mr-1 h-4 w-4" />
+              {locking ? "Locking…" : "Lock plan for the week"}
+            </Button>
+          ) : canEdit ? (
+            <Tooltip content="Add at least one commit before locking.">
+              <Button color="blue" disabled>
+                <HiLockClosed className="mr-1 h-4 w-4" /> Lock plan
+              </Button>
+            </Tooltip>
+          ) : null}
+        </div>
+      </div>
+
+      {lockError && (
+        <Alert color="failure" icon={HiInformationCircle}>
+          {lockError}
+        </Alert>
+      )}
     </div>
   );
 }
