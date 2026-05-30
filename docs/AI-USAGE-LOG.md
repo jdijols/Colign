@@ -153,6 +153,33 @@ Per the project brief, AI usage documentation is a required deliverable. The goa
   - **Carry-forward**: GET next week's plan (week=2026-06-01) returned a brand-new plan id=2 in DRAFT containing 1 commit titled "Tune auth cache hit rate" with `status=CARRIED` and `carriedFromCommitId=2`. This is the product's headline narrative — verified working end-to-end.
 - **Human judgment:** Decided to **keep commits referencing the ORIGINAL outcome on carry-forward** rather than re-prompting the IC to re-pick. Rationale: the strategic context (which outcome it supports) is the part that doesn't change between weeks; the IC may want to re-prioritize but the alignment FK should persist. Also: PARTIAL maps to commit.status=MISSED in the denormalized status mirror (because part-done = not-done from a carry-forward perspective). Logged so a reviewer can argue with the choice.
 
-### Slot 8 — Day-1 polish + Sunday slots
+### Sharp-edge fixes (current-week semantic + compound lock button) ✅
 
-(In progress at next AI turn — Manager dashboard next.)
+- **`currentWeekStart()` flipped from `previousOrSame Monday` to `nextOrSame Monday`.** Rationale: in a 15-Five-style cadence the IC plans on Fri/Mon FOR the upcoming week, so "this week" should read as the week that's about to start. Mid-week the call is to be re-evaluated; for the demo, this gives a cleaner "you're planning the future" framing.
+- **WeeklyPlanPage gains a `Lock & start reconciling` compound button** next to the standard "Lock plan" in the DRAFT footer. Calls `lockPlan` then `startReconciliation` sequentially; if start-recon fails after lock succeeds the plan is recoverable from /reconcile (which now also has a "Start reconciliation" call-to-action when state is LOCKED). The standalone "Lock plan" stays available for the literal Friday-evening-only path. Plus a new shortcut button on /weekly-commit in the LOCKED state to skip the navigation hop.
+
+### Sunday Slot — Manager dashboard + multi-IC seed ✅ (pulled forward)
+
+- **AI tool:** Claude Opus 4.7 main context.
+- **Backend:**
+  - `V3__seed_users.sql`: 4 demo users (Sam Manager + Ada/Ben/Chris ICs with manager_id linkage + Admin), using `INSERT … WHERE NOT EXISTS` instead of `ON CONFLICT (col) DO NOTHING` because H2 in PG-compat mode doesn't implement the Postgres 9.5+ syntax. Verified works on both engines.
+  - `DemoDataInitializer` (CommandLineRunner, `@Profile({"h2", "demo"})`) materializes the demo plans + commits + reconciliations on first boot when no commits exist. Ada this-week DRAFT 2-commit; Ben this-week LOCKED 3-commit; Chris last-week RECONCILED 3-commit (one missed) + this-week DRAFT carrying that missed commit. Idempotent on `commits.count() > 0`.
+  - `ManagerController.team(Pageable)`: returns paginated direct reports with `currentPlan` (most recent plan via new `PlanRepository.findFirstByUserIdOrderByWeekStartDateDesc`). Capped at 2000 rows per page. Spring Data auto-binds `?page=&size=&sort=`.
+  - `TeamMemberDto` carries `currentPlan: PlanDto | null` so the FE renders "No plan yet" gracefully when an IC hasn't logged in yet.
+- **Frontend:**
+  - `team` RTK Query slice with `useGetTeamQuery`.
+  - `TeamRollupTable` (Flowbite Table, sticky header, sortable columns, server-side pagination, alignment progress-bar column with tier color, "No plan" badge for ICs without a plan, click-row-or-button to drill).
+  - `IcDrillDrawer` (Flowbite Drawer position="right"): renders the selected IC's full plan read-only — alignment summary, commits list with chess/priority badges, reconciliation outcomes shown inline when present, "carried" badge on carry-forward commits.
+  - `ManagerDashboardPage` rewrite: header + 4 KPI cards (total reports, plans started, locked/reconciling, avg alignment with tier coloring) + `TeamRollupTable` + `IcDrillDrawer`.
+- **Verification (live, end-to-end):**
+  - Backend boots: V1 → V2 → V3 migrations clean, `DemoDataInitializer seeded: ada DRAFT/2, ben LOCKED/3, chris RECONCILED-last + DRAFT-carried/1`.
+  - `GET /manager/team` as Sam returns `total 3 direct reports` with the right currentPlan summaries:
+    - Ada: state=DRAFT commits=2 alignment=50.0%
+    - Ben: state=LOCKED commits=3 alignment=100.0%
+    - Chris: state=DRAFT commits=1 alignment=0.0% (only the carry-forward commit, low-priority — sharp signal for the manager)
+- **Bug fix logged:** First V3 attempt used `ON CONFLICT (email) DO NOTHING`. H2 in PG mode rejected it with "Syntax error". Reverted to `INSERT … WHERE NOT EXISTS` which works on both engines. Lesson logged so a reviewer can see I caught + fixed it inline.
+- **Human judgment:** Bounded the seed deliberately — 3 ICs in 3 distinct states tells a credible team-snapshot story without making the table feel synthetic. The "Chris with carried-forward commit but 0% alignment this week" stitches reconciliation, carry-forward, and the manager's "what should I follow up on" lens together in one row.
+
+### Iteration phase
+
+(Manager foundation complete — handing back to the user for IC + Manager UX iteration.)

@@ -52,9 +52,14 @@ public class PlanService {
         this.reconciliations = reconciliations;
     }
 
-    /** Monday-of-this-week, UTC. The demo's canonical week-start convention. */
+    /**
+     * Monday of "this week" — defined as the upcoming-or-today Monday, UTC.
+     * Rationale: in a 15-Five-style weekly cadence the IC plans on Fri/Mon
+     * FOR the upcoming week, so on a non-Monday day "this week" reads as
+     * the week that's about to start. On a Monday this is today.
+     */
     public static LocalDate currentWeekStart() {
-        return LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        return LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
     }
 
     @Transactional

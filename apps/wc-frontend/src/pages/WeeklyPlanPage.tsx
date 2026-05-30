@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Button, Card, Spinner, Alert, Tooltip } from "flowbite-react";
-import { HiPlus, HiLockClosed, HiInformationCircle } from "react-icons/hi";
-import { useGetCurrentPlanQuery, useLockPlanMutation } from "@/api/plans";
+import { HiPlus, HiLockClosed, HiInformationCircle, HiArrowRight } from "react-icons/hi";
+import { useNavigate } from "react-router-dom";
+import {
+  useGetCurrentPlanQuery,
+  useLockPlanMutation,
+  useStartReconciliationMutation,
+} from "@/api/plans";
 import { useDeleteCommitMutation } from "@/api/commits";
 import { CommitForm } from "@/components/CommitForm";
 import { CommitRow } from "@/components/CommitRow";
@@ -11,9 +16,11 @@ import { AlignmentBar } from "@/components/AlignmentBar";
 export function WeeklyPlanPage() {
   const { data, isLoading, error } = useGetCurrentPlanQuery();
   const [lockPlan, { isLoading: locking }] = useLockPlanMutation();
+  const [startRecon, { isLoading: startingRecon }] = useStartReconciliationMutation();
   const [deleteCommit] = useDeleteCommitMutation();
   const [adding, setAdding] = useState(false);
-  const [lockError, setLockError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -39,14 +46,45 @@ export function WeeklyPlanPage() {
   const canEdit = data.state === "DRAFT";
   const canLock = canEdit && data.commits.length > 0;
 
+  function handleErr(e: unknown, fallback: string) {
+    const msg = (e as { data?: { detail?: string } })?.data?.detail
+      ?? (e instanceof Error ? e.message : fallback);
+    setActionError(msg);
+  }
+
   async function lock() {
-    setLockError(null);
+    setActionError(null);
     try {
       await lockPlan(data!.id).unwrap();
     } catch (e) {
-      const msg = (e as { data?: { detail?: string } })?.data?.detail
-        ?? (e instanceof Error ? e.message : "Lock failed");
-      setLockError(msg);
+      handleErr(e, "Lock failed");
+    }
+  }
+
+  /**
+   * Compound: lock the plan THEN immediately move into reconciliation.
+   * Shortcut for demos / Friday-night flows that skip the "wait for the
+   * week to end" hop. Frontend-sequential is intentional — if start-recon
+   * fails after lock succeeded, the plan stays LOCKED (recoverable).
+   */
+  async function lockAndReconcile() {
+    setActionError(null);
+    try {
+      const locked = await lockPlan(data!.id).unwrap();
+      await startRecon(locked.id).unwrap();
+      navigate("reconcile");
+    } catch (e) {
+      handleErr(e, "Lock & reconcile failed");
+    }
+  }
+
+  async function startReconciliationOnly() {
+    setActionError(null);
+    try {
+      await startRecon(data!.id).unwrap();
+      navigate("reconcile");
+    } catch (e) {
+      handleErr(e, "Start reconciliation failed");
     }
   }
 
@@ -122,34 +160,55 @@ export function WeeklyPlanPage() {
         <div className="text-sm text-gray-600 dark:text-gray-400">
           {canEdit ? (
             <>
-              When you're done editing, <strong>lock the plan</strong> for the week.
-              Locked plans are read-only until you reconcile on Friday.
+              When you're done editing, <strong>lock the plan</strong> for the week —
+              or skip ahead and reconcile in one step.
             </>
           ) : data.state === "LOCKED" ? (
-            <>This week is locked. Reconciliation opens automatically Friday evening.</>
+            <>This week is locked. Reconcile when the week is done.</>
           ) : (
             <>This week has been reconciled. See it under <a href="reconcile">Reconcile</a>.</>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {canLock ? (
-            <Button color="blue" onClick={lock} disabled={locking} data-cy="lock-plan">
-              <HiLockClosed className="mr-1 h-4 w-4" />
-              {locking ? "Locking…" : "Lock plan for the week"}
-            </Button>
+            <>
+              <Button color="blue" onClick={lock} disabled={locking || startingRecon} data-cy="lock-plan">
+                <HiLockClosed className="mr-1 h-4 w-4" />
+                {locking && !startingRecon ? "Locking…" : "Lock plan"}
+              </Button>
+              <Button
+                color="light"
+                onClick={lockAndReconcile}
+                disabled={locking || startingRecon}
+                data-cy="lock-and-reconcile"
+              >
+                {startingRecon ? "Starting…" : "Lock & start reconciling"}
+                <HiArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </>
           ) : canEdit ? (
             <Tooltip content="Add at least one commit before locking.">
               <Button color="blue" disabled>
                 <HiLockClosed className="mr-1 h-4 w-4" /> Lock plan
               </Button>
             </Tooltip>
+          ) : data.state === "LOCKED" ? (
+            <Button
+              color="blue"
+              onClick={startReconciliationOnly}
+              disabled={startingRecon}
+              data-cy="goto-reconcile"
+            >
+              {startingRecon ? "Starting…" : "Start reconciliation"}
+              <HiArrowRight className="ml-1 h-4 w-4" />
+            </Button>
           ) : null}
         </div>
       </div>
 
-      {lockError && (
+      {actionError && (
         <Alert color="failure" icon={HiInformationCircle}>
-          {lockError}
+          {actionError}
         </Alert>
       )}
     </div>

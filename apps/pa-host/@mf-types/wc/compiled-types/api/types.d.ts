@@ -93,3 +93,11 @@ export interface SpringPage<T> {
     first: boolean;
     last: boolean;
 }
+export interface TeamMemberDto {
+    userId: number;
+    email: string;
+    displayName: string;
+    role: "IC" | "MANAGER" | "ADMIN";
+    avatarUrl: string | null;
+    currentPlan: PlanDto | null;
+}

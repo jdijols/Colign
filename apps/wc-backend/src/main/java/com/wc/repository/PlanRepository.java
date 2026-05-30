@@ -12,4 +12,6 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
     Optional<Plan> findByUserIdAndWeekStartDate(Long userId, LocalDate weekStartDate);
 
     Page<Plan> findByUserId(Long userId, Pageable pageable);
+
+    Optional<Plan> findFirstByUserIdOrderByWeekStartDateDesc(Long userId);
 }
