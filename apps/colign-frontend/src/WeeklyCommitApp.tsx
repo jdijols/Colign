@@ -22,7 +22,6 @@ import { AuthGate } from "@/auth/AuthGate";
 import { OnboardingGate } from "@/auth/OnboardingGate";
 import { LoginPage } from "@/pages/LoginPage";
 import { OnboardingChoicePage } from "@/pages/OnboardingChoicePage";
-import { CreateTeamPage } from "@/pages/CreateTeamPage";
 import { WeeklyPlanPage } from "@/pages/WeeklyPlanPage";
 import { ReconcilePage } from "@/pages/ReconcilePage";
 import { ManagerDashboardPage } from "@/pages/ManagerDashboardPage";
@@ -49,7 +48,9 @@ export default function WeeklyCommitApp() {
         <Routes>
           <Route path="login" element={<LoginPage />} />
 
-          {/* Authenticated but team-agnostic — reachable with no team yet. */}
+          {/* Authenticated but team-agnostic — reachable with no team yet.
+              The onboarding screen IS the create-team form (single focused
+              input); there's no separate create-team route. */}
           <Route
             element={
               <AuthGate>
@@ -58,7 +59,6 @@ export default function WeeklyCommitApp() {
             }
           >
             <Route path="onboarding" element={<OnboardingChoicePage />} />
-            <Route path="create-team" element={<CreateTeamPage />} />
           </Route>
 
           {/* Requires a team — OnboardingGate bounces teamless users to onboarding. */}
