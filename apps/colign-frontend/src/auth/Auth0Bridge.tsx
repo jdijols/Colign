@@ -14,9 +14,14 @@ import { auth0Config, isReal } from "./auth0Config";
  *
  * Real mode: this component listens for Auth0 auth-state changes, requests
  * the access token (cached in localStorage by the SDK), and dispatches it.
- * Role is derived from the namespaced "https://colign.org/roles" claim when present,
- * falling back to IC otherwise — the seeded UserResolver also enforces role
- * server-side based on the email match for the demo team.
+ *
+ * Role here is a BOOTSTRAP value only. colign derives the authoritative role
+ * from team relationships server-side (UserResolver.derivedRole) and returns it
+ * from GET /me — a user becomes MANAGER the instant someone reports to them, no
+ * re-login. Auth0 carries no role claim (pure identity), so the claim lookup
+ * below normally yields [] and we seed IC; the real role arrives via /me.
+ * The optional claim read is kept only as a forward-compatible hint (e.g. an
+ * operator could seed ADMIN via a claim) and degrades safely when absent.
  */
 export function Auth0Bridge({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
