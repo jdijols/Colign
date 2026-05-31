@@ -85,7 +85,7 @@ export function StackPage() {
 
       <h3>The remote says "I expose WeeklyCommitApp"</h3>
       <p>
-        <FileRef path="apps/wc-frontend/vite.config.ts" /> (the symmetric side
+        <FileRef path="apps/colign-frontend/vite.config.ts" /> (the symmetric side
         — the file declares <code>exposes: {`{ "./WeeklyCommitApp": "./src/WeeklyCommitApp.tsx" }`}</code>{" "}
         and the same <code>shared</code> block).
       </p>
@@ -104,7 +104,7 @@ export function StackPage() {
           <tr>
             <td>Standalone (<code>:5174</code>)</td>
             <td>
-              <FileRef path="apps/wc-frontend/src/main.tsx" /> wraps it in{" "}
+              <FileRef path="apps/colign-frontend/src/main.tsx" /> wraps it in{" "}
               <code>{`<BrowserRouter><Auth0ProviderWithRouter>...`}</code>.
             </td>
           </tr>
@@ -137,17 +137,17 @@ export function StackPage() {
             <td><strong>wc-backend</strong></td>
             <td>Spring Boot JAR (Java 21)</td>
             <td>
-              <FileRef path="apps/wc-backend/pom.xml" />,{" "}
-              <FileRef path="apps/wc-backend/src/main/java/com/wc/WcApplication.java" />
+              <FileRef path="apps/colign-backend/pom.xml" />,{" "}
+              <FileRef path="apps/colign-backend/src/main/java/com/colign/WcApplication.java" />
             </td>
           </tr>
           <tr>
             <td><strong>wc-frontend</strong></td>
             <td>Vite + MF remote (static bundle + remoteEntry.js)</td>
             <td>
-              <FileRef path="apps/wc-frontend/vite.config.ts" />,{" "}
-              <FileRef path="apps/wc-frontend/src/WeeklyCommitApp.tsx" />,{" "}
-              <FileRef path="apps/wc-frontend/src/main.tsx" />
+              <FileRef path="apps/colign-frontend/vite.config.ts" />,{" "}
+              <FileRef path="apps/colign-frontend/src/WeeklyCommitApp.tsx" />,{" "}
+              <FileRef path="apps/colign-frontend/src/main.tsx" />
             </td>
           </tr>
           <tr>
@@ -164,7 +164,7 @@ export function StackPage() {
       <h2>Local dev — the commands a new engineer needs</h2>
 
       <Code>{`# 1. Backend (Postgres + Flyway + Spring Boot)
-cd apps/wc-backend
+cd apps/colign-backend
 ./mvnw spring-boot:run                       # default profile uses Postgres
 SPRING_PROFILES_ACTIVE=h2 ./mvnw spring-boot:run   # in-memory H2 alternative
 
@@ -178,7 +178,7 @@ yarn workspace pa-host dev                   # http://localhost:4173
 node scripts/mock-jwt.mjs --email ada@st6.dev --role IC
 
 # Run tests
-cd apps/wc-backend && ./mvnw verify          # JaCoCo 80% gate
+cd apps/colign-backend && ./mvnw verify          # JaCoCo 80% gate
 yarn workspace wc-frontend test              # Vitest
 yarn workspace wc-frontend cy:run            # Cypress + Cucumber`}</Code>
 

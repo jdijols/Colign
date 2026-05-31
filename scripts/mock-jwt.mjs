@@ -3,7 +3,7 @@
 // scripts/mock-jwt.mjs — mint demo JWTs for local development
 //
 // DEMO-ONLY. Pairs with the public key at
-//   apps/wc-backend/src/main/resources/keys/colign-mock-public.pem
+//   apps/colign-backend/src/main/resources/keys/colign-mock-public.pem
 // The private key in scripts/colign-mock-private.pem is committed for demo
 // purposes ONLY. Never reuse it in any non-demo environment.
 //

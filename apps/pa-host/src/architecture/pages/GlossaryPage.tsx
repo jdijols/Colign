@@ -18,7 +18,7 @@ export function GlossaryPage() {
       <h3>colign</h3>
       <p>
         The product name. The codebase calls it the Weekly Commit module
-        (paths like <code>apps/wc-frontend</code>, package names like{" "}
+        (paths like <code>apps/colign-frontend</code>, package names like{" "}
         <code>wc-backend</code>) — that's the brief's terminology and stays
         in the file tree because renaming Maven artifacts and federated
         remote module names mid-flight is more cost than value. In docs,
@@ -51,7 +51,7 @@ export function GlossaryPage() {
       <p>
         Of the commits in a plan, the fraction linked to a P0 or P1 priority
         Outcome. Computed on demand in{" "}
-        <FileRef path="apps/wc-backend/src/main/java/com/wc/service/PlanService.java" line={142} />.
+        <FileRef path="apps/colign-backend/src/main/java/com/colign/service/PlanService.java" line={142} />.
         Rendered in the manager dashboard as a colored bar (green ≥ 70%, amber
         40–69%, red &lt; 40%).
       </p>
@@ -85,7 +85,7 @@ export function GlossaryPage() {
         <code>version</code> columns. Auto-populated by Spring's JPA auditing,
         with the auditor sourced from the JWT email (fallback: sub, then
         "system"). Base class:{" "}
-        <FileRef path="apps/wc-backend/src/main/java/com/wc/domain/AbstractAuditingEntity.java" />.
+        <FileRef path="apps/colign-backend/src/main/java/com/colign/domain/AbstractAuditingEntity.java" />.
       </p>
 
       <h3>Module Federation (MF)</h3>
@@ -142,7 +142,7 @@ export function GlossaryPage() {
       <h3>3. Wire the admin RCDO catalog screen</h3>
       <p>
         Currently the RCDO catalog is seeded once via{" "}
-        <FileRef path="apps/wc-backend/src/main/resources/db/migration/V2__demo_seed.sql" />.
+        <FileRef path="apps/colign-backend/src/main/resources/db/migration/V2__demo_seed.sql" />.
         Build the <code>/admin/rcdo</code> screen with a Flowbite table that
         lists Rally Cries → Defining Objectives → Outcomes, gated to{" "}
         <code>ADMIN</code> role. Backend endpoints already exist (or are a thin
@@ -162,7 +162,7 @@ export function GlossaryPage() {
       <h3>5. Add a Vitest for the carry-forward edge case</h3>
       <p>
         The "next week is already locked" branch in{" "}
-        <FileRef path="apps/wc-backend/src/main/java/com/wc/service/ReconciliationService.java" line={138} />{" "}
+        <FileRef path="apps/colign-backend/src/main/java/com/colign/service/ReconciliationService.java" line={138} />{" "}
         currently has no test. Write a backend integration test that locks
         next-week first, finalizes this-week, and asserts no rows were
         inserted into the next-week plan.

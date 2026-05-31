@@ -66,7 +66,7 @@ export function OverviewPage() {
         <tbody>
           <tr>
             <td>
-              <FileRef path="apps/wc-backend" />
+              <FileRef path="apps/colign-backend" />
             </td>
             <td>REST API + Postgres. Owns the data model and lifecycle.</td>
             <td>:8080</td>
@@ -74,7 +74,7 @@ export function OverviewPage() {
           </tr>
           <tr>
             <td>
-              <FileRef path="apps/wc-frontend" />
+              <FileRef path="apps/colign-frontend" />
             </td>
             <td>The user-facing screens, exposed as a Module Federation remote.</td>
             <td>:5174</td>

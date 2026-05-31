@@ -49,7 +49,7 @@ export function AuthPage() {
       <p>
         The backend supports both an Auth0 tenant and a local mock-JWT path,
         switched by a single config key.{" "}
-        <FileRef path="apps/wc-backend/src/main/java/com/wc/config/security/SecurityConfig.java" />:
+        <FileRef path="apps/colign-backend/src/main/java/com/colign/config/security/SecurityConfig.java" />:
       </p>
 
       <Code>{`return switch (mode.toLowerCase()) {
@@ -119,7 +119,7 @@ export function AuthPage() {
       <p>
         <code>UserResolver</code> bridges Spring Security's principal into a
         domain <code>User</code> row.{" "}
-        <FileRef path="apps/wc-backend/src/main/java/com/wc/service/UserResolver.java" />:
+        <FileRef path="apps/colign-backend/src/main/java/com/colign/service/UserResolver.java" />:
       </p>
 
       <Code>{`@Transactional
@@ -142,7 +142,7 @@ public User resolveCurrent() {
         Both modes register a 60-second leeway on the token timestamp
         validators. Default Spring Security leeway is zero, which causes
         flaky failures when client and server clocks drift. Line in{" "}
-        <FileRef path="apps/wc-backend/src/main/java/com/wc/config/security/SecurityConfig.java" line={132} />:
+        <FileRef path="apps/colign-backend/src/main/java/com/colign/config/security/SecurityConfig.java" line={132} />:
       </p>
       <Code>{`OAuth2TokenValidator<Jwt> withTimestamp =
         new JwtTimestampValidator(Duration.ofSeconds(60));`}</Code>

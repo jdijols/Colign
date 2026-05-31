@@ -11,7 +11,7 @@ export function RoutesPage() {
       <p className="arch-lead">
         Five user-facing screens on the frontend, eleven REST endpoints on the
         backend. Frontend routes are defined in{" "}
-        <FileRef path="apps/wc-frontend/src/WeeklyCommitApp.tsx" />; backend
+        <FileRef path="apps/colign-frontend/src/WeeklyCommitApp.tsx" />; backend
         endpoints live under <code>com.wc.controller</code>.
       </p>
 
@@ -96,7 +96,7 @@ export function RoutesPage() {
       <p>
         Every authenticated route is wrapped in <code>AuthGate</code>, which
         redirects to <code>/login</code> if no JWT is in the Redux store.
-        Source: <FileRef path="apps/wc-frontend/src/auth/AuthGate.tsx" />.
+        Source: <FileRef path="apps/colign-frontend/src/auth/AuthGate.tsx" />.
       </p>
 
       <Code>{`<Route element={<AuthGate><AppShell /></AuthGate>}>
@@ -109,7 +109,7 @@ export function RoutesPage() {
 
       <h3><code>PlanController</code></h3>
       <p>
-        Source: <FileRef path="apps/wc-backend/src/main/java/com/wc/controller/PlanController.java" />.
+        Source: <FileRef path="apps/colign-backend/src/main/java/com/colign/controller/PlanController.java" />.
       </p>
       <table className="arch-table">
         <thead><tr><th>Method</th><th>Path</th><th>What it does</th></tr></thead>
@@ -123,7 +123,7 @@ export function RoutesPage() {
 
       <h3><code>WeeklyCommitController</code></h3>
       <p>
-        Source: <FileRef path="apps/wc-backend/src/main/java/com/wc/controller/WeeklyCommitController.java" />.
+        Source: <FileRef path="apps/colign-backend/src/main/java/com/colign/controller/WeeklyCommitController.java" />.
       </p>
       <table className="arch-table">
         <thead><tr><th>Method</th><th>Path</th><th>What it does</th></tr></thead>
@@ -136,7 +136,7 @@ export function RoutesPage() {
 
       <h3><code>ReconciliationController</code></h3>
       <p>
-        Source: <FileRef path="apps/wc-backend/src/main/java/com/wc/controller/ReconciliationController.java" />.
+        Source: <FileRef path="apps/colign-backend/src/main/java/com/colign/controller/ReconciliationController.java" />.
       </p>
       <table className="arch-table">
         <thead><tr><th>Method</th><th>Path</th><th>What it does</th></tr></thead>
@@ -161,7 +161,7 @@ export function RoutesPage() {
       <h2>The frontend ↔ backend wiring</h2>
       <p>
         All HTTP calls go through RTK Query. The base config is in{" "}
-        <FileRef path="apps/wc-frontend/src/api/baseApi.ts" />:
+        <FileRef path="apps/colign-frontend/src/api/baseApi.ts" />:
       </p>
       <Code>{`export const wcApi = createApi({
   reducerPath: "wcApi",
@@ -179,9 +179,9 @@ export function RoutesPage() {
 
       <p>
         Each domain area injects its endpoints onto this base — see{" "}
-        <FileRef path="apps/wc-frontend/src/api/plans.ts" />,{" "}
-        <FileRef path="apps/wc-frontend/src/api/commits.ts" />,{" "}
-        <FileRef path="apps/wc-frontend/src/api/team.ts" />, etc.
+        <FileRef path="apps/colign-frontend/src/api/plans.ts" />,{" "}
+        <FileRef path="apps/colign-frontend/src/api/commits.ts" />,{" "}
+        <FileRef path="apps/colign-frontend/src/api/team.ts" />, etc.
       </p>
 
       <PageFooter prev={navLink("lifecycle")} next={navLink("auth")} />

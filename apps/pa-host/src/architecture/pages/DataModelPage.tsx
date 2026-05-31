@@ -99,7 +99,7 @@ export function DataModelPage() {
         Nine tables. The shape is "people on the left, strategy in the middle,
         weekly work on the right" — and a non-nullable foreign key chains them
         together. Migration{" "}
-        <FileRef path="apps/wc-backend/src/main/resources/db/migration/V1__init.sql" /> is
+        <FileRef path="apps/colign-backend/src/main/resources/db/migration/V1__init.sql" /> is
         the source of truth.
       </p>
 
@@ -165,7 +165,7 @@ export function DataModelPage() {
       <p>
         A group of users. Owns Rally Cries. Optional <code>lead_user_id</code>.
         Defined in{" "}
-        <FileRef path="apps/wc-backend/src/main/java/com/wc/domain/Team.java" />.
+        <FileRef path="apps/colign-backend/src/main/java/com/colign/domain/Team.java" />.
       </p>
 
       <h3>User (table is <code>app_user</code>)</h3>
@@ -189,7 +189,7 @@ export function DataModelPage() {
       <Callout tone="info" title="Why a P0/P1 distinction matters in code">
         Alignment percentage on a plan is calculated as
         {" "}<code>(commits linked to P0 or P1 outcomes) / total commits</code>.
-        See <FileRef path="apps/wc-backend/src/main/java/com/wc/service/PlanService.java" line={142} />.
+        See <FileRef path="apps/colign-backend/src/main/java/com/colign/service/PlanService.java" line={142} />.
         The frontend renders this as a colored bar; lower than 40% goes red.
       </Callout>
 

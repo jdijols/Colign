@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
               const email = url.searchParams.get("email") ?? "ada@st6.dev";
               const role = url.searchParams.get("role") ?? "IC";
               const ttl = url.searchParams.get("ttl") ?? "14400";
-              const audience = url.searchParams.get("audience") ?? "https://api.wc.local";
+              const audience = url.searchParams.get("audience") ?? "https://api.colign.org";
               const scriptPath = path.resolve(__dirname, "../../scripts/mock-jwt.mjs");
               const token = execSync(
                 `node "${scriptPath}" --email "${email}" --role "${role}" --ttl ${ttl} --audience "${audience}"`,

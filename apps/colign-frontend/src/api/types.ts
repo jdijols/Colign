@@ -1,4 +1,4 @@
-// Mirrors apps/wc-backend src/main/java/com/wc/dto/*.
+// Mirrors apps/colign-backend src/main/java/com/colign/dto/*.
 
 export type PlanState = "DRAFT" | "LOCKED" | "RECONCILING" | "RECONCILED" | "CARRIED_FORWARD";
 export type CommitStatus = "PLANNED" | "IN_PROGRESS" | "DONE" | "MISSED" | "CARRIED";

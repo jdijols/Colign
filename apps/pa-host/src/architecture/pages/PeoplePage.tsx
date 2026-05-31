@@ -37,7 +37,7 @@ export function PeoplePage() {
       <h2>The three roles</h2>
       <p>
         A user's role lives on the user row itself as an enum column. Defined in{" "}
-        <FileRef path="apps/wc-backend/src/main/java/com/wc/domain/UserRole.java" />:
+        <FileRef path="apps/colign-backend/src/main/java/com/colign/domain/UserRole.java" />:
       </p>
       <Code>{`public enum UserRole {
     IC,
@@ -85,7 +85,7 @@ export function PeoplePage() {
         <code>team_id</code> points at <code>team</code>, and{" "}
         <code>manager_id</code> is a self-FK back into <code>app_user</code>.
         Defined in{" "}
-        <FileRef path="apps/wc-backend/src/main/java/com/wc/domain/User.java" />:
+        <FileRef path="apps/colign-backend/src/main/java/com/colign/domain/User.java" />:
       </p>
       <Code>{`@Column(name = "manager_id")
 private Long managerId;
@@ -109,7 +109,7 @@ private Long teamId;`}</Code>
       <p>
         Manager visibility is enforced at the query layer in{" "}
         <FileRef
-          path="apps/wc-backend/src/main/java/com/wc/controller/ManagerController.java"
+          path="apps/colign-backend/src/main/java/com/colign/controller/ManagerController.java"
           line={51}
         />
         . The manager calls <code>GET /api/v1/manager/team</code>, and the
@@ -137,7 +137,7 @@ public Page<TeamMemberDto> team(@PageableDefault(...) Pageable pageable) {
         colign does not have a "create user" form. The first time someone logs
         in with a valid JWT, the backend lazy-provisions a <code>User</code>
         row for them. This lives in{" "}
-        <FileRef path="apps/wc-backend/src/main/java/com/wc/service/UserResolver.java" />:
+        <FileRef path="apps/colign-backend/src/main/java/com/colign/service/UserResolver.java" />:
       </p>
       <Code>{`@Transactional
 public User resolveCurrent() {
@@ -163,7 +163,7 @@ public User resolveCurrent() {
       <h2>Demo accounts in the seed</h2>
       <p>
         Migration{" "}
-        <FileRef path="apps/wc-backend/src/main/resources/db/migration/V3__seed_users.sql" />{" "}
+        <FileRef path="apps/colign-backend/src/main/resources/db/migration/V3__seed_users.sql" />{" "}
         seeds a working org so the demo flow works out of the box:
       </p>
       <ul>
@@ -183,7 +183,7 @@ public User resolveCurrent() {
       <p>
         Mint a JWT for any of them in dev with{" "}
         <code>node scripts/mock-jwt.mjs --email ada@st6.dev --role IC</code>{" "}
-        (see <FileRef path="apps/wc-backend/docs/AUTH0_SETUP.md" /> for the real-Auth0 path).
+        (see <FileRef path="apps/colign-backend/docs/AUTH0_SETUP.md" /> for the real-Auth0 path).
       </p>
 
       <PageFooter prev={navLink("overview")} next={navLink("data")} />

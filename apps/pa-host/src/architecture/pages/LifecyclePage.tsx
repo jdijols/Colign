@@ -106,7 +106,7 @@ export function LifecyclePage() {
       <h2>Guards — what stops an illegal transition</h2>
 
       <Callout tone="warn" title="You cannot LOCK an empty plan">
-        Enforced in <FileRef path="apps/wc-backend/src/main/java/com/wc/service/PlanService.java" line={89} />:
+        Enforced in <FileRef path="apps/colign-backend/src/main/java/com/colign/service/PlanService.java" line={89} />:
         <Code>{`if (n == 0) {
     throw new IllegalTransitionException(
         PlanState.DRAFT, PlanState.LOCKED,
@@ -115,7 +115,7 @@ export function LifecyclePage() {
       </Callout>
 
       <Callout tone="warn" title="You cannot FINALIZE if any commit is unreconciled">
-        Enforced in <FileRef path="apps/wc-backend/src/main/java/com/wc/service/ReconciliationService.java" line={106} />:
+        Enforced in <FileRef path="apps/colign-backend/src/main/java/com/colign/service/ReconciliationService.java" line={106} />:
         <Code>{`boolean fullyReconciled = all.stream().allMatch(c ->
         reconciliations.findByWeeklyCommitId(c.getId()).isPresent());
 if (!fullyReconciled) {
@@ -125,7 +125,7 @@ if (!fullyReconciled) {
       </Callout>
 
       <Callout tone="warn" title="You cannot add/edit/delete commits unless DRAFT">
-        Enforced in <FileRef path="apps/wc-backend/src/main/java/com/wc/controller/WeeklyCommitController.java" line={47} />.
+        Enforced in <FileRef path="apps/colign-backend/src/main/java/com/colign/controller/WeeklyCommitController.java" line={47} />.
         Locked plans are intentionally immutable so a manager sees what was
         committed, not what was edited later.
       </Callout>
@@ -143,7 +143,7 @@ if (!fullyReconciled) {
 
       <p>
         The cloning loop is in{" "}
-        <FileRef path="apps/wc-backend/src/main/java/com/wc/service/ReconciliationService.java" line={144} />:
+        <FileRef path="apps/colign-backend/src/main/java/com/colign/service/ReconciliationService.java" line={144} />:
       </p>
       <Code>{`for (int i = 0; i < toCarry.size(); i++) {
     WeeklyCommit src = toCarry.get(i);
@@ -171,19 +171,19 @@ if (!fullyReconciled) {
       <ul>
         <li>
           <strong>The state enum:</strong>{" "}
-          <FileRef path="apps/wc-backend/src/main/java/com/wc/domain/PlanState.java" />
+          <FileRef path="apps/colign-backend/src/main/java/com/colign/domain/PlanState.java" />
         </li>
         <li>
           <strong>DRAFT → LOCKED guard:</strong>{" "}
-          <FileRef path="apps/wc-backend/src/main/java/com/wc/service/PlanService.java" line={83} />
+          <FileRef path="apps/colign-backend/src/main/java/com/colign/service/PlanService.java" line={83} />
         </li>
         <li>
           <strong>LOCKED → RECONCILING guard:</strong>{" "}
-          <FileRef path="apps/wc-backend/src/main/java/com/wc/service/ReconciliationService.java" line={47} />
+          <FileRef path="apps/colign-backend/src/main/java/com/colign/service/ReconciliationService.java" line={47} />
         </li>
         <li>
           <strong>RECONCILING → RECONCILED + carry-forward:</strong>{" "}
-          <FileRef path="apps/wc-backend/src/main/java/com/wc/service/ReconciliationService.java" line={98} />
+          <FileRef path="apps/colign-backend/src/main/java/com/colign/service/ReconciliationService.java" line={98} />
         </li>
       </ul>
 

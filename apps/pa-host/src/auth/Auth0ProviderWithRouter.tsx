@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { auth0Config, isReal } from "./auth0Config";
 
 /**
- * Mirror of apps/wc-frontend/src/auth/Auth0ProviderWithRouter.tsx so the host
+ * Mirror of apps/colign-frontend/src/auth/Auth0ProviderWithRouter.tsx so the host
  * has its own Auth0Provider when running on :4173. Auth0 state is scoped per
  * origin (separate localStorage between :4173 and :5174), so a user signing in
  * on the host signs in into the host's Auth0 client — the embedded WC remote

@@ -24,7 +24,7 @@ export function Auth0ProviderWithRouter({ children }: { children: ReactNode }) {
         <h2>Auth0 misconfigured</h2>
         <p>
           VITE_AUTH_MODE is "real" but VITE_AUTH0_DOMAIN or VITE_AUTH0_CLIENT_ID
-          is empty. Edit <code>apps/wc-frontend/.env.local</code> and restart Vite.
+          is empty. Edit <code>apps/colign-frontend/.env.local</code> and restart Vite.
         </p>
       </div>
     );

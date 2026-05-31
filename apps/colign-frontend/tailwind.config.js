@@ -19,12 +19,12 @@ export default {
   ],
   // Specificity scoping for when this remote is consumed by the PA host.
   // Tailwind utility prefix would break Flowbite-react's internal classes,
-  // so we rely on the #wc-root id-scope instead.
-  important: "#wc-root",
+  // so we rely on the #colign-root id-scope instead.
+  important: "#colign-root",
   theme: {
     extend: {
       colors: {
-        wcAccent: {
+        colignAccent: {
           50: "#eef6ff",
           100: "#d8eaff",
           200: "#b8d8ff",

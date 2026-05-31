@@ -137,10 +137,10 @@ export default function App() {
                 </div>
               }
             >
-              {/* The remote's Tailwind is scoped with `important: "#wc-root"`.
+              {/* The remote's Tailwind is scoped with `important: "#colign-root"`.
                   Standalone, that id is the mount node; here in the host we
                   provide it as a wrapper so the remote's utilities resolve. */}
-              <div id="wc-root">
+              <div id="colign-root">
                 <WeeklyCommitApp />
               </div>
             </Suspense>
