@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       federation({
-        name: "wc",
+        name: "colign",
         filename: "remoteEntry.js",
         manifest: true,
         exposes: {

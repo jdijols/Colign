@@ -1,8 +1,8 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-const STORAGE_KEY = "wc_jwt";
-const ROLE_KEY = "wc_role";
-const EMAIL_KEY = "wc_email";
+const STORAGE_KEY = "colign_jwt";
+const ROLE_KEY = "colign_role";
+const EMAIL_KEY = "colign_email";
 
 export interface AuthState {
   token: string | null;

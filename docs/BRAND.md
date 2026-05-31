@@ -27,7 +27,7 @@ Three left-aligned horizontal bars of decreasing length, stored as a single SVG.
 - **The RCDO hierarchy** — Rally Cry (longest, broadest) → Defining Objective → Outcome (shortest, most specific).
 - **The act of alignment itself** — things lining up to a common left edge.
 
-Source: `apps/wc-frontend/src/components/Brand.tsx` (React component) and `apps/{wc-frontend,pa-host}/public/favicon.svg` (favicon variant with rounded square background).
+Source: `apps/colign-frontend/src/components/Brand.tsx` (React component) and `apps/{wc-frontend,pa-host}/public/favicon.svg` (favicon variant with rounded square background).
 
 The mark uses `currentColor` so it inherits the text color of its parent — no separate light/dark variants needed in product UI. The favicon embeds a `prefers-color-scheme` media query so it adapts in browser tabs too.
 

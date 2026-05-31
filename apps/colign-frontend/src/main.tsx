@@ -12,7 +12,7 @@ import "./index.css";
  * both wrappers and lazy-imports WeeklyCommitApp directly — this main.tsx
  * is not loaded.
  */
-ReactDOM.createRoot(document.getElementById("wc-root")!).render(
+ReactDOM.createRoot(document.getElementById("colign-root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <Auth0ProviderWithRouter>

@@ -5,7 +5,7 @@
 @layer base {
   html,
   body,
-  #wc-root {
+  #colign-root {
     @apply h-full min-h-screen;
   }
   body {

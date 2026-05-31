@@ -69,7 +69,7 @@ export function StackPage() {
     wc: {
       type: "module",
       name: "wc",
-      entry: WC_REMOTE_URL, // defaults to http://localhost:5174/remoteEntry.js
+      entry: COLIGN_REMOTE_URL, // defaults to http://localhost:5174/remoteEntry.js
       entryGlobalName: "wc",
       shareScope: "default",
     },

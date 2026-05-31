@@ -1,7 +1,7 @@
-import { wcApi } from "./baseApi";
+import { colignApi } from "./baseApi";
 import type { ReconcileCommitRequest, ReconciliationDto } from "./types";
 
-export const reconciliationsApi = wcApi.injectEndpoints({
+export const reconciliationsApi = colignApi.injectEndpoints({
   endpoints: (build) => ({
     reconcileCommit: build.mutation<
       ReconciliationDto,

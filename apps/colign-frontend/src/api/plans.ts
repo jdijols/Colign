@@ -1,7 +1,7 @@
-import { wcApi } from "./baseApi";
+import { colignApi } from "./baseApi";
 import type { PlanDto } from "./types";
 
-export const plansApi = wcApi.injectEndpoints({
+export const plansApi = colignApi.injectEndpoints({
   endpoints: (build) => ({
     getCurrentPlan: build.query<PlanDto, void>({
       query: () => "plans/current",

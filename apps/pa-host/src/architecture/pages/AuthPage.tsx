@@ -76,7 +76,7 @@ export function AuthPage() {
             <td><code>mock</code></td>
             <td>
               Loads a committed RS256 public key at{" "}
-              <code>classpath:keys/wc-mock-public.pem</code> and validates
+              <code>classpath:keys/colign-mock-public.pem</code> and validates
               against it.
             </td>
             <td>
@@ -104,12 +104,12 @@ export function AuthPage() {
           <tr><td><code>email</code></td><td>Auth0 user profile</td><td>Used by <code>UserResolver</code> to find/provision the User row.</td></tr>
           <tr><td><code>aud</code></td><td>Token request</td><td>Must match <code>wc.auth.audience</code> on the backend.</td></tr>
           <tr><td><code>iss</code></td><td>Auth0 tenant</td><td>Must match <code>wc.auth.real.issuer-uri</code> (real mode only).</td></tr>
-          <tr><td><code>https://wc/roles</code></td><td>Auth0 Action / mock script</td><td>Becomes the <code>ROLE_*</code> Spring authority.</td></tr>
+          <tr><td><code>https://colign.org/roles</code></td><td>Auth0 Action / mock script</td><td>Becomes the <code>ROLE_*</code> Spring authority.</td></tr>
           <tr><td><code>scope</code></td><td>OAuth2 scopes</td><td>Becomes the <code>SCOPE_*</code> Spring authority.</td></tr>
         </tbody>
       </table>
 
-      <Callout tone="info" title="Why namespaced 'https://wc/roles'">
+      <Callout tone="info" title="Why namespaced 'https://colign.org/roles'">
         Auth0 requires custom claims to be namespaced (a URL) so they can't
         collide with reserved OIDC claims. The string itself isn't a real URL —
         nothing fetches it — it's just a unique identifier.
@@ -130,7 +130,7 @@ public User resolveCurrent() {
 }`}</Code>
 
       <p>
-        Provisioning sets the role from <code>https://wc/roles</code> if
+        Provisioning sets the role from <code>https://colign.org/roles</code> if
         present, falling back to <code>wc.users.default-role</code> (defaults
         to <code>IC</code>). Manager and team linkage are left null on
         provision — they get set later (today: by editing the seed; in

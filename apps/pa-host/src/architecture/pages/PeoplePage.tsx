@@ -149,7 +149,7 @@ public User resolveCurrent() {
 
       <p>
         The provisioned user's role comes from the JWT's{" "}
-        <code>https://wc/roles</code> claim if present (Auth0 sets this), or
+        <code>https://colign.org/roles</code> claim if present (Auth0 sets this), or
         falls back to <code>IC</code> via the <code>wc.users.default-role</code>{" "}
         config key.
       </p>

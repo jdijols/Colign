@@ -1,8 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { RootState } from "@/store";
 
-export const wcApi = createApi({
-  reducerPath: "wcApi",
+export const colignApi = createApi({
+  reducerPath: "colignApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "/api/v1/",
     prepareHeaders: (headers, { getState }) => {

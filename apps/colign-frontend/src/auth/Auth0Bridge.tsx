@@ -14,7 +14,7 @@ import { auth0Config, isReal } from "./auth0Config";
  *
  * Real mode: this component listens for Auth0 auth-state changes, requests
  * the access token (cached in localStorage by the SDK), and dispatches it.
- * Role is derived from the namespaced "https://wc/roles" claim when present,
+ * Role is derived from the namespaced "https://colign.org/roles" claim when present,
  * falling back to IC otherwise — the seeded UserResolver also enforces role
  * server-side based on the email match for the demo team.
  */
@@ -33,7 +33,7 @@ export function Auth0Bridge({ children }: { children: ReactNode }) {
       })
         .then((token) => {
           if (cancelled) return;
-          const roles = (user["https://wc/roles"] as string[] | undefined) ?? [];
+          const roles = (user["https://colign.org/roles"] as string[] | undefined) ?? [];
           const role = roles.includes("ADMIN")
             ? ("ADMIN" as const)
             : roles.includes("MANAGER")

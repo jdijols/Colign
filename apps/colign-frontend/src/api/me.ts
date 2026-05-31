@@ -1,4 +1,4 @@
-import { wcApi } from "./baseApi";
+import { colignApi } from "./baseApi";
 
 export interface MeDto {
   id: number;
@@ -18,7 +18,7 @@ export interface MeDto {
  * Tagged "Me" so mutations that change team membership or relationships
  * (create team, accept invite, add report) can invalidate it and re-route.
  */
-export const meApi = wcApi.injectEndpoints({
+export const meApi = colignApi.injectEndpoints({
   endpoints: (build) => ({
     getMe: build.query<MeDto, void>({
       query: () => "me",

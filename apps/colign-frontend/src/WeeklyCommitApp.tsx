@@ -8,13 +8,13 @@ import { Outlet, Route, Routes } from "react-router-dom";
 // compile WC's classes either.
 //
 // Fix: precompile Tailwind to a static, fully-expanded stylesheet
-// (src/wc-compiled.css — produced by `yarn build:css`, kept fresh in dev by
+// (src/colign-compiled.css — produced by `yarn build:css`, kept fresh in dev by
 // `yarn dev:css --watch`), then import THAT with `?inline`. With no @tailwind
 // directives left, `?inline` returns the whole expanded string, which we render
 // as a <style> tag. It travels with the JS module across the MF boundary and,
 // being a rendered element, mounts only while WeeklyCommitApp is on screen — so
 // its global preflight never leaks onto the host's landing/architecture routes.
-import wcStyles from "./wc-compiled.css?inline";
+import colignStyles from "./colign-compiled.css?inline";
 import { store } from "@/store";
 import { Auth0Bridge } from "@/auth/Auth0Bridge";
 import { AppShell } from "@/components/AppShell";
@@ -44,7 +44,7 @@ import { ManagerDashboardPage } from "@/pages/ManagerDashboardPage";
 export default function WeeklyCommitApp() {
   return (
     <Provider store={store}>
-      <style dangerouslySetInnerHTML={{ __html: wcStyles }} />
+      <style dangerouslySetInnerHTML={{ __html: colignStyles }} />
       <Auth0Bridge>
         <Routes>
           <Route path="login" element={<LoginPage />} />

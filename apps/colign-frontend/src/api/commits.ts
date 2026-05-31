@@ -1,7 +1,7 @@
-import { wcApi } from "./baseApi";
+import { colignApi } from "./baseApi";
 import type { AddCommitRequest, PlanDto, UpdateCommitRequest } from "./types";
 
-export const commitsApi = wcApi.injectEndpoints({
+export const commitsApi = colignApi.injectEndpoints({
   endpoints: (build) => ({
     addCommit: build.mutation<PlanDto, { planId: number; body: AddCommitRequest }>({
       query: ({ planId, body }) => ({

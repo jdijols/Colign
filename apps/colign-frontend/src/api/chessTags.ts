@@ -1,7 +1,7 @@
-import { wcApi } from "./baseApi";
+import { colignApi } from "./baseApi";
 import type { ChessTagDto } from "./types";
 
-export const chessTagsApi = wcApi.injectEndpoints({
+export const chessTagsApi = colignApi.injectEndpoints({
   endpoints: (build) => ({
     listChessTags: build.query<ChessTagDto[], void>({
       query: () => "chess-tags",

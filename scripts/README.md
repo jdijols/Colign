@@ -4,9 +4,9 @@ Local-development helpers. **None of this is for production.**
 
 ## `mock-jwt.mjs`
 
-Mints RS256 JWTs signed by `wc-mock-private.pem`. The backend validates
+Mints RS256 JWTs signed by `colign-mock-private.pem`. The backend validates
 against the paired public key at
-`apps/wc-backend/src/main/resources/keys/wc-mock-public.pem` when
+`apps/colign-backend/src/main/resources/keys/colign-mock-public.pem` when
 `wc.auth.mode=mock` (the default in `application-local.example.yml`).
 
 ```bash
@@ -20,9 +20,9 @@ T=$(node scripts/mock-jwt.mjs --email manager@st6.dev --role MANAGER --ttl 14400
 
 Flags: `--email` (default `ada@st6.dev`), `--role` (`IC` | `MANAGER` | `ADMIN`,
 default `IC`), `--ttl` (seconds, default `3600`), `--audience` (default
-`https://api.wc.local`), `--issuer` (default `wc-mock`).
+`https://api.colign.org`), `--issuer` (default `colign-mock`).
 
-## `wc-mock-private.pem` / `wc-mock-public.pem`
+## `colign-mock-private.pem` / `colign-mock-public.pem`
 
 The keypair used by the mock JWT flow. **Committed deliberately** so a
 reviewer can clone the repo and immediately mint tokens to hit the backend.
@@ -35,6 +35,6 @@ reviewer can clone the repo and immediately mint tokens to hit the backend.
 ## Generating fresh keys (if needed)
 
 ```bash
-openssl genrsa -out scripts/wc-mock-private.pem 2048
-openssl rsa -in scripts/wc-mock-private.pem -pubout -out apps/wc-backend/src/main/resources/keys/wc-mock-public.pem
+openssl genrsa -out scripts/colign-mock-private.pem 2048
+openssl rsa -in scripts/colign-mock-private.pem -pubout -out apps/colign-backend/src/main/resources/keys/colign-mock-public.pem
 ```

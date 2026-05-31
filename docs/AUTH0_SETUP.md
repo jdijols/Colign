@@ -1,7 +1,7 @@
 # Auth0 setup (switching to real-tenant mode)
 
 The backend ships with `wc.auth.mode=mock` by default — it validates RS256
-JWTs signed by `scripts/wc-mock-private.pem`. This document walks through
+JWTs signed by `scripts/colign-mock-private.pem`. This document walks through
 the one-time tenant configuration to flip into `wc.auth.mode=real`, which
 validates JWTs against a live Auth0 tenant + JWKS.
 
@@ -22,7 +22,7 @@ Auth0 dashboard → **APIs** → **+ Create API**.
 | Field | Value |
 | --- | --- |
 | Name | `Weekly Commit API` |
-| Identifier (audience) | `https://api.wc.local` — must exactly match `wc.auth.audience` in `application-local.yml` |
+| Identifier (audience) | `https://api.colign.org` — must exactly match `wc.auth.audience` in `application-local.yml` |
 | JSON Web Token (JWT) Profile | `RS256` |
 | Signing Algorithm | `RS256` |
 
@@ -56,24 +56,24 @@ Auth0 → **Applications → + Create Application**, type "Single Page Web App".
 | Allowed Logout URLs | `http://localhost:5173, http://localhost:5174` |
 | Allowed Web Origins | `http://localhost:5173, http://localhost:5174` |
 
-Save. Note the **Domain** and **Client ID** for the frontend (`apps/wc-frontend/.env.local`).
+Save. Note the **Domain** and **Client ID** for the frontend (`apps/colign-frontend/.env.local`).
 
 ### 5. Flip the backend into real mode
 
-Copy `apps/wc-backend/src/main/resources/application-local.example.yml`
+Copy `apps/colign-backend/src/main/resources/application-local.example.yml`
 to `application-local.yml` and edit:
 
 ```yaml
 wc:
   auth:
     mode: real
-    audience: https://api.wc.local
+    audience: https://api.colign.org
     real:
       issuer-uri: https://YOUR_TENANT.us.auth0.com/
       jwk-set-uri: https://YOUR_TENANT.us.auth0.com/.well-known/jwks.json
 ```
 
-Restart: `cd apps/wc-backend && mvn spring-boot:run`.
+Restart: `cd apps/colign-backend && mvn spring-boot:run`.
 
 ### 6. Mint a test token + verify
 
@@ -86,7 +86,7 @@ TOKEN=$(curl -sX POST https://YOUR_TENANT.us.auth0.com/oauth/token \
   -d '{
     "client_id":"YOUR_M2M_CLIENT_ID",
     "client_secret":"YOUR_M2M_SECRET",
-    "audience":"https://api.wc.local",
+    "audience":"https://api.colign.org",
     "grant_type":"client_credentials"
   }' | jq -r .access_token)
 

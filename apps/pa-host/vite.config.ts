@@ -5,8 +5,8 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import pkg from "./package.json" with { type: "json" };
 
-const WC_REMOTE_URL =
-  process.env.WC_REMOTE_URL ?? "http://localhost:5174/remoteEntry.js";
+const COLIGN_REMOTE_URL =
+  process.env.COLIGN_REMOTE_URL ?? "http://localhost:5174/remoteEntry.js";
 
 export default defineConfig({
   plugins: [
@@ -14,11 +14,11 @@ export default defineConfig({
     federation({
       name: "pa_host",
       remotes: {
-        wc: {
+        colign: {
           type: "module",
-          name: "wc",
-          entry: WC_REMOTE_URL,
-          entryGlobalName: "wc",
+          name: "colign",
+          entry: COLIGN_REMOTE_URL,
+          entryGlobalName: "colign",
           shareScope: "default",
         },
       },

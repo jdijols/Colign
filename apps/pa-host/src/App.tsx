@@ -4,9 +4,9 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { HostHome } from "./HostHome";
 
 // MF-lazy import. The host has no compile-time dep on wc-frontend;
-// remoteEntry.js is fetched at runtime from VITE_WC_REMOTE_URL (defaults
+// remoteEntry.js is fetched at runtime from VITE_COLIGN_REMOTE_URL (defaults
 // to http://localhost:5174 in dev). See research/03-vite-module-federation.md.
-const WeeklyCommitApp = lazy(() => import("wc/WeeklyCommitApp"));
+const WeeklyCommitApp = lazy(() => import("colign/WeeklyCommitApp"));
 
 // Local lazy import — the architecture site is bundled into pa-host itself
 // (not a Module Federation remote). Onboarding docs don't need their own

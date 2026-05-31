@@ -1,14 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
-import { wcApi } from "@/api/baseApi";
+import { colignApi } from "@/api/baseApi";
 import authReducer from "@/auth/authSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    [wcApi.reducerPath]: wcApi.reducer,
+    [colignApi.reducerPath]: colignApi.reducer,
   },
-  middleware: (getDefault) => getDefault().concat(wcApi.middleware),
+  middleware: (getDefault) => getDefault().concat(colignApi.middleware),
 });
 
 setupListeners(store.dispatch);

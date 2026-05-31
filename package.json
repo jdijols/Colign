@@ -2,19 +2,19 @@
   "name": "st6-weekly-commit-module",
   "version": "0.1.0",
   "private": true,
-  "description": "ST6 Weekly Commit Module — production-ready replacement for 15-Five weekly planning with structural RCDO alignment. Monorepo: wc-backend (Spring Boot 3.3) + wc-frontend (Vite 5 MF remote) + pa-host (Vite 5 MF host shell).",
+  "description": "ST6 Weekly Commit Module — production-ready replacement for 15-Five weekly planning with structural RCDO alignment. Monorepo: colign-backend (Spring Boot 3.3) + colign-frontend (Vite 5 MF remote) + pa-host (Vite 5 MF host shell).",
   "workspaces": [
-    "apps/wc-frontend",
+    "apps/colign-frontend",
     "apps/pa-host"
   ],
-  "//": "wc-backend (Java) is not a Yarn workspace — managed by Maven.",
+  "//": "colign-backend (Java) is not a Yarn workspace — managed by Maven.",
   "scripts": {
-    "dev": "echo 'Run each app independently: yarn workspace wc-frontend dev, yarn workspace pa-host dev, (cd apps/wc-backend && mvn spring-boot:run)'",
-    "dev:frontend": "yarn workspace wc-frontend dev",
+    "dev": "echo 'Run each app independently: yarn workspace colign-frontend dev, yarn workspace pa-host dev, (cd apps/colign-backend && mvn spring-boot:run)'",
+    "dev:frontend": "yarn workspace colign-frontend dev",
     "dev:host": "yarn workspace pa-host dev",
-    "build": "yarn workspace wc-frontend build && yarn workspace pa-host build",
-    "test:frontend": "yarn workspace wc-frontend test",
-    "cy:run": "yarn workspace wc-frontend cy:run",
+    "build": "yarn workspace colign-frontend build && yarn workspace pa-host build",
+    "test:frontend": "yarn workspace colign-frontend test",
+    "cy:run": "yarn workspace colign-frontend cy:run",
     "mock-jwt": "node scripts/mock-jwt.mjs"
   },
   "engines": {

@@ -1,7 +1,7 @@
-import { wcApi } from "./baseApi";
+import { colignApi } from "./baseApi";
 import type { SpringPage, TeamMemberDto } from "./types";
 
-export const teamApi = wcApi.injectEndpoints({
+export const teamApi = colignApi.injectEndpoints({
   endpoints: (build) => ({
     getTeam: build.query<
       SpringPage<TeamMemberDto>,

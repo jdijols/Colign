@@ -21,9 +21,9 @@ Each is addressed in its own section below.
 ## Prerequisites
 
 - Logged in to the Auth0 dashboard at `https://manage.auth0.com/dashboard/us/dev-xpbf6g232kcce8nc/`.
-- A public URL where your logo SVG is hosted. The ColignMark SVG lives at `apps/wc-frontend/src/components/Brand.tsx` — extract the `<svg>` and host it. Options:
+- A public URL where your logo SVG is hosted. The ColignMark SVG lives at `apps/colign-frontend/src/components/Brand.tsx` — extract the `<svg>` and host it. Options:
   - `https://colign.org/colign-mark.svg` (once the marketing site ships at colign.org)
-  - GitHub raw URL: `https://raw.githubusercontent.com/jdijols/Colign/main/apps/wc-frontend/public/colign-mark.svg`
+  - GitHub raw URL: `https://raw.githubusercontent.com/jdijols/Colign/main/apps/colign-frontend/public/colign-mark.svg`
   - `data:` URI inline (works for small SVGs)
 
 ---
@@ -181,12 +181,12 @@ Fine for local dev, demos to internal stakeholders, and the ST6 submission walkt
 2. Create a new tenant with **Environment Tag: Production** and Name: `colign-prod` (or whatever) → Region: same as dev for latency.
 3. Production tenants still cost nothing on Free plan (7,000 MAU).
 4. Re-run §1-§5 in the new tenant (or use the **Tenant Settings → Import / Export** feature to clone configuration).
-5. Update `apps/pa-host/.env.local` and `apps/wc-frontend/.env.local`:
+5. Update `apps/pa-host/.env.local` and `apps/colign-frontend/.env.local`:
 
    ```bash
    VITE_AUTH0_DOMAIN=colign-prod.us.auth0.com    # or whatever the new tenant subdomain is
    VITE_AUTH0_CLIENT_ID=<new SPA client id>
-   # VITE_AUTH0_AUDIENCE stays the same: https://api.wc.local
+   # VITE_AUTH0_AUDIENCE stays the same: https://api.colign.org
    ```
 
 6. Update the backend env (`WC_AUTH0_ISSUER`, `WC_AUTH0_JWKS`) similarly — the JWKS URL becomes `https://colign-prod.us.auth0.com/.well-known/jwks.json`.
