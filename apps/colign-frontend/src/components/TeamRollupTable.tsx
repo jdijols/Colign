@@ -64,13 +64,28 @@ export function TeamRollupTable({ onSelectMember }: Props) {
           <THead>
             <tr>
               <TH
-                onClick={() => toggleSort("displayName")}
                 aria-sort={
                   sort === "displayName" ? (dir === "asc" ? "ascending" : "descending") : "none"
                 }
-                className="cursor-pointer"
+                className="p-0"
               >
-                Direct report <SortIcon k="displayName" />
+                {/* Activator is a real <button> so keyboard users get native
+                    Enter/Space activation and focus rings. The TH keeps
+                    aria-sort for table semantics. */}
+                <button
+                  type="button"
+                  onClick={() => toggleSort("displayName")}
+                  className="w-full px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
+                  aria-label={`Sort by direct report, currently ${
+                    sort === "displayName"
+                      ? dir === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : "unsorted"
+                  }`}
+                >
+                  Direct report <SortIcon k="displayName" />
+                </button>
               </TH>
               <TH>Week of</TH>
               <TH>Status</TH>
