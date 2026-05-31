@@ -1,6 +1,5 @@
 package com.colign.controller;
 
-import com.colign.domain.User;
 import com.colign.dto.MeDto;
 import com.colign.service.UserResolver;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,14 +28,6 @@ public class MeController {
 
     @GetMapping
     public MeDto me() {
-        User user = userResolver.resolveCurrent();
-        return MeDto.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .displayName(user.getDisplayName())
-                .role(userResolver.derivedRole(user).name())
-                .teamId(user.getTeamId())
-                .managerId(user.getManagerId())
-                .build();
+        return userResolver.toMeDto(userResolver.resolveCurrent());
     }
 }

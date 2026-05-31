@@ -34,6 +34,14 @@ export default defineConfig({
           requiredVersion: pkg.dependencies["@reduxjs/toolkit"],
         },
         "react-redux": { singleton: true, requiredVersion: pkg.dependencies["react-redux"] },
+        // MUST be a singleton: @auth0/auth0-react provides React CONTEXT. This
+        // host creates the Auth0Provider; the remote's useAuth0() reads it. If
+        // the remote loads its own copy, its context is never initialized →
+        // isLoading stuck true → infinite "Signing you in…". Same as react-router.
+        "@auth0/auth0-react": {
+          singleton: true,
+          requiredVersion: pkg.dependencies["@auth0/auth0-react"],
+        },
       },
     }),
     // Mirror the wc-frontend dev-mint middleware so the WC remote's LoginPage

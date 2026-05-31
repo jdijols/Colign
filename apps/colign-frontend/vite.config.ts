@@ -25,6 +25,12 @@ export default defineConfig(({ mode }) => {
           "react-router-dom": { singleton: true, requiredVersion: pkg.dependencies["react-router-dom"] },
           "@reduxjs/toolkit": { singleton: true, requiredVersion: pkg.dependencies["@reduxjs/toolkit"] },
           "react-redux": { singleton: true, requiredVersion: pkg.dependencies["react-redux"] },
+          // MUST be a singleton: @auth0/auth0-react provides React CONTEXT. The
+          // host creates the Auth0Provider; the remote's useAuth0() must read
+          // that same context, not a second copy. Without this, the remote's
+          // context is never initialized → isLoading stuck true → infinite
+          // "Signing you in…". Same reasoning as react-router/redux above.
+          "@auth0/auth0-react": { singleton: true, requiredVersion: pkg.dependencies["@auth0/auth0-react"] },
         },
       }),
       // Dev-only middleware: mock-JWT minter, calls the Node script in scripts/
