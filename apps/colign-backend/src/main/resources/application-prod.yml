@@ -1,0 +1,34 @@
+# Production profile (Fly.io), activated by SPRING_PROFILES_ACTIVE=prod.
+#
+# The datasource, auth mode, audience, issuer/JWKS, CORS origins, email key,
+# and app base-url all come from environment variables resolved in the base
+# application.yml — set as Fly [env] (non-secret) or `fly secrets` (DB creds,
+# Resend key). See DEPLOY.md. This profile only tightens prod-appropriate
+# behavior on top of the base config.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate   # Flyway owns the schema; never let Hibernate mutate prod
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        default_schema: wc
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    schemas: wc
+    default-schema: wc
+    locations: classpath:db/migration
+
+# Don't expose the API explorer in production.
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+logging:
+  level:
+    com.colign: INFO
+    org.hibernate.SQL: WARN

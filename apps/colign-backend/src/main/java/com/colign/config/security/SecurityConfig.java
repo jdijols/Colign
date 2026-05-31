@@ -59,6 +59,15 @@ public class SecurityConfig {
 
     private static final String ROLES_CLAIM = "https://colign.org/roles";
 
+    /**
+     * Comma-separated browser origins allowed to call the API directly. Bound
+     * from {@code colign.cors.allowed-origins} (env {@code COLIGN_CORS_ORIGINS}
+     * in prod), so the deployed frontend origin doesn't require a code change —
+     * the previous hardcoded localhost list was a prod blocker.
+     */
+    @org.springframework.beans.factory.annotation.Value("${colign.cors.allowed-origins}")
+    private String allowedOriginsCsv;
+
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http, JwtDecoder jwtDecoder) throws Exception {
         http
@@ -165,11 +174,11 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
-        c.setAllowedOrigins(List.of(
-                "http://localhost:4173",  // pa-host
-                "http://localhost:5173",  // pa-host (legacy default — kept for flexibility)
-                "http://localhost:5174",  // wc-frontend standalone
-                "http://localhost:3000"));
+        c.setAllowedOrigins(
+                java.util.Arrays.stream(allowedOriginsCsv.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .toList());
         c.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         c.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
         c.setExposedHeaders(List.of("Location", "Link"));

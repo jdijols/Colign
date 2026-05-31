@@ -1,0 +1,45 @@
+# Fly.io config for the colign backend.
+#
+# `app` must be globally unique on Fly — if `fly launch` says it's taken,
+# pick another name. It does NOT affect the public hostname: users reach the
+# API at https://api.colign.org via `fly certs add` + a GoDaddy CNAME (see
+# DEPLOY.md), regardless of the internal app name.
+#
+# Non-secret config lives in [env]. Secrets (DB creds, Resend key) are set
+# with `fly secrets set` and never committed — see DEPLOY.md.
+app = "colign-backend"
+primary_region = "iad"  # us-east-1-adjacent: near Resend (us-east-1) + the Auth0 tenant
+
+[build]
+
+[env]
+  SPRING_PROFILES_ACTIVE = "prod"
+  COLIGN_AUTH_MODE = "real"
+  COLIGN_AUTH_AUDIENCE = "https://api.colign.org"
+  COLIGN_AUTH0_ISSUER = "https://dev-xpbf6g232kcce8nc.us.auth0.com/"
+  COLIGN_AUTH0_JWKS = "https://dev-xpbf6g232kcce8nc.us.auth0.com/.well-known/jwks.json"
+  COLIGN_CORS_ORIGINS = "https://app.colign.org"
+  COLIGN_APP_BASE_URL = "https://app.colign.org/weekly-commit"
+  RESEND_FROM = "Colign <onboarding@colign.org>"
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  # Keep one machine warm for launch day so the prod smoke test doesn't eat a
+  # ~30s Spring Boot cold start. Drop to 0 later to save money if idle cost
+  # matters more than first-request latency.
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "60s"  # Spring Boot + Flyway on a fresh Postgres needs headroom
+    method = "GET"
+    path = "/actuator/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"  # Spring Boot 3 + JPA is tight at 512mb; 1gb is the safe launch size

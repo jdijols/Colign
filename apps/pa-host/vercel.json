@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "//": "pa-host is the user-facing MF host (app.colign.org). The /api rewrite proxies API calls server-side to the Fly backend so the browser stays same-origin (no CORS, Authorization header passes through). The catch-all serves index.html for client-side routes; real static files under /assets are served by the filesystem before this rule applies.",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://api.colign.org/api/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

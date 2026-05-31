@@ -1,0 +1,10 @@
+# Keep the build context small AND keep secrets out of image layers.
+# .env.local holds the real Resend key — it must never enter the image.
+.env
+.env.local
+target/
+*.log
+.idea/
+.vscode/
+.DS_Store
+HELP.md

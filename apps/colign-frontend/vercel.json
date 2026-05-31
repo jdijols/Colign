@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "//": "colign-frontend deployed as the standalone MF REMOTE. The host (app.colign.org) fetches remoteEntry.js + chunks cross-origin from this project's domain, so every asset needs Access-Control-Allow-Origin. Build this project with PUBLIC_PATH=/ so Vite emits root-relative asset paths (the default prod base is /wc/, which would 404 when served at the domain root). See DEPLOY.md.",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}

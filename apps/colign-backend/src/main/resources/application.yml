@@ -51,6 +51,14 @@ colign:
     # FROM address. Defaults to Resend's sandbox sender; override via RESEND_FROM
     # once the colign.org domain is verified in the Resend dashboard.
     from: ${RESEND_FROM:Colign <onboarding@resend.dev>}
+  cors:
+    # Browser origins allowed to call the API directly (comma-separated). Dev
+    # defaults cover the host/remote/standalone Vite ports. In prod set
+    # COLIGN_CORS_ORIGINS to the deployed frontend origin (e.g.
+    # https://app.colign.org). Note: when the frontend proxies /api via a
+    # same-origin rewrite, no browser CORS is triggered for those calls — this
+    # is defense-in-depth for any direct cross-origin call.
+    allowed-origins: ${COLIGN_CORS_ORIGINS:http://localhost:4173,http://localhost:5173,http://localhost:5174,http://localhost:3000}
   app:
     # Base URL the invitation accept link is built against. The controller
     # appends "/invite/{token}". For pa-host on dev that's :4173/weekly-commit
