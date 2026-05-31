@@ -44,7 +44,7 @@ export function CommitRow({ commit, canEdit, onDelete }: CommitRowProps) {
           </p>
         ) : null}
 
-        <div className="mt-1 text-xs text-neutral-500 dark:text-neutral-500 flex items-center gap-1.5">
+        <div className="mt-1 text-xs text-neutral-600 dark:text-neutral-400 flex items-center gap-1.5">
           <HiOutlineFlag className="h-3.5 w-3.5 shrink-0" aria-hidden />
           <span className="truncate">
             {commit.outcomeTitle ?? `Outcome #${commit.outcomeId}`}
@@ -71,7 +71,7 @@ export function CommitRow({ commit, canEdit, onDelete }: CommitRowProps) {
             onClick={onDelete}
             aria-label={`Delete commit ${commit.title}`}
             data-cy="delete-commit"
-            className="!px-2"
+            className="!px-0 !h-10 !w-10"
           >
             <HiTrash className="h-3.5 w-3.5" />
           </Button>

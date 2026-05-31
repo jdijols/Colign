@@ -84,13 +84,13 @@ export function TeamRollupTable({ onSelectMember }: Props) {
           <TBody>
             {isFetching && !data ? (
               <TR hover={false}>
-                <TD colSpan={6} className="py-8 text-center text-neutral-500">
+                <TD colSpan={6} className="py-8 text-center text-neutral-600">
                   <Spinner size="sm" /> Loading team…
                 </TD>
               </TR>
             ) : (data?.content ?? []).length === 0 ? (
               <TR hover={false}>
-                <TD colSpan={6} className="py-8 text-center text-sm text-neutral-500">
+                <TD colSpan={6} className="py-8 text-center text-sm text-neutral-600">
                   No direct reports linked to your account. (Seeded as
                   manager@st6.dev → Ada / Ben / Chris in the H2 demo profile.)
                 </TD>
@@ -115,7 +115,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                           <div className="font-medium text-sm text-neutral-900 dark:text-neutral-50">
                             {m.displayName}
                           </div>
-                          <div className="text-xs text-neutral-500 dark:text-neutral-500 font-mono">
+                          <div className="text-xs text-neutral-600 dark:text-neutral-400 font-mono">
                             {m.email}
                           </div>
                         </div>
@@ -183,7 +183,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
       </TableScroller>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-1">
-        <span className="text-xs text-neutral-500 dark:text-neutral-400">
+        <span className="text-xs text-neutral-600 dark:text-neutral-400">
           Showing <span className="font-medium tabular-nums">{from}</span>–
           <span className="font-medium tabular-nums">{to}</span> of{" "}
           <span className="font-medium tabular-nums">{data?.totalElements ?? 0}</span>

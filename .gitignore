@@ -37,8 +37,8 @@ application-local.yml
 application-local.properties
 
 # --- Test artifacts ---
-coverage/
 .nyc_output/
+coverage/
 cypress/videos/
 cypress/screenshots/
 cypress/downloads/
@@ -48,13 +48,20 @@ jacoco.exec
 jacoco-it.exec
 
 # --- Logs ---
-logs/
+tmp/
 *.log
 *.log.*
 
+# --- Generated: Tailwind precompiled output for MF CSS crossing ---
+# (produced by `yarn build:css` / `yarn dev:css`; regenerated, never edited)
+apps/*/src/*-compiled.css
+
+# --- Generated: TypeScript incremental build info ---
+*.tsbuildinfo
+
+# --- Generated: Module Federation type hints + diagnostics ---
+**/@mf-types/
+**/.mf/
+
 # --- Misc ---
-.cache/
-tmp/
-.tmp/
-*.original
 .gstack/

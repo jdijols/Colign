@@ -6,6 +6,9 @@
   "description": "ST6 Weekly Commit Module — Vite 5 + React 18 Module Federation REMOTE. Runs standalone on :5174 or is consumed by apps/pa-host.",
   "scripts": {
     "dev": "vite --port 5174",
+    "dev:css": "tailwindcss -i src/index.css -o src/wc-compiled.css --watch",
+    "build:css": "tailwindcss -i src/index.css -o src/wc-compiled.css --minify",
+    "prebuild": "yarn build:css",
     "build": "tsc -b && vite build",
     "preview": "vite preview --port 5174",
     "test": "vitest run",

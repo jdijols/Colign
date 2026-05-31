@@ -36,7 +36,7 @@ const TONES: Record<
   },
   warning: {
     palette:
-      "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-950/40 dark:border-amber-900 dark:text-amber-300",
+      "bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-950/40 dark:border-amber-900 dark:text-amber-300",
     Icon: HiExclamationCircle,
   },
   danger: {

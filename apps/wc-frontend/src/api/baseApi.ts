@@ -12,6 +12,6 @@ export const wcApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Plan", "Commit", "Outcome", "ChessTag", "TeamPage"],
+  tagTypes: ["Plan", "Commit", "Outcome", "ChessTag", "TeamPage", "Me", "TeamMembers"],
   endpoints: () => ({}),
 });

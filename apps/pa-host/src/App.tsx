@@ -1,5 +1,6 @@
 import { Suspense, lazy } from "react";
 import { Link, NavLink, Outlet, Route, Routes } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 import { HostHome } from "./HostHome";
 
 // MF-lazy import. The host has no compile-time dep on wc-frontend;
@@ -12,7 +13,7 @@ const WeeklyCommitApp = lazy(() => import("wc/WeeklyCommitApp"));
 // deploy lifecycle.
 const ArchitectureSite = lazy(() => import("./architecture/ArchitectureSite"));
 
-function ColignMark({ size = 20 }: { size?: number }) {
+function ColignMark({ size = 18 }: { size?: number }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -29,6 +30,11 @@ function ColignMark({ size = 20 }: { size?: number }) {
 }
 
 function HostShell() {
+  const { isAuthenticated, logout } = useAuth0();
+  // Brand mark routes to wherever "home" means for this user:
+  // signed-in users home is the app, signed-out users home is the landing.
+  const brandTarget = isAuthenticated ? "/weekly-commit" : "/";
+
   return (
     <div>
       <nav
@@ -46,7 +52,7 @@ function HostShell() {
         }}
       >
         <Link
-          to="/"
+          to={brandTarget}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -61,12 +67,29 @@ function HostShell() {
           <ColignMark size={18} />
           colign
         </Link>
-        <NavLinkPlain to="/" end label="Home" />
         <NavLinkPlain to="/weekly-commit" label="App" />
         <NavLinkPlain to="/architecture" label="Architecture" />
-        <span style={{ marginLeft: "auto", color: "var(--muted)", fontSize: 12 }}>
-          PA host shell · :4173
-        </span>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={() =>
+                logout({ logoutParams: { returnTo: window.location.origin } })
+              }
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--muted)",
+                fontSize: 13,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                padding: 0,
+              }}
+            >
+              Sign out
+            </button>
+          )}
+        </div>
       </nav>
       <Outlet />
     </div>
@@ -91,15 +114,19 @@ function NavLinkPlain({ to, label, end }: { to: string; label: string; end?: boo
 }
 
 /**
- * Demonstrates structural alignment: PA owns the chrome + a Home route, and
- * mounts the entire WC remote under /weekly-commit/* via React.lazy + Suspense.
- * The remote runs unchanged — same code that boots standalone on :5174.
+ * Two top-level layouts:
+ *   /                   → full-bleed landing (no nav, marketing-shaped)
+ *   /weekly-commit/*    → app under HostShell chrome (MF remote)
+ *   /architecture/*     → docs under HostShell chrome (local sub-app)
  */
 export default function App() {
   return (
     <Routes>
+      {/* Landing renders standalone — the marketing page has its own chrome
+          (or rather, no chrome at all) and shouldn't inherit the app nav. */}
+      <Route index element={<HostHome />} />
+
       <Route element={<HostShell />}>
-        <Route index element={<HostHome />} />
         <Route
           path="weekly-commit/*"
           element={
@@ -110,7 +137,12 @@ export default function App() {
                 </div>
               }
             >
-              <WeeklyCommitApp />
+              {/* The remote's Tailwind is scoped with `important: "#wc-root"`.
+                  Standalone, that id is the mount node; here in the host we
+                  provide it as a wrapper so the remote's utilities resolve. */}
+              <div id="wc-root">
+                <WeeklyCommitApp />
+              </div>
             </Suspense>
           }
         />

@@ -118,12 +118,14 @@ export function alignmentTier(pct: number): AlignmentTier {
     return {
       tone: "warning",
       bar: "bg-amber-500 dark:bg-amber-400",
-      label: "text-amber-600 dark:text-amber-400",
+      // amber-600 on white = 3.32:1 (fails AA normal). Bumped to amber-700 (5.05:1).
+      label: "text-amber-700 dark:text-amber-400",
     };
   }
   return {
     tone: "danger",
     bar: "bg-rose-500 dark:bg-rose-400",
-    label: "text-rose-600 dark:text-rose-400",
+    // rose-600 on white = 4.45:1 (borderline). Bumped to rose-700 (5.94:1).
+    label: "text-rose-700 dark:text-rose-400",
   };
 }

@@ -79,7 +79,7 @@ function RealAuth0Login() {
         <h1 className="mt-8 text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 text-center leading-tight">
           Plan your week.
           <br />
-          <span className="text-neutral-500 dark:text-neutral-400">
+          <span className="text-neutral-600 dark:text-neutral-400">
             Aligned by default.
           </span>
         </h1>
@@ -129,13 +129,13 @@ function RealAuth0Login() {
           {/* Divider */}
           <div className="my-5 flex items-center gap-2">
             <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
-            <span className="text-[10px] uppercase tracking-wider text-neutral-500">
+            <span className="text-[10px] uppercase tracking-wider text-neutral-600">
               Demo tip
             </span>
             <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
           </div>
 
-          <p className="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
             Sign up with{" "}
             <code className="rounded bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 text-[11px] text-neutral-700 dark:text-neutral-200 font-mono">
               manager@st6.dev
@@ -147,7 +147,7 @@ function RealAuth0Login() {
         </div>
 
         {/* Footer */}
-        <div className="mt-6 flex items-center justify-center gap-3 text-xs text-neutral-500">
+        <div className="mt-6 flex items-center justify-center gap-3 text-xs text-neutral-600">
           <span>open source · MIT</span>
           <span className="text-neutral-300 dark:text-neutral-700">·</span>
           <a
@@ -200,7 +200,7 @@ function MockLogin() {
         <h1 className="mt-8 text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 text-center">
           Mock sign-in
         </h1>
-        <p className="mt-2 text-sm text-neutral-500 text-center">
+        <p className="mt-2 text-sm text-neutral-600 text-center">
           Dev mode. RS256 JWTs minted locally.
           <br />
           Set <code className="font-mono">VITE_AUTH_MODE=real</code> to use Auth0.
@@ -218,7 +218,7 @@ function MockLogin() {
               <span className="font-medium text-neutral-900 dark:text-neutral-50">
                 {u.label}
               </span>
-              <span className="text-xs text-neutral-500 font-mono">{u.email}</span>
+              <span className="text-xs text-neutral-600 font-mono">{u.email}</span>
             </button>
           ))}
         </div>
@@ -229,7 +229,7 @@ function MockLogin() {
           </div>
         )}
 
-        <div className="mt-6 flex items-center justify-center gap-3 text-xs text-neutral-500">
+        <div className="mt-6 flex items-center justify-center gap-3 text-xs text-neutral-600">
           <span>open source · MIT</span>
           <span className="text-neutral-300 dark:text-neutral-700">·</span>
           <a href="https://colign.org" className="hover:text-neutral-900 dark:hover:text-neutral-100">

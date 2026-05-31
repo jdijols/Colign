@@ -100,7 +100,7 @@ export function WeeklyPlanPage() {
     <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500">My weekly plan</p>
+          <p className="text-[10px] uppercase tracking-wider text-neutral-600">My weekly plan</p>
           <h1
             className="mt-1 text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50"
             data-cy="plan-heading"
@@ -110,7 +110,7 @@ export function WeeklyPlanPage() {
         </div>
         <div className="flex flex-col sm:items-end gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-neutral-500">Status</span>
+            <span className="text-xs text-neutral-600">Status</span>
             <span data-cy="plan-state">
               <PlanStatePill state={data.state} />
             </span>
@@ -136,7 +136,7 @@ export function WeeklyPlanPage() {
 
         {data.commits.length === 0 && !adding ? (
           <CardBody>
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-neutral-600">
               No commits yet. Click{" "}
               <strong className="text-neutral-700 dark:text-neutral-300">Add commit</strong> to
               start your week — each commit must link to a strategic Outcome.
@@ -234,7 +234,7 @@ export function WeeklyPlanPage() {
       )}
 
       {data.commits.length === 0 && !adding && (
-        <div className="text-xs text-neutral-500 dark:text-neutral-500 flex items-center gap-1.5">
+        <div className="text-xs text-neutral-600 dark:text-neutral-400 flex items-center gap-1.5">
           <HiInformationCircle className="h-3.5 w-3.5" aria-hidden />
           The brief calls this structural alignment — every commit links to a leaf Outcome.
         </div>

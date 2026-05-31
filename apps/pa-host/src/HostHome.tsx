@@ -1,13 +1,265 @@
-import { Link } from "react-router-dom";
+import { useEffect, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 
-const brand = {
-  text: "var(--fg)",
-  muted: "var(--muted)",
-  border: "var(--border)",
-  surface: "var(--surface)",
-};
+// In prod the canonical home is colign.org; in dev it's the local landing root.
+const HOME_URL = import.meta.env.PROD ? "https://colign.org" : "/";
 
-function ColignMark({ size = 32 }: { size?: number }) {
+/**
+ * Landing page at /. The typography itself enacts the colign brand:
+ * three lines descending from the abstract (Strategy) through the structural
+ * (a defining objective) to the concrete (what lands this week). The visual
+ * gesture mirrors the ColignMark — three bars at decreasing weight — and
+ * teaches the product's core concept before the user reads a single word.
+ *
+ * The reader's eye flows:
+ *   brand anchor → manifesto → concrete value prop → CTA → footer.
+ *
+ * Authenticated visitors skip the landing entirely and land in the app.
+ *
+ * Accessibility:
+ *   - Single semantic <h1> wraps the three visual lines (SR-friendly).
+ *   - Skip link as first focusable for keyboard nav.
+ *   - All interactive elements get :focus-visible rings (defined in index.html).
+ *   - CTA lift animation gated by prefers-reduced-motion.
+ *   - Caption-link tap zones expanded to ≥24px without changing visual layout.
+ *   - All text contrast ≥7:1 (AAA) in light and dark modes.
+ */
+export function HostHome() {
+  const navigate = useNavigate();
+  const { loginWithRedirect, isAuthenticated, isLoading } = useAuth0();
+
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      navigate("/weekly-commit", { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  const handleGetStarted = () => {
+    void loginWithRedirect({
+      appState: { returnTo: "/weekly-commit" },
+      authorizationParams: { screen_hint: "login" },
+    });
+  };
+
+  if (isLoading || isAuthenticated) {
+    return (
+      <div
+        style={{
+          minHeight: "100dvh",
+          background: "var(--bg)",
+          color: "var(--muted)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        aria-busy="true"
+        aria-label="Loading"
+      >
+        <span aria-hidden style={{ opacity: 0.6 }}>·</span>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <a href="#main-cta" className="sr-only">
+        Skip to Get started
+      </a>
+      <main
+        id="main"
+        style={{
+          minHeight: "100dvh",
+          background: "var(--bg)",
+          color: "var(--fg)",
+          display: "flex",
+          flexDirection: "column",
+          padding: "clamp(28px, 4.5vw, 64px)",
+        }}
+      >
+        {/* Brand anchor — links to the canonical home (colign.org in prod,
+            local root in dev). aria-label disambiguates the icon+text combo. */}
+        <header>
+          <a
+            href={HOME_URL}
+            aria-label="colign — home"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 12,
+              color: "var(--fg)",
+              textDecoration: "none",
+              fontWeight: 600,
+              fontSize: 26,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            <ColignMark size={28} />
+            colign
+          </a>
+        </header>
+
+        {/* Top breath — pushes the manifesto toward optical center */}
+        <div style={{ flex: 1, minHeight: "clamp(48px, 10vh, 140px)" }} />
+
+        {/* The three lines, semantically ONE statement under a single <h1>.
+            SR reads: "Strategy. A defining objective. What lands this week."
+            Visual spans render as block lines with descending color. */}
+        <h1
+          style={{
+            margin: 0,
+            padding: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.04em",
+          }}
+        >
+          <span style={headlineLineStyle("var(--fg)")}>Strategy.</span>
+          <span style={headlineLineStyle("var(--fg)")}>A defining objective.</span>
+          <span style={headlineLineStyle("var(--muted)")}>
+            What lands this week.
+          </span>
+        </h1>
+
+        {/* Big breath — separates manifesto from concrete claim */}
+        <div style={{ height: "clamp(40px, 5vw, 64px)" }} />
+
+        {/* Value prop — what they're starting. Reads BEFORE the CTA so
+            the click is informed. One sentence, no licensing chatter. */}
+        <p
+          style={{
+            margin: 0,
+            maxWidth: 640,
+            fontSize: "clamp(17px, 1.4vw, 19px)",
+            lineHeight: 1.5,
+            color: "var(--muted)",
+            textWrap: "balance",
+          }}
+        >
+          Weekly planning where every commit links to a strategic outcome.
+        </p>
+
+        {/* Tighter gap — CTA pairs with the line it answers */}
+        <div style={{ height: "clamp(28px, 3vw, 40px)" }} />
+
+        {/* CTA — physically larger so it carries against the headline mass */}
+        <GetStartedButton onClick={handleGetStarted} loading={isLoading} />
+
+        {/* Bottom breath, slightly smaller than top so content sits
+            marginally above optical center (eyes track to upper third) */}
+        <div style={{ flex: 1, minHeight: "clamp(40px, 8vh, 120px)" }} />
+
+        {/* Footer — mono caption row, byline + source.
+            Tap zones expanded to ≥24×24 via .colign-caption-link CSS. */}
+        <footer
+          style={{
+            color: "var(--muted)",
+            fontSize: 12,
+            letterSpacing: "0.01em",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            fontFamily:
+              '"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
+          }}
+        >
+          <FooterLink href="https://linkedin.com/in/jasondijols">
+            Jason Dijols
+          </FooterLink>
+          <Dot />
+          <FooterLink href="https://github.com/jdijols/Colign">GitHub</FooterLink>
+        </footer>
+      </main>
+    </>
+  );
+}
+
+function headlineLineStyle(color: string) {
+  return {
+    margin: 0,
+    fontSize: "clamp(44px, 8.5vw, 108px)",
+    fontFamily: '"Source Serif 4", "Source Serif Pro", Georgia, serif',
+    fontVariationSettings: '"opsz" 60',
+    fontWeight: 500,
+    letterSpacing: "-0.025em",
+    lineHeight: 1.02,
+    color,
+    textWrap: "balance" as const,
+  };
+}
+
+function GetStartedButton({
+  onClick,
+  loading,
+}: {
+  onClick: () => void;
+  loading: boolean;
+}) {
+  return (
+    <button
+      id="main-cta"
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      data-cy="landing-get-started"
+      className="colign-cta"
+      style={{
+        alignSelf: "flex-start",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 12,
+        background: "var(--fg)",
+        color: "var(--bg)",
+        border: "none",
+        padding: "20px 28px",
+        fontSize: 16,
+        fontWeight: 500,
+        letterSpacing: "-0.005em",
+        borderRadius: 999,
+        cursor: loading ? "wait" : "pointer",
+        opacity: loading ? 0.6 : 1,
+        fontFamily: "inherit",
+        minHeight: 44,
+      }}
+    >
+      {loading ? "Loading…" : "Get started"}
+      {!loading && (
+        <span aria-hidden style={{ fontSize: 18, lineHeight: 1 }}>
+          →
+        </span>
+      )}
+    </button>
+  );
+}
+
+function Dot() {
+  return (
+    <span aria-hidden style={{ opacity: 0.5 }}>
+      ·
+    </span>
+  );
+}
+
+function FooterLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target={href.startsWith("http") ? "_blank" : undefined}
+      rel={href.startsWith("http") ? "noreferrer" : undefined}
+      className="colign-caption-link"
+    >
+      {children}
+    </a>
+  );
+}
+
+function ColignMark({ size = 24 }: { size?: number }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -20,180 +272,5 @@ function ColignMark({ size = 32 }: { size?: number }) {
       <rect x="3" y="11" width="13" height="2" rx="1" />
       <rect x="3" y="17" width="8" height="2" rx="1" />
     </svg>
-  );
-}
-
-export function HostHome() {
-  return (
-    <main style={{ maxWidth: 880, margin: "80px auto", padding: "0 24px" }}>
-      {/* Hero */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, color: brand.text }}>
-        <ColignMark size={28} />
-        <span style={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.01em" }}>colign</span>
-      </div>
-
-      <h1
-        style={{
-          marginTop: 32,
-          fontSize: 48,
-          fontWeight: 600,
-          letterSpacing: "-0.025em",
-          lineHeight: 1.05,
-          color: brand.text,
-        }}
-      >
-        Aligned weeks.
-        <br />
-        <span style={{ color: brand.muted }}>Visible strategy.</span>
-      </h1>
-      <p
-        style={{
-          marginTop: 16,
-          color: brand.muted,
-          fontSize: 18,
-          maxWidth: 620,
-          lineHeight: 1.55,
-        }}
-      >
-        Open source weekly planning where every commit links to a strategic outcome.
-        Replaces 15-Five with structural alignment — built for engineering organizations
-        that care about the line from strategy to execution.
-      </p>
-
-      {/* Tag chips */}
-      <div style={{ marginTop: 24, display: "flex", flexWrap: "wrap", gap: 8 }}>
-        {["Spring Boot 3.3", "Vite Module Federation", "Auth0 OIDC", "PostgreSQL 16", "MIT"].map(
-          (chip) => (
-            <span
-              key={chip}
-              style={{
-                fontSize: 11,
-                color: brand.muted,
-                border: `1px solid ${brand.border}`,
-                padding: "4px 10px",
-                borderRadius: 999,
-                letterSpacing: "0.02em",
-              }}
-            >
-              {chip}
-            </span>
-          )
-        )}
-      </div>
-
-      {/* Cards */}
-      <div
-        style={{
-          marginTop: 56,
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: 12,
-        }}
-      >
-        <Card
-          title="Open the app"
-          body="The Weekly Commit module — federated remote loaded at runtime from :5174."
-          cta="Open colign"
-          to="/weekly-commit"
-          primary
-        />
-        <Card
-          title="Architecture & onboarding"
-          body="Guided tour of the data model, weekly lifecycle, routes, and the MF setup."
-          cta="Open architecture site"
-          to="/architecture"
-        />
-      </div>
-
-      {/* Footnote */}
-      <div
-        style={{
-          marginTop: 56,
-          paddingTop: 24,
-          borderTop: `1px solid ${brand.border}`,
-          color: brand.muted,
-          fontSize: 13,
-          lineHeight: 1.55,
-        }}
-      >
-        <strong style={{ color: brand.text, fontWeight: 600 }}>How it's wired.</strong>{" "}
-        This page is the PA host shell — it has no compile-time dependency on the WC
-        remote. <code>remoteEntry.js</code> is fetched at runtime via{" "}
-        <code>@module-federation/vite</code>. React, ReactDOM, React Router, RTK, and
-        react-redux are shared singletons across both apps so context identity survives
-        the remote boundary. The Architecture site lives inside this host as a normal
-        lazy-imported sub-app (no need for it to be a federated remote).
-        <br />
-        <br />
-        Built for the ST6 partnership submission as the Weekly Commit Module — opened up
-        as an MIT-licensed standalone project at{" "}
-        <a
-          href="https://colign.org"
-          style={{ color: brand.text, textDecoration: "underline" }}
-        >
-          colign.org
-        </a>
-        .
-      </div>
-    </main>
-  );
-}
-
-function Card({
-  title,
-  body,
-  cta,
-  to,
-  primary,
-}: {
-  title: string;
-  body: string;
-  cta: string;
-  to: string;
-  primary?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        padding: 24,
-        border: `1px solid ${brand.border}`,
-        borderRadius: 10,
-        background: brand.surface,
-        transition: "border-color 120ms ease",
-      }}
-    >
-      <h2
-        style={{
-          margin: 0,
-          fontSize: 16,
-          fontWeight: 600,
-          color: brand.text,
-          letterSpacing: "-0.01em",
-        }}
-      >
-        {title}
-      </h2>
-      <p style={{ marginTop: 8, color: brand.muted, fontSize: 14, lineHeight: 1.55 }}>
-        {body}
-      </p>
-      <Link
-        to={to}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 4,
-          marginTop: 16,
-          padding: primary ? "8px 14px" : "8px 0",
-          background: primary ? brand.text : "transparent",
-          color: primary ? brand.surface : brand.text,
-          borderRadius: 6,
-          textDecoration: "none",
-          fontWeight: 500,
-          fontSize: 13,
-        }}
-      >
-        {cta} →
-      </Link>
-    </div>
   );
 }

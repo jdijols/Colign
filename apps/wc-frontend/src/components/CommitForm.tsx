@@ -26,14 +26,14 @@ const CHESS_TONES: Record<string, string> = {
   OFFENSE:
     "border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:border-emerald-800 dark:text-emerald-300 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70",
   DEFENSE:
-    "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-300 dark:bg-amber-950/40 dark:hover:bg-amber-950/70",
+    "border-amber-400 text-amber-800 bg-amber-50 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-300 dark:bg-amber-950/40 dark:hover:bg-amber-950/70",
   MAINTENANCE:
     "border-neutral-200 text-neutral-700 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:bg-neutral-900 dark:hover:bg-neutral-800",
 };
 
 const CHESS_ACTIVE: Record<string, string> = {
   OFFENSE: "bg-emerald-600 text-white border-emerald-600 dark:bg-emerald-500 dark:border-emerald-500",
-  DEFENSE: "bg-amber-500 text-white border-amber-500",
+  DEFENSE: "bg-amber-500 text-neutral-900 border-amber-600",
   MAINTENANCE:
     "bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white",
 };
@@ -185,7 +185,7 @@ export function CommitForm({ planId, onDone, onCancel }: Props) {
                 );
               })}
               {loadingTags ? (
-                <span className="text-xs text-neutral-500 self-center">
+                <span className="text-xs text-neutral-600 self-center">
                   <Spinner size="sm" />
                 </span>
               ) : null}

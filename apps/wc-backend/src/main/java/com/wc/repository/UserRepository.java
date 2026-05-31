@@ -12,4 +12,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     org.springframework.data.domain.Page<User> findByManagerId(
             Long managerId, org.springframework.data.domain.Pageable pageable);
+
+    /** Count of direct reports — drives MANAGER role derivation. */
+    long countByManagerId(Long managerId);
 }

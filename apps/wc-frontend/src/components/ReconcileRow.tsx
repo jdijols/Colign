@@ -17,9 +17,9 @@ const OPTIONS: Array<{ value: ReconcileStatus; label: string; activeClass: strin
   {
     value: "PARTIAL",
     label: "Partial",
-    activeClass: "bg-amber-500 text-white border-amber-500",
+    activeClass: "bg-amber-500 text-neutral-900 border-amber-600",
     inactiveClass:
-      "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-300 dark:bg-amber-950/40 dark:hover:bg-amber-950/70",
+      "border-amber-400 text-amber-800 bg-amber-50 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-300 dark:bg-amber-950/40 dark:hover:bg-amber-950/70",
   },
   {
     value: "MISSED",
@@ -89,7 +89,7 @@ export function ReconcileRow({ commit, expanded, onToggle }: Props) {
             {commit.title}
           </span>
         </div>
-        <div className="text-xs text-neutral-500 shrink-0 hidden sm:flex gap-3 items-center">
+        <div className="text-xs text-neutral-600 shrink-0 hidden sm:flex gap-3 items-center">
           <span>{commit.outcomePriority ?? "—"}</span>
           {commit.plannedEffortHours != null ? (
             <span className="tabular-nums">planned {commit.plannedEffortHours}h</span>

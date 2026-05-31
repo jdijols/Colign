@@ -9,6 +9,23 @@
     @apply h-full min-h-screen;
   }
   body {
-    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family: "Geist", "Inter", system-ui, -apple-system, "Segoe UI",
+      Roboto, sans-serif;
+    font-feature-settings: "ss01", "cv11";
+  }
+}
+
+/* WCAG 2.3.3 Animation from Interactions — vestibular safety.
+   Disables animations + transitions globally for users who have set
+   prefers-reduced-motion. Catches the Spinner, transition-colors,
+   any future animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

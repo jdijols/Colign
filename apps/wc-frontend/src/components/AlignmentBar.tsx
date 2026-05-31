@@ -27,7 +27,7 @@ export function AlignmentBar({ alignment, size = "sm" }: AlignmentBarProps) {
         />
       </div>
       <span className={cn("text-xs font-medium tabular-nums", tier.label)}>{alignmentPct}%</span>
-      <span className="text-xs text-neutral-500 dark:text-neutral-500 tabular-nums">
+      <span className="text-xs text-neutral-600 dark:text-neutral-400 tabular-nums">
         {linkedToHighPriority}/{totalCommits} on P0/P1
       </span>
     </div>

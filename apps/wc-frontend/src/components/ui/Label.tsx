@@ -18,13 +18,13 @@ export function Label({ className, children, hint, required, ...props }: LabelPr
       >
         {children}
         {required ? (
-          <span className="ml-0.5 text-rose-600 dark:text-rose-400" aria-hidden>
+          <span className="ml-0.5 text-rose-700 dark:text-rose-400" aria-hidden>
             *
           </span>
         ) : null}
       </label>
       {hint ? (
-        <span className="text-[11px] text-neutral-500 dark:text-neutral-400">{hint}</span>
+        <span className="text-[11px] text-neutral-600 dark:text-neutral-400">{hint}</span>
       ) : null}
     </div>
   );
@@ -64,12 +64,15 @@ export function Field({
       )}
       {children}
       {helpText && !error && (
-        <p className="mt-1.5 text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
+        <p className="mt-1.5 text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
           {helpText}
         </p>
       )}
       {error && (
-        <p className="mt-1.5 text-[11px] text-rose-600 dark:text-rose-400 leading-relaxed">
+        <p
+          role="alert"
+          className="mt-1.5 text-[11px] text-rose-700 dark:text-rose-400 leading-relaxed"
+        >
           {error}
         </p>
       )}

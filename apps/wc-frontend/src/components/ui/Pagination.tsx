@@ -24,7 +24,7 @@ export function Pagination({ page, totalPages, onPageChange, className }: Pagina
         >
           Prev
         </Button>
-        <span className="px-2 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+        <span className="px-2 text-xs text-neutral-600 dark:text-neutral-400 tabular-nums">
           {page + 1} / {totalPages || 1}
         </span>
         <Button

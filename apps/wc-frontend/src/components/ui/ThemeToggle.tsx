@@ -19,7 +19,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       title={`Theme: ${theme} (click for ${next})`}
       aria-label={`Theme: ${theme}. Click to switch to ${next}.`}
       className={cn(
-        "inline-flex h-8 w-8 items-center justify-center rounded-md text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors",
+        "inline-flex h-10 w-10 items-center justify-center rounded-md text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950",
         className
       )}
     >

@@ -26,14 +26,14 @@ export function IcDrillDrawer({ member, onClose }: Props) {
       description={member ? `${member.email} · ${member.role}` : undefined}
     >
       {!member ? null : !member.currentPlan ? (
-        <div className="rounded-md border border-dashed border-neutral-300 dark:border-neutral-700 p-8 text-sm text-neutral-500 text-center">
+        <div className="rounded-md border border-dashed border-neutral-300 dark:border-neutral-700 p-8 text-sm text-neutral-600 text-center">
           No plan recorded yet.
         </div>
       ) : (
         <div className="space-y-5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-neutral-500">Week of</p>
+              <p className="text-[10px] uppercase tracking-wider text-neutral-600">Week of</p>
               <p className="text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 tabular-nums">
                 {member.currentPlan.weekStartDate}
               </p>
@@ -46,11 +46,11 @@ export function IcDrillDrawer({ member, onClose }: Props) {
           <div className="h-px bg-neutral-200 dark:bg-neutral-800" />
 
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-3">
               Commits · {member.currentPlan.commits.length}
             </h3>
             {member.currentPlan.commits.length === 0 ? (
-              <p className="text-sm text-neutral-500">No commits in this plan.</p>
+              <p className="text-sm text-neutral-600">No commits in this plan.</p>
             ) : (
               <ul className="space-y-3">
                 {member.currentPlan.commits.map((c) => (
@@ -80,7 +80,7 @@ export function IcDrillDrawer({ member, onClose }: Props) {
                         {commitStatusLabel(c.status)}
                       </Badge>
                     </div>
-                    <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                    <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
                       {c.outcomeTitle ?? `Outcome #${c.outcomeId}`}
                       {c.plannedEffortHours != null ? ` · planned ${c.plannedEffortHours}h` : ""}
                     </p>
@@ -113,7 +113,7 @@ export function IcDrillDrawer({ member, onClose }: Props) {
             )}
           </div>
 
-          <div className="rounded-md border border-dashed border-neutral-300 dark:border-neutral-700 p-3 text-xs text-neutral-500 dark:text-neutral-500">
+          <div className="rounded-md border border-dashed border-neutral-300 dark:border-neutral-700 p-3 text-xs text-neutral-600 dark:text-neutral-400">
             <strong className="text-neutral-700 dark:text-neutral-300 font-semibold">
               Coming next.
             </strong>{" "}

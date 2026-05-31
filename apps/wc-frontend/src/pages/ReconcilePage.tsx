@@ -64,13 +64,13 @@ export function ReconcilePage() {
     <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-wider text-neutral-500">Reconciliation</p>
+          <p className="text-[10px] uppercase tracking-wider text-neutral-600">Reconciliation</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
             Week of <span className="tabular-nums">{data.weekStartDate}</span>
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-neutral-500">Status</span>
+          <span className="text-xs text-neutral-600">Status</span>
           <PlanStatePill state={data.state} />
         </div>
       </header>
@@ -132,7 +132,7 @@ export function ReconcilePage() {
 
           {data.state === "RECONCILING" && (
             <CardFooter>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              <p className="text-xs text-neutral-600 dark:text-neutral-400">
                 {allReconciled
                   ? "All commits reconciled — submit to finalize. Missed commits will carry forward into next week."
                   : `${data.commits.length - reconciledCount} commit(s) still need a reconciliation.`}

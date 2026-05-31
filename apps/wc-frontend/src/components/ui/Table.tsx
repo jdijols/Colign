@@ -71,7 +71,7 @@ export function TH({ className, children, ...props }: ThHTMLAttributes<HTMLTable
   return (
     <th
       className={cn(
-        "px-3 py-2.5 text-left text-[11px] uppercase tracking-wider font-semibold text-neutral-500 dark:text-neutral-400 whitespace-nowrap",
+        "px-3 py-2.5 text-left text-[11px] uppercase tracking-wider font-semibold text-neutral-600 dark:text-neutral-400 whitespace-nowrap",
         className
       )}
       {...props}

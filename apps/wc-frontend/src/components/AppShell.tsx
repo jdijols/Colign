@@ -30,7 +30,7 @@ export function AppShell() {
       "text-sm transition-colors",
       isActive
         ? "text-neutral-900 dark:text-neutral-50 font-medium"
-        : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50"
+        : "text-neutral-600 hover:text-neutral-900 dark:hover:text-neutral-50"
     );
 
   return (
@@ -59,7 +59,7 @@ export function AppShell() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            <div className="hidden lg:flex items-center gap-2 text-xs text-neutral-500 pr-2 border-r border-neutral-200 dark:border-neutral-800">
+            <div className="hidden lg:flex items-center gap-2 text-xs text-neutral-600 pr-2 border-r border-neutral-200 dark:border-neutral-800">
               <span className="font-mono">{auth.email}</span>
               <span className="text-neutral-300 dark:text-neutral-700">·</span>
               <span className="uppercase tracking-wider">{auth.role}</span>
@@ -71,7 +71,7 @@ export function AppShell() {
 
             <button
               type="button"
-              className="md:hidden inline-flex h-8 w-8 items-center justify-center rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950"
               onClick={() => setMenuOpen((o) => !o)}
               aria-expanded={menuOpen}
               aria-label="Toggle navigation"
@@ -98,7 +98,7 @@ export function AppShell() {
                 Team
               </NavLink>
             ) : null}
-            <div className="border-t border-neutral-200 dark:border-neutral-800 mt-2 pt-2 text-xs text-neutral-500 font-mono">
+            <div className="border-t border-neutral-200 dark:border-neutral-800 mt-2 pt-2 text-xs text-neutral-600 font-mono">
               {auth.email} · {auth.role}
             </div>
           </nav>
