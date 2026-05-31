@@ -4,6 +4,7 @@ import { useReconcileCommitMutation } from "@/api/reconciliations";
 import type { ReconcileStatus, WeeklyCommitDto } from "@/api/types";
 import { Badge, Button, Field, Input, Spinner, Textarea } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { radioGroupKeyDown, radioTabIndex } from "@/lib/radioGroup";
 import { reconcileStatusTone } from "@/lib/tokens";
 
 const OPTIONS: Array<{ value: ReconcileStatus; label: string; activeClass: string; inactiveClass: string }> = [
@@ -103,25 +104,37 @@ export function ReconcileRow({ commit, expanded, onToggle }: Props) {
       {expanded && (
         <div className="mt-3 ml-5 pl-4 border-l-2 border-neutral-200 dark:border-neutral-800 space-y-3">
           <Field label="What actually happened?">
-            <div className="flex flex-wrap gap-1.5" role="radiogroup">
-              {OPTIONS.map((o) => {
-                const active = status === o.value;
-                return (
-                  <button
-                    type="button"
-                    key={o.value}
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setStatus(o.value)}
-                    className={cn(
-                      "inline-flex items-center rounded-md border text-xs font-medium px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-1",
-                      active ? o.activeClass : o.inactiveClass
-                    )}
-                  >
-                    {o.label}
-                  </button>
+            <div
+              className="flex flex-wrap gap-1.5"
+              role="radiogroup"
+              aria-label="What actually happened?"
+            >
+              {(() => {
+                const currentIdx = OPTIONS.findIndex((o) => o.value === status);
+                const onKeyDown = radioGroupKeyDown(OPTIONS, currentIdx, (next) =>
+                  setStatus(next.value),
                 );
-              })}
+                return OPTIONS.map((o, idx) => {
+                  const active = status === o.value;
+                  return (
+                    <button
+                      type="button"
+                      key={o.value}
+                      role="radio"
+                      aria-checked={active}
+                      tabIndex={radioTabIndex(active, currentIdx < 0 && idx === 0)}
+                      onClick={() => setStatus(o.value)}
+                      onKeyDown={onKeyDown}
+                      className={cn(
+                        "inline-flex items-center rounded-md border text-xs font-medium px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-1",
+                        active ? o.activeClass : o.inactiveClass
+                      )}
+                    >
+                      {o.label}
+                    </button>
+                  );
+                });
+              })()}
             </div>
           </Field>
 

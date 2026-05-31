@@ -15,6 +15,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { radioGroupKeyDown, radioTabIndex } from "@/lib/radioGroup";
 
 interface Props {
   planId: number;
@@ -164,26 +165,35 @@ export function CommitForm({ planId, onDone, onCancel }: Props) {
 
           <Field label="Chess layer" hint="posture">
             <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Chess layer">
-              {(chessTags ?? []).map((t) => {
-                const active = chessTagId === t.id;
-                const base = CHESS_TONES[t.code] ?? CHESS_TONES.MAINTENANCE;
-                const activeClass = CHESS_ACTIVE[t.code] ?? CHESS_ACTIVE.MAINTENANCE;
-                return (
-                  <button
-                    type="button"
-                    key={t.id}
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setChessTagId(active ? "" : t.id)}
-                    className={cn(
-                      "inline-flex items-center rounded-md border text-xs font-medium px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-1",
-                      active ? activeClass : base
-                    )}
-                  >
-                    {t.label}
-                  </button>
+              {(() => {
+                const tags = chessTags ?? [];
+                const currentIdx = tags.findIndex((t) => t.id === chessTagId);
+                const onKeyDown = radioGroupKeyDown(tags, currentIdx, (next) =>
+                  setChessTagId(next.id),
                 );
-              })}
+                return tags.map((t, idx) => {
+                  const active = chessTagId === t.id;
+                  const base = CHESS_TONES[t.code] ?? CHESS_TONES.MAINTENANCE;
+                  const activeClass = CHESS_ACTIVE[t.code] ?? CHESS_ACTIVE.MAINTENANCE;
+                  return (
+                    <button
+                      type="button"
+                      key={t.id}
+                      role="radio"
+                      aria-checked={active}
+                      tabIndex={radioTabIndex(active, currentIdx < 0 && idx === 0)}
+                      onClick={() => setChessTagId(active ? "" : t.id)}
+                      onKeyDown={onKeyDown}
+                      className={cn(
+                        "inline-flex items-center rounded-md border text-xs font-medium px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-1",
+                        active ? activeClass : base
+                      )}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                });
+              })()}
               {loadingTags ? (
                 <span className="text-xs text-neutral-600 self-center">
                   <Spinner size="sm" />
