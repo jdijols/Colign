@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: colign-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/wc}
+    username: ${DB_USER:wc}
+    password: ${DB_PASS:wc}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        default_schema: wc
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    schemas: wc
+    default-schema: wc
+    locations: classpath:db/migration
+
+server:
+  port: ${PORT:8080}
+
+# --- WC auth mode ---
+# Two modes for Auth0 JWT validation:
+#   real  → validate against the configured Auth0 issuer-uri + JWKS
+#   mock  → validate against a hardcoded RS256 public key (scripts/mock-jwt.sh issues tokens)
+colign:
+  auth:
+    mode: ${COLIGN_AUTH_MODE:mock}
+    audience: ${COLIGN_AUTH_AUDIENCE:https://api.colign.org}
+    mock:
+      # Demo-only public key. Paired private key in scripts/mock-jwt.sh.
+      public-key-pem: |
+        -----BEGIN PUBLIC KEY-----
+        REPLACE_WITH_REAL_KEY_IN_SLOT_3
+        -----END PUBLIC KEY-----
+    real:
+      issuer-uri: ${COLIGN_AUTH0_ISSUER:https://YOUR_TENANT.us.auth0.com/}
+      jwk-set-uri: ${COLIGN_AUTH0_JWKS:https://YOUR_TENANT.us.auth0.com/.well-known/jwks.json}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    com.colign: DEBUG
+    org.hibernate.SQL: INFO

@@ -1,0 +1,16 @@
+# Copy to application-local.yml and edit for your machine.
+# application-local.yml is gitignored — never commit credentials.
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/wc
+    username: wc
+    password: wc
+
+colign:
+  auth:
+    mode: mock                    # flip to "real" once Auth0 tenant is configured below
+    audience: https://api.colign.org
+    real:
+      issuer-uri: https://YOUR_TENANT.us.auth0.com/
+      jwk-set-uri: https://YOUR_TENANT.us.auth0.com/.well-known/jwks.json

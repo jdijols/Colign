@@ -3,8 +3,8 @@
 // scripts/mock-jwt.mjs — mint demo JWTs for local development
 //
 // DEMO-ONLY. Pairs with the public key at
-//   apps/wc-backend/src/main/resources/keys/wc-mock-public.pem
-// The private key in scripts/wc-mock-private.pem is committed for demo
+//   apps/wc-backend/src/main/resources/keys/colign-mock-public.pem
+// The private key in scripts/colign-mock-private.pem is committed for demo
 // purposes ONLY. Never reuse it in any non-demo environment.
 //
 // Usage:
@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PRIVATE_KEY_PEM = readFileSync(join(__dirname, "wc-mock-private.pem"), "utf8");
+const PRIVATE_KEY_PEM = readFileSync(join(__dirname, "colign-mock-private.pem"), "utf8");
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, _, i, arr) => {
@@ -34,11 +34,11 @@ const args = Object.fromEntries(
 const email = args.email ?? "ada@st6.dev";
 const role = (args.role ?? "IC").toUpperCase();
 const ttlSec = Number(args.ttl ?? 3600);
-const audience = args.audience ?? "https://api.wc.local";
-const issuer = args.issuer ?? "wc-mock";
+const audience = args.audience ?? "https://api.colign.org";
+const issuer = args.issuer ?? "colign-mock";
 
 const now = Math.floor(Date.now() / 1000);
-const header = { alg: "RS256", typ: "JWT", kid: "wc-mock-key-1" };
+const header = { alg: "RS256", typ: "JWT", kid: "colign-mock-key-1" };
 const payload = {
   iss: issuer,
   sub: `mock|${email}`,
@@ -47,7 +47,7 @@ const payload = {
   nbf: now,
   exp: now + ttlSec,
   email,
-  "https://wc/roles": [role],
+  "https://colign.org/roles": [role],
   scope: "read:plans write:plans read:commits write:commits read:reconciliations write:reconciliations",
 };
 
