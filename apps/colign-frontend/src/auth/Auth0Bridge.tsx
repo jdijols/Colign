@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useAppDispatch } from "@/store/hooks";
-import { signIn, signOut } from "@/auth/authSlice";
+import { signIn, authError, signOut } from "@/auth/authSlice";
 import { auth0Config, isReal } from "./auth0Config";
 
 /**
@@ -51,8 +51,16 @@ export function Auth0Bridge({ children }: { children: ReactNode }) {
           }));
         })
         .catch((err) => {
+          if (cancelled) return;
           // eslint-disable-next-line no-console
           console.error("Auth0 token fetch failed:", err);
+          // Surface it so AuthGate can show a retry instead of hanging on
+          // "Signing you in…". The most common cause is consent_required —
+          // enable "Allow Skipping User Consent" on the Auth0 API.
+          const code =
+            (err as { error?: string })?.error ??
+            (err instanceof Error ? err.message : String(err));
+          dispatch(authError(String(code)));
         });
       return () => {
         cancelled = true;
