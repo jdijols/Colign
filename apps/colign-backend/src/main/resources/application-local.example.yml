@@ -14,3 +14,16 @@ colign:
     real:
       issuer-uri: https://YOUR_TENANT.us.auth0.com/
       jwk-set-uri: https://YOUR_TENANT.us.auth0.com/.well-known/jwks.json
+  email:
+    # Prefer setting RESEND_API_KEY / RESEND_FROM in apps/colign-backend/.env.local
+    # (already gitignored) and source it before boot:
+    #   set -a && source .env.local && set +a && ./mvnw spring-boot:run
+    # These YAML values are the fallback when the env vars aren't set.
+    resend-api-key: ""
+    from: "Colign <onboarding@resend.dev>"
+  app:
+    # Origin the invitation accept links resolve against. For the dev host
+    # use the pa-host port and the WC mount path:
+    base-url: http://localhost:4173/weekly-commit
+  invitations:
+    expiry-days: 14

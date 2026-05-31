@@ -42,6 +42,25 @@ colign:
     real:
       issuer-uri: ${COLIGN_AUTH0_ISSUER:https://YOUR_TENANT.us.auth0.com/}
       jwk-set-uri: ${COLIGN_AUTH0_JWKS:https://YOUR_TENANT.us.auth0.com/.well-known/jwks.json}
+  email:
+    # Resend API key (https://resend.com). Read from the RESEND_API_KEY env var,
+    # which is sourced from apps/colign-backend/.env.local (gitignored) at boot.
+    # Blank → emails are logged instead of sent, so the invitation flow still
+    # works end-to-end without an outbound provider configured.
+    resend-api-key: ${RESEND_API_KEY:}
+    # FROM address. Defaults to Resend's sandbox sender; override via RESEND_FROM
+    # once the colign.org domain is verified in the Resend dashboard.
+    from: ${RESEND_FROM:Colign <onboarding@resend.dev>}
+  app:
+    # Base URL the invitation accept link is built against. The controller
+    # appends "/invite/{token}". For pa-host on dev that's :4173/weekly-commit
+    # because the colign remote is mounted at /weekly-commit/*. Swap to a
+    # public origin (e.g. https://app.colign.org/weekly-commit) for prod.
+    base-url: ${COLIGN_APP_BASE_URL:http://localhost:4173/weekly-commit}
+  invitations:
+    # Days a pending invitation stays valid. After this it returns 410 GONE
+    # on preview/accept and the invitee must request a fresh one.
+    expiry-days: ${COLIGN_INVITE_EXPIRY_DAYS:14}
 
 springdoc:
   swagger-ui:

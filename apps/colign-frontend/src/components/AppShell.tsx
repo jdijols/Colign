@@ -2,19 +2,31 @@ import { useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { HiOutlineMenu, HiOutlineX } from "react-icons/hi";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import { signOut } from "@/auth/authSlice";
 import { isReal } from "@/auth/auth0Config";
+import { useGetMeQuery } from "@/api/me";
 import { ColignBrand } from "@/components/Brand";
 import { Button, ThemeToggle } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
+/**
+ * Authenticated app chrome. Role + email come from {@code GET /me}, not the
+ * Redux auth bootstrap — that bootstrap is a localStorage seed at sign-in time
+ * and never reflects derived-role transitions (e.g. an IC whose first REPORT
+ * just accepted an invitation should see the "Team" link on next render, not
+ * after a re-login).
+ */
 export function AppShell() {
-  const auth = useAppSelector((s) => s.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { logout: auth0Logout } = useAuth0();
+  const { data: me } = useGetMeQuery();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const role = me?.role ?? "IC";
+  const email = me?.email ?? "";
+  const isManagerOrAdmin = role === "MANAGER" || role === "ADMIN";
 
   const handleSignOut = () => {
     dispatch(signOut());
@@ -51,7 +63,7 @@ export function AppShell() {
             <NavLink to="reconcile" className={navLinkClass}>
               Reconcile
             </NavLink>
-            {auth.role === "MANAGER" || auth.role === "ADMIN" ? (
+            {isManagerOrAdmin ? (
               <NavLink to="manager" className={navLinkClass}>
                 Team
               </NavLink>
@@ -60,9 +72,9 @@ export function AppShell() {
 
           <div className="ml-auto flex items-center gap-2">
             <div className="hidden lg:flex items-center gap-2 text-xs text-neutral-600 pr-2 border-r border-neutral-200 dark:border-neutral-800">
-              <span className="font-mono">{auth.email}</span>
+              <span className="font-mono">{email}</span>
               <span className="text-neutral-300 dark:text-neutral-700">·</span>
-              <span className="uppercase tracking-wider">{auth.role}</span>
+              <span className="uppercase tracking-wider">{role}</span>
             </div>
             <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={handleSignOut} data-cy="sign-out">
@@ -93,13 +105,13 @@ export function AppShell() {
             <NavLink to="reconcile" className={navLinkClass} onClick={() => setMenuOpen(false)}>
               Reconcile
             </NavLink>
-            {auth.role === "MANAGER" || auth.role === "ADMIN" ? (
+            {isManagerOrAdmin ? (
               <NavLink to="manager" className={navLinkClass} onClick={() => setMenuOpen(false)}>
                 Team
               </NavLink>
             ) : null}
             <div className="border-t border-neutral-200 dark:border-neutral-800 mt-2 pt-2 text-xs text-neutral-600 font-mono">
-              {auth.email} · {auth.role}
+              {email} · {role}
             </div>
           </nav>
         )}

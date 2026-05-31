@@ -2,15 +2,21 @@ package com.colign.controller;
 
 import com.colign.domain.Team;
 import com.colign.domain.User;
+import com.colign.dto.CreateInvitationRequest;
 import com.colign.dto.CreateTeamRequest;
+import com.colign.dto.InvitationDto;
 import com.colign.dto.MeDto;
 import com.colign.repository.TeamRepository;
 import com.colign.repository.UserRepository;
+import com.colign.service.InvitationService;
 import com.colign.service.UserResolver;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,9 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Team lifecycle. v1 is deliberately thin: create a team (the onboarding
- * unblock). The creator becomes the team lead and its first member; they stay
- * IC until they invite a direct report, because role is DERIVED from team
- * relationships (see UserResolver.derivedRole), not stored.
+ * unblock), then invite teammates. The creator becomes the team lead and its
+ * first member; they stay IC until their first REPORT invitation is accepted,
+ * because role is DERIVED from team relationships (see
+ * {@code UserResolver.derivedRole}), not stored.
  */
 @RestController
 @RequestMapping("/api/v1/teams")
@@ -29,11 +36,17 @@ public class TeamController {
     private final UserResolver userResolver;
     private final TeamRepository teams;
     private final UserRepository users;
+    private final InvitationService invitations;
 
-    public TeamController(UserResolver userResolver, TeamRepository teams, UserRepository users) {
+    public TeamController(
+            UserResolver userResolver,
+            TeamRepository teams,
+            UserRepository users,
+            InvitationService invitations) {
         this.userResolver = userResolver;
         this.teams = teams;
         this.users = users;
+        this.invitations = invitations;
     }
 
     /**
@@ -64,5 +77,32 @@ public class TeamController {
         users.save(me);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(userResolver.toMeDto(me));
+    }
+
+    /**
+     * Invite a teammate by email. Any member of the team may invite (the role
+     * the inviter takes on the resulting relationship is decided here too —
+     * REPORT means "I'll be their manager", PEER means "we're peers"). The
+     * email send is synchronous; if it fails we 502 rather than leave a row
+     * the recipient never hears about.
+     */
+    @PostMapping("/{teamId}/invitations")
+    public ResponseEntity<InvitationDto> invite(
+            @PathVariable Long teamId,
+            @Valid @RequestBody CreateInvitationRequest req) {
+        User me = userResolver.resolveCurrent();
+        InvitationDto dto = invitations.create(teamId, req.email(), req.relationship(), me);
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+    }
+
+    /**
+     * List invitations for the team, newest first. Used by the post-create
+     * "invite teammates" screen so the inviter can see pending invites at a
+     * glance.
+     */
+    @GetMapping("/{teamId}/invitations")
+    public List<InvitationDto> list(@PathVariable Long teamId) {
+        User me = userResolver.resolveCurrent();
+        return invitations.listForTeam(teamId, me);
     }
 }

@@ -12,6 +12,6 @@ export const colignApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Plan", "Commit", "Outcome", "ChessTag", "TeamPage", "Me", "TeamMembers"],
+  tagTypes: ["Plan", "Commit", "Outcome", "ChessTag", "TeamPage", "Me", "TeamMembers", "Invites"],
   endpoints: () => ({}),
 });

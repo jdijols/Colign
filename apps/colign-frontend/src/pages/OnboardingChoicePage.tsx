@@ -28,9 +28,11 @@ export function OnboardingChoicePage() {
     setError(null);
     try {
       await createTeam({ name: trimmed }).unwrap();
-      // getMe cache already holds the new teamId (see createTeam.onQueryStarted),
-      // so the app's OnboardingGate passes. ".." → the WC app index (My Week).
-      navigate("..", { relative: "path" });
+      // getMe cache already holds the new teamId (see createTeam.onQueryStarted).
+      // Per the minimize-actions principle, the very next step IS inviting
+      // teammates — surface that screen instead of dropping the user into an
+      // empty My Week with no obvious next action.
+      navigate("invite", { relative: "path" });
     } catch (err) {
       const status = (err as { status?: number })?.status;
       setError(

@@ -22,6 +22,8 @@ import { AuthGate } from "@/auth/AuthGate";
 import { OnboardingGate } from "@/auth/OnboardingGate";
 import { LoginPage } from "@/pages/LoginPage";
 import { OnboardingChoicePage } from "@/pages/OnboardingChoicePage";
+import { InviteTeammatesPage } from "@/pages/InviteTeammatesPage";
+import { InviteAcceptPage } from "@/pages/InviteAcceptPage";
 import { WeeklyPlanPage } from "@/pages/WeeklyPlanPage";
 import { ReconcilePage } from "@/pages/ReconcilePage";
 import { ManagerDashboardPage } from "@/pages/ManagerDashboardPage";
@@ -48,9 +50,17 @@ export default function WeeklyCommitApp() {
         <Routes>
           <Route path="login" element={<LoginPage />} />
 
+          {/* Public invitation accept landing. Lives outside AuthGate so the
+              recipient can reach it from their email before signing in; the
+              page itself triggers loginWithRedirect (real) or routes to /login
+              (mock) and auto-accepts once authenticated. */}
+          <Route path="invite/:token" element={<InviteAcceptPage />} />
+
           {/* Authenticated but team-agnostic — reachable with no team yet.
               The onboarding screen IS the create-team form (single focused
-              input); there's no separate create-team route. */}
+              input); there's no separate create-team route. The invite step
+              sits one level deeper and bounces teamless users back to
+              /onboarding (see InviteTeammatesPage). */}
           <Route
             element={
               <AuthGate>
@@ -59,6 +69,7 @@ export default function WeeklyCommitApp() {
             }
           >
             <Route path="onboarding" element={<OnboardingChoicePage />} />
+            <Route path="onboarding/invite" element={<InviteTeammatesPage />} />
           </Route>
 
           {/* Requires a team — OnboardingGate bounces teamless users to onboarding. */}

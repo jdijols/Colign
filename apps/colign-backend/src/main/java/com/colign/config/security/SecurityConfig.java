@@ -70,6 +70,13 @@ public class SecurityConfig {
                         "/actuator/health/**", "/actuator/info",
                         "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
                 ).permitAll()
+                // Invitation preview is reachable to the unauthenticated
+                // invitee landing on /invite/<token>. The token is the
+                // security capability; the response leaks only public-safe
+                // fields (team name, inviter display name, relationship).
+                // Accept (POST .../accept) still requires auth.
+                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                        "/api/v1/invitations/*").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

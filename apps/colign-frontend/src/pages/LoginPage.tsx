@@ -171,6 +171,12 @@ function MockLogin() {
   const [error, setError] = useState<string | null>(null);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Honor an inbound `state.from` (e.g. the invitation accept page redirecting
+  // unauthenticated users here): after mint, route back there so the invite
+  // accept auto-runs. Falls back to role-appropriate landing otherwise.
+  const fromPath = (location.state as { from?: { pathname?: string } } | null)
+    ?.from?.pathname;
 
   async function mint(emailToUse: string, roleToUse: Role) {
     setBusyEmail(emailToUse);
@@ -182,7 +188,8 @@ function MockLogin() {
       if (!res.ok) throw new Error(`Mint failed: HTTP ${res.status}`);
       const data = (await res.json()) as { token: string; email: string; role: Role };
       dispatch(signIn({ token: data.token, email: data.email, role: data.role }));
-      navigate(roleToUse === "MANAGER" ? "../manager" : "..", { replace: true });
+      const target = fromPath ?? (roleToUse === "MANAGER" ? "../manager" : "..");
+      navigate(target, { replace: true });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
