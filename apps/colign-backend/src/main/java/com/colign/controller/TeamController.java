@@ -23,6 +23,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -144,5 +145,19 @@ public class TeamController {
             @Valid @RequestBody UpdateTeamRequest req) {
         User me = userResolver.resolveCurrent();
         return teamService.updateTeam(teamId, me, req);
+    }
+
+    /** Read the team profile. Any team member may call; ADMIN bypasses team membership. */
+    @GetMapping("/{teamId}")
+    public TeamDto get(@PathVariable Long teamId) {
+        User me = userResolver.resolveCurrent();
+        Team t = teams.findById(teamId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "team not found"));
+        if (me.getRole() != com.colign.domain.UserRole.ADMIN) {
+            if (me.getTeamId() == null || !me.getTeamId().equals(teamId)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not a member of this team");
+            }
+        }
+        return teamService.toDto(t);
     }
 }

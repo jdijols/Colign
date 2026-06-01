@@ -99,6 +99,15 @@ class TeamControllerWiringTest {
                 .andExpect(r -> assertThat(r.getResponse().getStatus()).isEqualTo(400));
     }
 
+    @Test
+    void getTeam_returns200_forMember() throws Exception {
+        mvc.perform(get("/api/v1/teams/" + team.getId()).with(jwtFor(lead)))
+                .andExpect(r -> {
+                    assertThat(r.getResponse().getStatus()).isEqualTo(200);
+                    assertThat(r.getResponse().getContentAsString()).contains("\"name\":\"TCW Team\"");
+                });
+    }
+
     private static RequestPostProcessor jwtFor(User user) {
         return jwt().jwt(jwt -> jwt
                 .subject(user.getAuth0Sub())

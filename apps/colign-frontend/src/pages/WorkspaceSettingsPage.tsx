@@ -1,12 +1,16 @@
 import { Navigate } from "react-router-dom";
 import { useGetMeQuery } from "@/api/me";
+import { useGetTeamQuery } from "@/api/team";
 import { InviteForm } from "@/components/InviteForm";
+import { MembersSection } from "@/components/workspace/MembersSection";
+import { TeamSettingsSection } from "@/components/workspace/TeamSettingsSection";
+import { canManageTeam } from "@/lib/permissions";
 
 /**
  * `/settings` — the workspace-management surface. Three stacked sections:
- *   - Team (PR 2): name + description + avatar URL. Permission-gated.
- *   - Members (PR 2): all team members, read-only; remove button in PR 3.
- *   - Invitations (PR 1): the existing <InviteForm> + pending list.
+ *   - Team: name + description + avatar URL. Permission-gated.
+ *   - Members: all team members, read-only; remove button in PR 3.
+ *   - Invitations: the existing <InviteForm> + pending list.
  *
  * Teamless users land here only via direct URL — bounce them up to the
  * parent route ("/") so OnboardingGate can route them to /onboarding.
@@ -14,17 +18,15 @@ import { InviteForm } from "@/components/InviteForm";
  * which doesn't exist.)
  */
 export function WorkspaceSettingsPage() {
-  const { data: me, isLoading } = useGetMeQuery();
+  const { data: me, isLoading: meLoading } = useGetMeQuery();
+  const teamId = me?.teamId ?? null;
+  const { data: team } = useGetTeamQuery({ teamId: teamId ?? 0 }, { skip: teamId == null });
 
-  if (isLoading) {
-    return (
-      <div className="px-4 sm:px-6 py-10">
-        <span className="text-sm text-neutral-600 dark:text-neutral-400">Loading…</span>
-      </div>
-    );
-  }
+  if (meLoading) return <Loading />;
   if (me && me.teamId == null) return <Navigate to=".." replace />;
   if (!me?.teamId) return null;
+
+  const canManage = canManageTeam(me, team ?? null);
 
   return (
     <div className="px-4 sm:px-6 py-10 max-w-2xl mx-auto">
@@ -33,28 +35,32 @@ export function WorkspaceSettingsPage() {
       </h1>
 
       <section aria-labelledby="team-heading" className="mt-10">
-        <h2 id="team-heading" className="text-lg font-medium text-neutral-900 dark:text-neutral-50">Team</h2>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-          Team profile lands in the next PR.
-        </p>
+        <h2 id="team-heading" className="text-lg font-medium text-neutral-900 dark:text-neutral-50 mb-4">Team</h2>
+        <TeamSettingsSection teamId={me.teamId} canManage={canManage} />
       </section>
 
-      <section aria-labelledby="members-heading" className="mt-10">
-        <h2 id="members-heading" className="text-lg font-medium text-neutral-900 dark:text-neutral-50">Members</h2>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-          Member list lands in the next PR.
-        </p>
+      <section aria-labelledby="members-heading" className="mt-12">
+        <h2 id="members-heading" className="text-lg font-medium text-neutral-900 dark:text-neutral-50 mb-4">Members</h2>
+        <MembersSection
+          teamId={me.teamId}
+          canManage={canManage}
+          currentUserId={me.id}
+          teamLeadId={team?.leadUserId ?? null}
+        />
       </section>
 
-      <section aria-labelledby="invitations-heading" className="mt-10">
-        <h2 id="invitations-heading" className="text-lg font-medium text-neutral-900 dark:text-neutral-50">Invitations</h2>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-          Send an invite. Pending invitations appear below.
-        </p>
-        <div className="mt-6">
-          <InviteForm teamId={me.teamId} />
-        </div>
+      <section aria-labelledby="invitations-heading" className="mt-12">
+        <h2 id="invitations-heading" className="text-lg font-medium text-neutral-900 dark:text-neutral-50 mb-4">Invitations</h2>
+        <InviteForm teamId={me.teamId} />
       </section>
+    </div>
+  );
+}
+
+function Loading() {
+  return (
+    <div className="px-4 sm:px-6 py-10">
+      <span className="text-sm text-neutral-600 dark:text-neutral-400">Loading…</span>
     </div>
   );
 }
