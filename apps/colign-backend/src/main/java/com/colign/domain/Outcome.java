@@ -38,6 +38,14 @@ public class Outcome extends AbstractAuditingEntity {
   @Column(name = "defining_objective_id", nullable = false)
   private Long definingObjectiveId;
 
+  /**
+   * Denormalised owning team (V7). Mirrors the parent Defining Objective's team so strategy authz,
+   * team-scoped Outcome pickers, and the {@code strategySetupComplete} signal resolve without a join.
+   */
+  @NotNull
+  @Column(name = "team_id", nullable = false)
+  private Long teamId;
+
   @Column(name = "parent_outcome_id")
   private Long parentOutcomeId;
 

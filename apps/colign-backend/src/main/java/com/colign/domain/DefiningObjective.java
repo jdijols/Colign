@@ -32,6 +32,15 @@ public class DefiningObjective extends AbstractAuditingEntity {
   @Column(name = "rally_cry_id", nullable = false)
   private Long rallyCryId;
 
+  /**
+   * Denormalised owning team (V7). Mirrors {@code rally_cry.team_id} so strategy authz and
+   * team-scoped reads don't walk the FK chain per request. Always equal to the parent Rally Cry's
+   * team.
+   */
+  @NotNull
+  @Column(name = "team_id", nullable = false)
+  private Long teamId;
+
   @NotBlank
   @Column(nullable = false, length = 200)
   private String title;
