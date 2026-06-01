@@ -173,6 +173,28 @@ If every step passes, prod is live.
 
 ---
 
+## Incremental deploys (after the first full deploy)
+
+The three services deploy independently — redeploy only what changed.
+
+- **Backend only** (`apps/colign-backend`): `fly deploy --app colign-backend`. Nothing on Vercel.
+- **MF remote only** (`apps/colign-frontend`) — the common case, most feature work lives here: from that dir, `vercel deploy --prod`. **The host does NOT need redeploying.** It loads `remoteEntry.js` at runtime from the stable `colign-frontend.vercel.app` alias, which serves `cache-control: public, max-age=0, must-revalidate`, so the host revalidates and picks up the new remote on the next page load.
+- **MF host only** (`apps/pa-host`): from that dir, `vercel deploy --prod`.
+- **Both frontends**: deploy the remote first (refreshes its alias), then the host. The host only needs a rebuild when `COLIGN_REMOTE_URL` changes (it doesn't on a same-project redeploy) or when a `shared` singleton version in the MF config changes.
+
+The remote build regenerates `src/colign-compiled.css` via the `prebuild` hook (the file is gitignored, never committed), so new Tailwind utility classes compile in the prod build automatically — no separate step.
+
+Verify after any frontend deploy:
+
+```bash
+curl -s -o /dev/null -w "remote %{http_code}\n" https://colign-frontend.vercel.app/remoteEntry.js
+curl -s -o /dev/null -w "host %{http_code}\n" https://colign.org
+```
+
+Rollback (remote-only change): `vercel rollback` or promote the previous deployment in the dashboard — no backend or DNS involved.
+
+---
+
 ## Environment variable reference
 
 **Fly backend** — `fly.toml [env]` (non-secret): `SPRING_PROFILES_ACTIVE=prod`,
