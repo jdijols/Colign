@@ -407,11 +407,14 @@ export function canManageTeam(
   me: { id: number; role: "IC" | "MANAGER" | "ADMIN" } | null,
   team: { leadUserId: number | null } | null,
 ): boolean {
-  if (!me || !team) return false;
+  if (!me) return false;
   if (me.role === "ADMIN" || me.role === "MANAGER") return true;
+  if (!team) return false;
   return team.leadUserId === me.id;
 }
 ```
+
+**Note:** Privileged roles (ADMIN/MANAGER) bypass the team check — they can manage before the team query has resolved. The IC-as-lead path requires the team object to compare ids. An earlier draft of this snippet had `if (!me || !team) return false` as the first guard, which would have failed the "allows ADMIN regardless of lead status" test (ADMIN + null team → false instead of true). Backend `TeamPermissions.canManage` (Task 2.2) keeps its `team == null → false` guard because the backend never reaches the permission check without first loading the team.
 
 - [ ] **Step 4: Run test to verify it passes**
 
