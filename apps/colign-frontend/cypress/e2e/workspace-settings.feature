@@ -9,3 +9,15 @@ Feature: Workspace settings
     When I type "newbie@example.com" into the invite email field
     And I submit the invite
     Then I should see an invitation sent confirmation
+
+  Scenario: Lead sees all team members in the Members section
+    When I open the workspace settings from the user menu
+    Then I should see the Members section
+    And the Members list contains "lead@example.com"
+
+  Scenario: Lead renames the team
+    When I open the workspace settings from the user menu
+    And I change the team name to "Renamed Acme"
+    And I save the team settings
+    Then I should see a saved confirmation
+    And reloading the page keeps the team name as "Renamed Acme"

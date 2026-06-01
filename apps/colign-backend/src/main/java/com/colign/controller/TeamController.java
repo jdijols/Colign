@@ -6,16 +6,27 @@ import com.colign.dto.CreateInvitationRequest;
 import com.colign.dto.CreateTeamRequest;
 import com.colign.dto.InvitationDto;
 import com.colign.dto.MeDto;
+import com.colign.dto.TeamDto;
+import com.colign.dto.TeamMemberDto;
+import com.colign.dto.UpdateTeamRequest;
 import com.colign.repository.TeamRepository;
 import com.colign.repository.UserRepository;
 import com.colign.service.InvitationService;
+import com.colign.service.TeamService;
 import com.colign.service.UserResolver;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,16 +48,19 @@ public class TeamController {
     private final TeamRepository teams;
     private final UserRepository users;
     private final InvitationService invitations;
+    private final TeamService teamService;
 
     public TeamController(
             UserResolver userResolver,
             TeamRepository teams,
             UserRepository users,
-            InvitationService invitations) {
+            InvitationService invitations,
+            TeamService teamService) {
         this.userResolver = userResolver;
         this.teams = teams;
         this.users = users;
         this.invitations = invitations;
+        this.teamService = teamService;
     }
 
     /**
@@ -104,5 +118,46 @@ public class TeamController {
     public List<InvitationDto> list(@PathVariable Long teamId) {
         User me = userResolver.resolveCurrent();
         return invitations.listForTeam(teamId, me);
+    }
+
+    /** Workspace member roster. Any member may read; cap page size at 2000 per brief. */
+    @GetMapping("/{teamId}/members")
+    public Page<TeamMemberDto> members(
+            @PathVariable Long teamId,
+            @PageableDefault(size = 50, sort = "displayName", direction = Sort.Direction.ASC) Pageable pageable) {
+        User me = userResolver.resolveCurrent();
+        Pageable capped = PageRequest.of(
+                pageable.getPageNumber(),
+                Math.min(pageable.getPageSize(), 2000),
+                pageable.getSort());
+        return teamService.listMembers(teamId, me, capped).map(u -> new TeamMemberDto(
+                u.getId(), u.getEmail(), u.getDisplayName(),
+                userResolver.derivedRole(u).name(),
+                u.getAvatarUrl(),
+                null /* currentPlan — not needed in the workspace roster; ManagerController serves the roll-up */
+        ));
+    }
+
+    /** Rename / set description / set avatar URL. Permission-gated in TeamService. */
+    @PatchMapping("/{teamId}")
+    public TeamDto update(
+            @PathVariable Long teamId,
+            @Valid @RequestBody UpdateTeamRequest req) {
+        User me = userResolver.resolveCurrent();
+        return teamService.updateTeam(teamId, me, req);
+    }
+
+    /** Read the team profile. Any team member may call; ADMIN bypasses team membership. */
+    @GetMapping("/{teamId}")
+    public TeamDto get(@PathVariable Long teamId) {
+        User me = userResolver.resolveCurrent();
+        Team t = teams.findById(teamId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "team not found"));
+        if (me.getRole() != com.colign.domain.UserRole.ADMIN) {
+            if (me.getTeamId() == null || !me.getTeamId().equals(teamId)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not a member of this team");
+            }
+        }
+        return teamService.toDto(t);
     }
 }
