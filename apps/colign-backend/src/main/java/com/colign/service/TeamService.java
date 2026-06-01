@@ -15,10 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Workspace-management operations: list members, update team profile, remove
- * a member (PR 3). Permissions follow {@link TeamPermissions}; same-team
- * membership is checked here, not in the controller, so reuse from other
- * services stays safe.
+ * Workspace-management operations: list members, update team profile, remove a member (PR 3).
+ * Permissions follow {@link TeamPermissions}; same-team membership is checked here, not in the
+ * controller, so reuse from other services stays safe.
  */
 @Service
 public class TeamService {
@@ -39,14 +38,15 @@ public class TeamService {
   }
 
   /**
-   * Apply only non-null fields. Trim+reject-blank for name. Caller must
-   * satisfy {@link TeamPermissions#canManage}. Returns the updated DTO so the
-   * FE doesn't need a follow-up GET.
+   * Apply only non-null fields. Trim+reject-blank for name. Caller must satisfy {@link
+   * TeamPermissions#canManage}. Returns the updated DTO so the FE doesn't need a follow-up GET.
    */
   @Transactional
   public TeamDto updateTeam(Long teamId, User caller, UpdateTeamRequest req) {
-    Team t = teams.findById(teamId).orElseThrow(
-        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "team not found"));
+    Team t =
+        teams
+            .findById(teamId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "team not found"));
     if (!TeamPermissions.canManage(caller, t)) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "only managers may update the team");
     }
@@ -72,22 +72,24 @@ public class TeamService {
   /** DTO mapping. Avatar field provisioned by V5 in Task 2.0 — direct getter. */
   public TeamDto toDto(Team t) {
     return new TeamDto(
-        t.getId(), t.getName(), t.getDescription(),
-        t.getAvatarUrl(), t.getLeadUserId());
+        t.getId(), t.getName(), t.getDescription(), t.getAvatarUrl(), t.getLeadUserId());
   }
 
   /**
-   * Remove a member from the team, cascading orphan reports (manager_id → null).
-   * Blocks removal of the team lead (transfer-lead flow not yet built).
-   * Caller must be the target user (self-leave) or satisfy
-   * {@link TeamPermissions#canManage}; otherwise 403.
+   * Remove a member from the team, cascading orphan reports (manager_id → null). Blocks removal of
+   * the team lead (transfer-lead flow not yet built). Caller must be the target user (self-leave)
+   * or satisfy {@link TeamPermissions#canManage}; otherwise 403.
    */
   @Transactional
   public void removeMember(Long teamId, Long userIdToRemove, User caller) {
-    Team t = teams.findById(teamId).orElseThrow(
-        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "team not found"));
-    User target = users.findById(userIdToRemove).orElseThrow(
-        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
+    Team t =
+        teams
+            .findById(teamId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "team not found"));
+    User target =
+        users
+            .findById(userIdToRemove)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
     if (target.getTeamId() == null || !target.getTeamId().equals(teamId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "user is not on this team");
     }
@@ -108,10 +110,13 @@ public class TeamService {
 
     // Orphan any reports — set manager_id null. Their derived role recomputes
     // on next /me; they remain on the team's data (but with no manager link).
-    users.findByManagerId(target.getId()).forEach(report -> {
-      report.setManagerId(null);
-      users.save(report);
-    });
+    users
+        .findByManagerId(target.getId())
+        .forEach(
+            report -> {
+              report.setManagerId(null);
+              users.save(report);
+            });
 
     target.setTeamId(null);
     target.setManagerId(null);

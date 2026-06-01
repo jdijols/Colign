@@ -25,29 +25,29 @@ import lombok.Setter;
 @AllArgsConstructor
 public class RallyCry extends AbstractAuditingEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @NotBlank
-    @Column(nullable = false, length = 200)
-    private String title;
+  @NotBlank
+  @Column(nullable = false, length = 200)
+  private String title;
 
-    @Column(columnDefinition = "TEXT")
-    private String narrative;
+  @Column(columnDefinition = "TEXT")
+  private String narrative;
 
-    @NotNull
-    @Column(name = "team_id", nullable = false)
-    private Long teamId;
+  @NotNull
+  @Column(name = "team_id", nullable = false)
+  private Long teamId;
 
-    @NotNull
-    @Column(name = "horizon_start", nullable = false)
-    private LocalDate horizonStart;
+  @NotNull
+  @Column(name = "horizon_start", nullable = false)
+  private LocalDate horizonStart;
 
-    @NotNull
-    @Column(name = "horizon_end", nullable = false)
-    private LocalDate horizonEnd;
+  @NotNull
+  @Column(name = "horizon_end", nullable = false)
+  private LocalDate horizonEnd;
 
-    @Column(nullable = false, length = 20)
-    private String status;
+  @Column(nullable = false, length = 20)
+  private String status;
 }

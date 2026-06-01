@@ -42,6 +42,7 @@ class TeamPermissionsTest {
   @Test
   void nullsAreBlocked() {
     assertThat(TeamPermissions.canManage(null, team(1L))).isFalse();
-    assertThat(TeamPermissions.canManage(User.builder().role(UserRole.MANAGER).build(), null)).isFalse();
+    assertThat(TeamPermissions.canManage(User.builder().role(UserRole.MANAGER).build(), null))
+        .isFalse();
   }
 }

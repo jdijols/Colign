@@ -26,35 +26,35 @@ import lombok.Setter;
 @AllArgsConstructor
 public class User extends AbstractAuditingEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @NotBlank
-    @Email
-    @Column(nullable = false, unique = true, length = 254)
-    private String email;
+  @NotBlank
+  @Email
+  @Column(nullable = false, unique = true, length = 254)
+  private String email;
 
-    @NotBlank
-    @Column(name = "display_name", nullable = false, length = 120)
-    private String displayName;
+  @NotBlank
+  @Column(name = "display_name", nullable = false, length = 120)
+  private String displayName;
 
-    @Column(name = "avatar_url", length = 500)
-    private String avatarUrl;
+  @Column(name = "avatar_url", length = 500)
+  private String avatarUrl;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private UserRole role;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  private UserRole role;
 
-    @Column(name = "manager_id")
-    private Long managerId;
+  @Column(name = "manager_id")
+  private Long managerId;
 
-    @Column(name = "team_id")
-    private Long teamId;
+  @Column(name = "team_id")
+  private Long teamId;
 
-    @Column(name = "auth0_sub", length = 120, unique = true)
-    private String auth0Sub;
+  @Column(name = "auth0_sub", length = 120, unique = true)
+  private String auth0Sub;
 
-    @Column(name = "is_active", nullable = false)
-    private boolean active;
+  @Column(name = "is_active", nullable = false)
+  private boolean active;
 }

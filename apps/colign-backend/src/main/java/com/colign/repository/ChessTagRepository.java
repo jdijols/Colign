@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ChessTagRepository extends JpaRepository<ChessTag, Long> {
 
-    List<ChessTag> findAllByOrderByPriorityRankAsc();
+  List<ChessTag> findAllByOrderByPriorityRankAsc();
 }

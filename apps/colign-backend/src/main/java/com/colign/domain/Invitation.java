@@ -20,15 +20,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * A team invitation. Created when a lead invites someone by email; consumed
- * when the named invitee signs in and accepts via the unique {@code token}.
+ * A team invitation. Created when a lead invites someone by email; consumed when the named invitee
+ * signs in and accepts via the unique {@code token}.
  *
- * Email is stored lowercased so the accept-side equality check is
- * case-insensitive without needing a {@code citext} column or a per-query
- * {@code LOWER()} call — historical accident of MIME but consistent in v1.
+ * <p>Email is stored lowercased so the accept-side equality check is case-insensitive without
+ * needing a {@code citext} column or a per-query {@code LOWER()} call — historical accident of MIME
+ * but consistent in v1.
  *
- * The {@code token} is the only field exposed to the outside world (it's
- * literally in the URL of the email); everything else stays server-side.
+ * <p>The {@code token} is the only field exposed to the outside world (it's literally in the URL of
+ * the email); everything else stays server-side.
  */
 @Entity
 @Table(name = "invitation")
@@ -39,41 +39,41 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Invitation extends AbstractAuditingEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @NotBlank
-    @Email
-    @Column(nullable = false, length = 254)
-    private String email;
+  @NotBlank
+  @Email
+  @Column(nullable = false, length = 254)
+  private String email;
 
-    @NotNull
-    @Column(name = "team_id", nullable = false)
-    private Long teamId;
+  @NotNull
+  @Column(name = "team_id", nullable = false)
+  private Long teamId;
 
-    @NotNull
-    @Column(name = "inviter_user_id", nullable = false)
-    private Long inviterUserId;
+  @NotNull
+  @Column(name = "inviter_user_id", nullable = false)
+  private Long inviterUserId;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
-    private InvitationRelationship relationship;
+  @NotNull
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 16)
+  private InvitationRelationship relationship;
 
-    @NotBlank
-    @Column(nullable = false, unique = true, length = 64)
-    private String token;
+  @NotBlank
+  @Column(nullable = false, unique = true, length = 64)
+  private String token;
 
-    @NotNull
-    @Column(name = "expires_at", nullable = false)
-    private Instant expiresAt;
+  @NotNull
+  @Column(name = "expires_at", nullable = false)
+  private Instant expiresAt;
 
-    @Column(name = "accepted_at")
-    private Instant acceptedAt;
+  @Column(name = "accepted_at")
+  private Instant acceptedAt;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
-    private InvitationStatus status;
+  @NotNull
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 16)
+  private InvitationStatus status;
 }

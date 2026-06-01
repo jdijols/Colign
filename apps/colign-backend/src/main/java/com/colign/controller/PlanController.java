@@ -19,37 +19,37 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/plans")
 public class PlanController {
 
-    private final PlanService plans;
-    private final UserResolver users;
+  private final PlanService plans;
+  private final UserResolver users;
 
-    public PlanController(PlanService plans, UserResolver users) {
-        this.plans = plans;
-        this.users = users;
-    }
+  public PlanController(PlanService plans, UserResolver users) {
+    this.plans = plans;
+    this.users = users;
+  }
 
-    /** Get-or-create the current-week plan for the JWT user. Idempotent. */
-    @GetMapping("/current")
-    public PlanDto getOrCreateCurrent() {
-        var me = users.resolveCurrent();
-        var plan = plans.getOrCreatePlanForWeek(me.getId(), PlanService.currentWeekStart());
-        return plans.toDto(plan);
-    }
+  /** Get-or-create the current-week plan for the JWT user. Idempotent. */
+  @GetMapping("/current")
+  public PlanDto getOrCreateCurrent() {
+    var me = users.resolveCurrent();
+    var plan = plans.getOrCreatePlanForWeek(me.getId(), PlanService.currentWeekStart());
+    return plans.toDto(plan);
+  }
 
-    @PostMapping
-    public ResponseEntity<PlanDto> create(@Valid @RequestBody CreatePlanRequest req) {
-        var me = users.resolveCurrent();
-        var plan = plans.getOrCreatePlanForWeek(me.getId(), req.weekStartDate());
-        var dto = plans.toDto(plan);
-        return ResponseEntity.created(URI.create("/api/v1/plans/" + dto.id())).body(dto);
-    }
+  @PostMapping
+  public ResponseEntity<PlanDto> create(@Valid @RequestBody CreatePlanRequest req) {
+    var me = users.resolveCurrent();
+    var plan = plans.getOrCreatePlanForWeek(me.getId(), req.weekStartDate());
+    var dto = plans.toDto(plan);
+    return ResponseEntity.created(URI.create("/api/v1/plans/" + dto.id())).body(dto);
+  }
 
-    @GetMapping("/{id}")
-    public PlanDto getById(@PathVariable Long id) {
-        return plans.toDto(plans.getById(id));
-    }
+  @GetMapping("/{id}")
+  public PlanDto getById(@PathVariable Long id) {
+    return plans.toDto(plans.getById(id));
+  }
 
-    @PatchMapping("/{id}/lock")
-    public PlanDto lock(@PathVariable Long id) {
-        return plans.toDto(plans.lock(id));
-    }
+  @PatchMapping("/{id}/lock")
+  public PlanDto lock(@PathVariable Long id) {
+    return plans.toDto(plans.lock(id));
+  }
 }

@@ -24,24 +24,24 @@ import lombok.Setter;
 @AllArgsConstructor
 public class DefiningObjective extends AbstractAuditingEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @NotNull
-    @Column(name = "rally_cry_id", nullable = false)
-    private Long rallyCryId;
+  @NotNull
+  @Column(name = "rally_cry_id", nullable = false)
+  private Long rallyCryId;
 
-    @NotBlank
-    @Column(nullable = false, length = 200)
-    private String title;
+  @NotBlank
+  @Column(nullable = false, length = 200)
+  private String title;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+  @Column(columnDefinition = "TEXT")
+  private String description;
 
-    @Column(name = "owner_user_id")
-    private Long ownerUserId;
+  @Column(name = "owner_user_id")
+  private Long ownerUserId;
 
-    @Column(nullable = false, length = 20)
-    private String status;
+  @Column(nullable = false, length = 20)
+  private String status;
 }

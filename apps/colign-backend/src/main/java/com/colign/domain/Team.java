@@ -23,20 +23,20 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Team extends AbstractAuditingEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @NotBlank
-    @Column(nullable = false, length = 120)
-    private String name;
+  @NotBlank
+  @Column(nullable = false, length = 120)
+  private String name;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+  @Column(columnDefinition = "TEXT")
+  private String description;
 
-    @Column(name = "avatar_url", length = 500)
-    private String avatarUrl;
+  @Column(name = "avatar_url", length = 500)
+  private String avatarUrl;
 
-    @Column(name = "lead_user_id")
-    private Long leadUserId;
+  @Column(name = "lead_user_id")
+  private Long leadUserId;
 }

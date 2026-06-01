@@ -57,9 +57,8 @@ class TeamServiceTest {
 
   @Test
   void listMembers_returnsAllForCallerOnTeam() {
-    when(users.findByTeamId(eq(TEAM_ID), any())).thenReturn(
-        new PageImpl<>(List.of(lead(), member(2L), member(3L)))
-    );
+    when(users.findByTeamId(eq(TEAM_ID), any()))
+        .thenReturn(new PageImpl<>(List.of(lead(), member(2L), member(3L))));
     var page = svc.listMembers(TEAM_ID, lead(), PageRequest.of(0, 50));
     assertThat(page.getTotalElements()).isEqualTo(3);
   }
@@ -97,7 +96,8 @@ class TeamServiceTest {
   @Test
   void updateTeam_rejectsBlankName() {
     when(teams.findById(TEAM_ID)).thenReturn(Optional.of(team()));
-    assertThatThrownBy(() -> svc.updateTeam(TEAM_ID, lead(), new UpdateTeamRequest("   ", null, null)))
+    assertThatThrownBy(
+            () -> svc.updateTeam(TEAM_ID, lead(), new UpdateTeamRequest("   ", null, null)))
         .isInstanceOf(ResponseStatusException.class)
         .hasMessageContaining("400");
   }
@@ -105,7 +105,8 @@ class TeamServiceTest {
   @Test
   void updateTeam_throws404_whenTeamMissing() {
     when(teams.findById(TEAM_ID)).thenReturn(Optional.empty());
-    assertThatThrownBy(() -> svc.updateTeam(TEAM_ID, lead(), new UpdateTeamRequest("x", null, null)))
+    assertThatThrownBy(
+            () -> svc.updateTeam(TEAM_ID, lead(), new UpdateTeamRequest("x", null, null)))
         .isInstanceOf(ResponseStatusException.class)
         .hasMessageContaining("404");
   }
@@ -113,10 +114,13 @@ class TeamServiceTest {
   @Test
   void removeMember_succeeds_andOrphanReports() {
     when(teams.findById(TEAM_ID)).thenReturn(Optional.of(team()));
-    User manager = member(2L); manager.setRole(UserRole.IC);
+    User manager = member(2L);
+    manager.setRole(UserRole.IC);
     when(users.findById(2L)).thenReturn(Optional.of(manager));
-    User report1 = member(3L); report1.setManagerId(2L);
-    User report2 = member(4L); report2.setManagerId(2L);
+    User report1 = member(3L);
+    report1.setManagerId(2L);
+    User report2 = member(4L);
+    report2.setManagerId(2L);
     when(users.findByManagerId(2L)).thenReturn(List.of(report1, report2));
     when(users.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -133,7 +137,8 @@ class TeamServiceTest {
     when(teams.findById(TEAM_ID)).thenReturn(Optional.of(team()));
     when(users.findById(LEAD_ID)).thenReturn(Optional.of(lead()));
     User admin = User.builder().role(UserRole.ADMIN).build();
-    admin.setId(99L); admin.setTeamId(TEAM_ID);
+    admin.setId(99L);
+    admin.setTeamId(TEAM_ID);
     assertThatThrownBy(() -> svc.removeMember(TEAM_ID, LEAD_ID, admin))
         .isInstanceOf(ResponseStatusException.class)
         .hasMessageContaining("400");

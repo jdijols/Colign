@@ -19,9 +19,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * The IC's weekly commitment. {@code outcomeId} is NOT NULL — this is the
- * structural-alignment guarantee that distinguishes WC from 15-Five's
- * unenforced "priorities link to objectives" pattern.
+ * The IC's weekly commitment. {@code outcomeId} is NOT NULL — this is the structural-alignment
+ * guarantee that distinguishes WC from 15-Five's unenforced "priorities link to objectives"
+ * pattern.
  */
 @Entity
 @Table(name = "weekly_commit")
@@ -32,39 +32,39 @@ import lombok.Setter;
 @AllArgsConstructor
 public class WeeklyCommit extends AbstractAuditingEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @NotNull
-    @Column(name = "plan_id", nullable = false)
-    private Long planId;
+  @NotNull
+  @Column(name = "plan_id", nullable = false)
+  private Long planId;
 
-    @NotNull
-    @Column(name = "outcome_id", nullable = false)
-    private Long outcomeId;
+  @NotNull
+  @Column(name = "outcome_id", nullable = false)
+  private Long outcomeId;
 
-    @Column(name = "chess_tag_id")
-    private Long chessTagId;
+  @Column(name = "chess_tag_id")
+  private Long chessTagId;
 
-    @NotBlank
-    @Column(nullable = false, length = 200)
-    private String title;
+  @NotBlank
+  @Column(nullable = false, length = 200)
+  private String title;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+  @Column(columnDefinition = "TEXT")
+  private String description;
 
-    @Column(name = "planned_effort_hours", precision = 5, scale = 2)
-    private BigDecimal plannedEffortHours;
+  @Column(name = "planned_effort_hours", precision = 5, scale = 2)
+  private BigDecimal plannedEffortHours;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private CommitStatus status;
+  @NotNull
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  private CommitStatus status;
 
-    @Column(nullable = false)
-    private Integer ordinal;
+  @Column(nullable = false)
+  private Integer ordinal;
 
-    @Column(name = "carried_from_commit_id")
-    private Long carriedFromCommitId;
+  @Column(name = "carried_from_commit_id")
+  private Long carriedFromCommitId;
 }

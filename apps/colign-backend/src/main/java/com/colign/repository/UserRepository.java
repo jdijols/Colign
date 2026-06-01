@@ -9,24 +9,24 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByEmail(String email);
+  Optional<User> findByEmail(String email);
 
-    Optional<User> findByAuth0Sub(String auth0Sub);
+  Optional<User> findByAuth0Sub(String auth0Sub);
 
-    Page<User> findByManagerId(Long managerId, Pageable pageable);
+  Page<User> findByManagerId(Long managerId, Pageable pageable);
 
-    /** Count of direct reports — drives MANAGER role derivation. */
-    long countByManagerId(Long managerId);
+  /** Count of direct reports — drives MANAGER role derivation. */
+  long countByManagerId(Long managerId);
 
-    /** Members on a team — drives the create→invite→app onboarding gate. */
-    long countByTeamId(Long teamId);
+  /** Members on a team — drives the create→invite→app onboarding gate. */
+  long countByTeamId(Long teamId);
 
-    /** All members of a team, ordered by displayName via Pageable. */
-    Page<User> findByTeamId(Long teamId, Pageable pageable);
+  /** All members of a team, ordered by displayName via Pageable. */
+  Page<User> findByTeamId(Long teamId, Pageable pageable);
 
-    /** Count members of a team, excluding one user (used to compute "last member" cases). */
-    long countByTeamIdAndIdNot(Long teamId, Long excludedUserId);
+  /** Count members of a team, excluding one user (used to compute "last member" cases). */
+  long countByTeamIdAndIdNot(Long teamId, Long excludedUserId);
 
-    /** All users whose manager is the given user — drives the orphan cascade on remove. */
-    List<User> findByManagerId(Long managerId);
+  /** All users whose manager is the given user — drives the orphan cascade on remove. */
+  List<User> findByManagerId(Long managerId);
 }

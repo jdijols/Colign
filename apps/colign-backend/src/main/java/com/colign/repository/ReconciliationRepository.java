@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ReconciliationRepository extends JpaRepository<Reconciliation, Long> {
 
-    Optional<Reconciliation> findByWeeklyCommitId(Long weeklyCommitId);
+  Optional<Reconciliation> findByWeeklyCommitId(Long weeklyCommitId);
 
-    List<Reconciliation> findByWeeklyCommitIdIn(List<Long> weeklyCommitIds);
+  List<Reconciliation> findByWeeklyCommitIdIn(List<Long> weeklyCommitIds);
 }

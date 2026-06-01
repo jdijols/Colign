@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OutcomeRepository extends JpaRepository<Outcome, Long> {
 
-    Page<Outcome> findByStatus(String status, Pageable pageable);
+  Page<Outcome> findByStatus(String status, Pageable pageable);
 }

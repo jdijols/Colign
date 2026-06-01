@@ -11,16 +11,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/chess-tags")
 public class ChessTagController {
 
-    private final ChessTagRepository chessTags;
+  private final ChessTagRepository chessTags;
 
-    public ChessTagController(ChessTagRepository chessTags) {
-        this.chessTags = chessTags;
-    }
+  public ChessTagController(ChessTagRepository chessTags) {
+    this.chessTags = chessTags;
+  }
 
-    @GetMapping
-    public List<ChessTagDto> list() {
-        return chessTags.findAllByOrderByPriorityRankAsc().stream()
-                .map(t -> new ChessTagDto(t.getId(), t.getCode(), t.getLabel(), t.getPriorityRank()))
-                .toList();
-    }
+  @GetMapping
+  public List<ChessTagDto> list() {
+    return chessTags.findAllByOrderByPriorityRankAsc().stream()
+        .map(t -> new ChessTagDto(t.getId(), t.getCode(), t.getLabel(), t.getPriorityRank()))
+        .toList();
+  }
 }

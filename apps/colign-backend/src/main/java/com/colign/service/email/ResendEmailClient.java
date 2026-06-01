@@ -17,77 +17,80 @@ import org.springframework.web.client.RestTemplate;
 /**
  * Sends transactional emails via Resend's HTTP API (https://resend.com/docs).
  *
- * Why this and not Spring's {@code JavaMailSender}: Resend is the chosen provider
- * for v1 (single HTTP POST, no SMTP infrastructure, free dev tier with the
- * {@code onboarding@resend.dev} sandbox sender). Adding the Resend Java SDK
- * would pull in OkHttp + Moshi; {@link RestTemplate} is already on the
- * classpath via {@code spring-boot-starter-web} and the request is one POST.
+ * <p>Why this and not Spring's {@code JavaMailSender}: Resend is the chosen provider for v1 (single
+ * HTTP POST, no SMTP infrastructure, free dev tier with the {@code onboarding@resend.dev} sandbox
+ * sender). Adding the Resend Java SDK would pull in OkHttp + Moshi; {@link RestTemplate} is already
+ * on the classpath via {@code spring-boot-starter-web} and the request is one POST.
  *
- * When {@code colign.email.resend-api-key} is blank — typical for local dev
- * without Resend configured — we log the would-be email at INFO and return
- * silently. This keeps the invitation flow working end-to-end in mock mode
- * (and during tests) without requiring an API key in every contributor's
- * environment.
+ * <p>When {@code colign.email.resend-api-key} is blank — typical for local dev without Resend
+ * configured — we log the would-be email at INFO and return silently. This keeps the invitation
+ * flow working end-to-end in mock mode (and during tests) without requiring an API key in every
+ * contributor's environment.
  */
 @Component
 @Primary
 public class ResendEmailClient implements EmailClient {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ResendEmailClient.class);
-    private static final String ENDPOINT = "https://api.resend.com/emails";
+  private static final Logger LOG = LoggerFactory.getLogger(ResendEmailClient.class);
+  private static final String ENDPOINT = "https://api.resend.com/emails";
 
-    private final RestTemplate http;
-    private final String apiKey;
-    private final String fromAddress;
+  private final RestTemplate http;
+  private final String apiKey;
+  private final String fromAddress;
 
-    public ResendEmailClient(
-            RestTemplate restTemplate,
-            @Value("${colign.email.resend-api-key:}") String apiKey,
-            @Value("${colign.email.from:Colign <onboarding@resend.dev>}") String fromAddress) {
-        this.http = restTemplate;
-        this.apiKey = apiKey;
-        this.fromAddress = fromAddress;
+  public ResendEmailClient(
+      RestTemplate restTemplate,
+      @Value("${colign.email.resend-api-key:}") String apiKey,
+      @Value("${colign.email.from:Colign <onboarding@resend.dev>}") String fromAddress) {
+    this.http = restTemplate;
+    this.apiKey = apiKey;
+    this.fromAddress = fromAddress;
+  }
+
+  @Override
+  public void sendInvitation(InvitationEmail email) {
+    String subject =
+        "%s invited you to Colign — %s".formatted(email.inviterDisplayName(), email.teamName());
+    String html = renderHtml(email);
+
+    if (apiKey == null || apiKey.isBlank()) {
+      LOG.info(
+          "[email:disabled] would send invitation to {} | subject={} | acceptUrl={}",
+          email.toEmail(),
+          subject,
+          email.acceptUrl());
+      return;
     }
 
-    @Override
-    public void sendInvitation(InvitationEmail email) {
-        String subject = "%s invited you to Colign — %s".formatted(
-                email.inviterDisplayName(), email.teamName());
-        String html = renderHtml(email);
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.setBearerAuth(apiKey);
 
-        if (apiKey == null || apiKey.isBlank()) {
-            LOG.info("[email:disabled] would send invitation to {} | subject={} | acceptUrl={}",
-                    email.toEmail(), subject, email.acceptUrl());
-            return;
-        }
+    Map<String, Object> body =
+        Map.of(
+            "from", fromAddress,
+            "to", List.of(email.toEmail()),
+            "subject", subject,
+            "html", html);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-
-        Map<String, Object> body = Map.of(
-                "from", fromAddress,
-                "to", List.of(email.toEmail()),
-                "subject", subject,
-                "html", html);
-
-        try {
-            http.exchange(ENDPOINT, HttpMethod.POST, new HttpEntity<>(body, headers), String.class);
-        } catch (RestClientException ex) {
-            // Surface as a 502 to the caller via the controller — silent
-            // swallow would leave the invitation row pending with no email.
-            throw new EmailDeliveryException(
-                    "Resend rejected the invitation email to " + email.toEmail(), ex);
-        }
+    try {
+      http.exchange(ENDPOINT, HttpMethod.POST, new HttpEntity<>(body, headers), String.class);
+    } catch (RestClientException ex) {
+      // Surface as a 502 to the caller via the controller — silent
+      // swallow would leave the invitation row pending with no email.
+      throw new EmailDeliveryException(
+          "Resend rejected the invitation email to " + email.toEmail(), ex);
     }
+  }
 
-    private String renderHtml(InvitationEmail email) {
-        String relationshipLabel = switch (email.relationship()) {
-            case REPORT -> "as a direct report";
-            case PEER -> "as a teammate";
+  private String renderHtml(InvitationEmail email) {
+    String relationshipLabel =
+        switch (email.relationship()) {
+          case REPORT -> "as a direct report";
+          case PEER -> "as a teammate";
         };
-        // Plain inline HTML — no images, no tracking pixels, single CTA.
-        return """
+    // Plain inline HTML — no images, no tracking pixels, single CTA.
+    return """
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; \
                 color: #171717; max-width: 480px; margin: 0 auto; padding: 24px;">
                   <h1 style="font-size: 20px; font-weight: 600; margin: 0 0 16px;">You're invited to Colign</h1>
@@ -106,19 +109,20 @@ public class ResendEmailClient implements EmailClient {
                     <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">%s</span>
                   </p>
                 </div>
-                """.formatted(
-                escapeHtml(email.inviterDisplayName()),
-                escapeHtml(email.teamName()),
-                relationshipLabel,
-                email.acceptUrl(),
-                email.acceptUrl());
-    }
+                """
+        .formatted(
+            escapeHtml(email.inviterDisplayName()),
+            escapeHtml(email.teamName()),
+            relationshipLabel,
+            email.acceptUrl(),
+            email.acceptUrl());
+  }
 
-    private static String escapeHtml(String s) {
-        if (s == null) return "";
-        return s.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;");
-    }
+  private static String escapeHtml(String s) {
+    if (s == null) return "";
+    return s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;");
+  }
 }

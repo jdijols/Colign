@@ -9,9 +9,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PlanRepository extends JpaRepository<Plan, Long> {
 
-    Optional<Plan> findByUserIdAndWeekStartDate(Long userId, LocalDate weekStartDate);
+  Optional<Plan> findByUserIdAndWeekStartDate(Long userId, LocalDate weekStartDate);
 
-    Page<Plan> findByUserId(Long userId, Pageable pageable);
+  Page<Plan> findByUserId(Long userId, Pageable pageable);
 
-    Optional<Plan> findFirstByUserIdOrderByWeekStartDateDesc(Long userId);
+  Optional<Plan> findFirstByUserIdOrderByWeekStartDateDesc(Long userId);
 }
