@@ -7,6 +7,7 @@ import { signOut } from "@/auth/authSlice";
 import { isReal } from "@/auth/auth0Config";
 import { useGetMeQuery } from "@/api/me";
 import { ColignBrand } from "@/components/Brand";
+import { TeamPill } from "@/components/TeamPill";
 import { ThemeToggle } from "@/components/ui";
 import { UserMenu } from "@/components/UserMenu";
 import { cn } from "@/lib/cn";
@@ -56,6 +57,13 @@ export function AppShell() {
           >
             <ColignBrand size="md" />
           </Link>
+
+          {me?.teamName && (
+            <>
+              <span aria-hidden className="text-neutral-300 dark:text-neutral-700">/</span>
+              <TeamPill name={me.teamName} avatarUrl={me.teamAvatarUrl} />
+            </>
+          )}
 
           <nav className="hidden md:flex items-center gap-5">
             <NavLink to="." end className={navLinkClass}>

@@ -12,6 +12,7 @@ export function TeamSettingsSection({ teamId, canManage }: Props) {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
@@ -19,6 +20,7 @@ export function TeamSettingsSection({ teamId, canManage }: Props) {
     if (team) {
       setName(team.name);
       setDescription(team.description ?? "");
+      setAvatarUrl(team.avatarUrl ?? "");
     }
   }, [team]);
 
@@ -40,6 +42,7 @@ export function TeamSettingsSection({ teamId, canManage }: Props) {
         body: {
           name: trimmedName,
           description: description.trim() || undefined,
+          avatarUrl: avatarUrl.trim() || undefined,
         },
       }).unwrap();
       setSavedAt(Date.now());
@@ -53,7 +56,10 @@ export function TeamSettingsSection({ teamId, canManage }: Props) {
     }
   }
 
-  const dirty = name.trim() !== team.name || (description.trim() || null) !== (team.description ?? null);
+  const dirty =
+    name.trim() !== team.name ||
+    (description.trim() || null) !== (team.description ?? null) ||
+    (avatarUrl.trim() || null) !== (team.avatarUrl ?? null);
 
   return (
     <div className="space-y-4">
@@ -91,6 +97,33 @@ export function TeamSettingsSection({ teamId, canManage }: Props) {
           onChange={(e) => setDescription(e.target.value)}
           className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-50 disabled:bg-neutral-100 dark:disabled:bg-neutral-900 disabled:text-neutral-500"
         />
+      </div>
+      <div>
+        <label htmlFor="team-avatar-url" className="block text-sm font-medium text-neutral-900 dark:text-neutral-50 mb-1">
+          Avatar URL
+        </label>
+        <input
+          id="team-avatar-url"
+          data-cy="team-avatar-input"
+          type="url"
+          value={avatarUrl}
+          maxLength={500}
+          disabled={!canManage}
+          onChange={(e) => setAvatarUrl(e.target.value)}
+          placeholder="https://…"
+          className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-50 disabled:bg-neutral-100 dark:disabled:bg-neutral-900 disabled:text-neutral-500"
+        />
+        {avatarUrl && (
+          <div className="mt-2 flex items-center gap-2">
+            <img
+              src={avatarUrl}
+              alt="Team avatar preview"
+              className="h-10 w-10 rounded object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+            <span className="text-xs text-neutral-500">Preview</span>
+          </div>
+        )}
       </div>
       {error && <p role="alert" className="text-sm text-rose-700 dark:text-rose-400">{error}</p>}
       {savedAt && !error && (
