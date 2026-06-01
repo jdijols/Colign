@@ -101,14 +101,43 @@ public class SecurityConfig {
             @Value("${colign.auth.audience}") String audience,
             @Value("${colign.auth.real.issuer-uri:#{null}}") String issuerUri,
             @Value("${colign.auth.real.jwk-set-uri:#{null}}") String jwkSetUri,
+            org.springframework.core.env.Environment env,
             ResourceLoader resourceLoader) throws Exception {
 
-        return switch (mode.toLowerCase()) {
+        String normalized = mode == null ? "" : mode.toLowerCase();
+
+        // application.yml defaults colign.auth.mode to "mock" when the env var
+        // is unset, so a prod deploy that forgets COLIGN_AUTH_MODE=real would
+        // silently accept any JWT signed by scripts/colign-mock-private.pem.
+        // Throwing here fails Spring's context refresh — the app refuses to
+        // start at all, instead of starting in a vulnerable state.
+        if ("mock".equals(normalized) && isProdLikeProfile(env)) {
+            throw new IllegalStateException(
+                "REFUSING TO START: colign.auth.mode=mock under active profile(s) "
+                    + java.util.Arrays.toString(env.getActiveProfiles())
+                    + ". Mock auth accepts any JWT signed by the demo key in "
+                    + "scripts/colign-mock-private.pem. Set COLIGN_AUTH_MODE=real "
+                    + "(with COLIGN_AUTH0_ISSUER + COLIGN_AUTH0_JWKS) before booting "
+                    + "this profile.");
+        }
+
+        return switch (normalized) {
             case "real" -> buildRealDecoder(issuerUri, audience);
             case "mock" -> buildMockDecoder(resourceLoader, audience);
             default -> throw new IllegalStateException(
-                    "wc.auth.mode must be 'real' or 'mock' (got: " + mode + ")");
+                    "colign.auth.mode must be 'real' or 'mock' (got: " + mode + ")");
         };
+    }
+
+    private static boolean isProdLikeProfile(org.springframework.core.env.Environment env) {
+        for (String p : env.getActiveProfiles()) {
+            String t = p.toLowerCase();
+            if (t.equals("prod") || t.equals("production")
+                    || t.equals("staging") || t.equals("stage")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private NimbusJwtDecoder buildRealDecoder(String issuerUri, String audience) {
