@@ -51,3 +51,17 @@ Then("reloading the page keeps the team name as {string}", (name: string) => {
   cy.reload();
   cy.get('[data-cy="team-name-input"]').should("have.value", name);
 });
+
+When("I click Remove on the member with email {string}", (email: string) => {
+  cy.contains("li", email).within(() => {
+    cy.contains("button", /remove/i).click();
+  });
+});
+
+When("I confirm the removal", () => {
+  cy.get('[data-cy="confirm-dialog-confirm"]').click();
+});
+
+Then("the Members list no longer contains {string}", (email: string) => {
+  cy.contains(email).should("not.exist");
+});
