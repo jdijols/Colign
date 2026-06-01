@@ -8,9 +8,10 @@ interface Props {
 
 /**
  * Sidebar-shaped icon (rounded rectangle with a vertical divider near the
- * left), mirroring the chrome users recognise as "the sidebar."
+ * left), mirroring the chrome users recognise as "the sidebar." Exported so
+ * the workspace-pill hover-morph affordance can reuse the same glyph.
  */
-function SidebarIcon({ className }: { className?: string }) {
+export function SidebarIcon({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"

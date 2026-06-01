@@ -89,21 +89,23 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
       data-cy="sidebar"
       data-collapsed={collapsed ? "true" : "false"}
     >
-      {/* Top row: workspace identity + toggle.
-          Expanded — workspace pill left, toggle pinned right.
-          Collapsed — both stack centered in the narrow rail. */}
+      {/* Top row:
+          Expanded — workspace pill left, separate close-sidebar toggle pinned right.
+          Collapsed — workspace avatar IS the open-sidebar affordance (hover-morph),
+            no separate toggle button below it. */}
       <div
         className={cn(
-          "flex border-b border-neutral-200 dark:border-neutral-800",
-          collapsed ? "flex-col items-center gap-1 py-2" : "items-center gap-1 px-2 py-2",
+          "flex items-center border-b border-neutral-200 dark:border-neutral-800",
+          collapsed ? "py-1" : "gap-1 px-2 py-2",
         )}
       >
         <WorkspacePill
           name={me.teamName ?? ""}
           avatarUrl={me.teamAvatarUrl ?? null}
           compact={collapsed}
+          onToggle={collapsed ? toggleDesktopCollapse : undefined}
         />
-        <SidebarToggle collapsed={collapsed} onToggle={toggleDesktopCollapse} />
+        {collapsed ? null : <SidebarToggle collapsed={false} onToggle={toggleDesktopCollapse} />}
       </div>
 
       <div className="flex-1 overflow-y-auto">
