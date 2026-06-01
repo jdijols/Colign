@@ -7,11 +7,12 @@ const HOME_URL = import.meta.env.PROD ? "https://colign.org" : "/";
 
 /**
  * Landing page at /. The typography itself enacts the colign brand:
- * three lines stating the colign thesis — short-term commitments compound
- * into long-term alignment, made concrete in what lands this week. The
- * descending visual weight (full → full → muted) mirrors the ColignMark's
- * three bars and bakes the brand etymology (commit-ment + align-ment) into
- * the manifesto before the user reads a single word.
+ * two lines stating the colign thesis — short-term commitments (full
+ * weight, present and concrete) leading to long-term alignment (muted
+ * weight, the goal receding into the future). The grayscale gradient
+ * maps to the temporal arc: bold = now, muted = horizon. The brand
+ * etymology (commit-ment + align-ment) sits in the manifesto before
+ * the user reads a single word.
  *
  * The reader's eye flows:
  *   brand anchor → manifesto → concrete value prop → CTA → footer.
@@ -19,7 +20,7 @@ const HOME_URL = import.meta.env.PROD ? "https://colign.org" : "/";
  * Authenticated visitors skip the landing entirely and land in the app.
  *
  * Accessibility:
- *   - Single semantic <h1> wraps the three visual lines (SR-friendly).
+ *   - Single semantic <h1> wraps the two visual lines (SR-friendly).
  *   - Skip link as first focusable for keyboard nav.
  *   - All interactive elements get :focus-visible rings (defined in index.html).
  *   - CTA lift animation gated by prefers-reduced-motion.
@@ -103,9 +104,9 @@ export function HostHome() {
         {/* Top breath — pushes the manifesto toward optical center */}
         <div style={{ flex: 1, minHeight: "clamp(48px, 10vh, 140px)" }} />
 
-        {/* The three lines, semantically ONE statement under a single <h1>.
-            SR reads: "Short-term commitments. Long-term alignment. What lands this week."
-            Visual spans render as block lines with descending color. */}
+        {/* The two lines, semantically ONE statement under a single <h1>.
+            SR reads: "Short-term commitments. Long-term alignment."
+            Visual spans render as block lines: bold first, muted second. */}
         <h1
           style={{
             margin: 0,
@@ -116,10 +117,7 @@ export function HostHome() {
           }}
         >
           <span style={headlineLineStyle("var(--fg)")}>Short-term commitments.</span>
-          <span style={headlineLineStyle("var(--fg)")}>Long-term alignment.</span>
-          <span style={headlineLineStyle("var(--muted)")}>
-            What lands this week.
-          </span>
+          <span style={headlineLineStyle("var(--muted)")}>Long-term alignment.</span>
         </h1>
 
         {/* Big breath — separates manifesto from concrete claim */}
