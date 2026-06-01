@@ -27,6 +27,7 @@ import { InviteAcceptPage } from "@/pages/InviteAcceptPage";
 import { WeeklyPlanPage } from "@/pages/WeeklyPlanPage";
 import { ReconcilePage } from "@/pages/ReconcilePage";
 import { ManagerDashboardPage } from "@/pages/ManagerDashboardPage";
+import { WorkspaceSettingsPage } from "@/pages/WorkspaceSettingsPage";
 
 /**
  * The MF-remote entry. Self-contains Redux Provider + Auth0Bridge so the host
@@ -85,6 +86,7 @@ export default function WeeklyCommitApp() {
             <Route index element={<WeeklyPlanPage />} />
             <Route path="reconcile" element={<ReconcilePage />} />
             <Route path="manager" element={<ManagerDashboardPage />} />
+            <Route path="settings" element={<WorkspaceSettingsPage />} />
           </Route>
         </Routes>
       </Auth0Bridge>
