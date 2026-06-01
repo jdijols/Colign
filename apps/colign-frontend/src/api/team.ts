@@ -80,6 +80,18 @@ export const teamApi = colignApi.injectEndpoints({
       ],
     }),
 
+    removeTeamMember: build.mutation<void, { teamId: number; userId: number }>({
+      query: ({ teamId, userId }) => ({
+        url: `teams/${teamId}/members/${userId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_r, _e, { teamId }) => [
+        { type: "TeamMembers" as const, id: `${teamId}:LIST` },
+        "Me",
+        { type: "TeamPage" as const, id: "LIST" },
+      ],
+    }),
+
     /**
      * Create a team and attach the caller as its lead. The response is the
      * caller's refreshed identity (MeDto). We write it straight into the getMe
@@ -102,5 +114,6 @@ export const {
   useGetTeamMembersQuery,
   useGetTeamQuery,
   useUpdateTeamMutation,
+  useRemoveTeamMemberMutation,
   useCreateTeamMutation,
 } = teamApi;
