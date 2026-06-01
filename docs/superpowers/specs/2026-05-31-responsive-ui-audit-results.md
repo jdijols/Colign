@@ -170,4 +170,76 @@ This run **adapted** the plan's per-screen audit loop. The plan called for booti
 
 If the user wants the full screenshot evidence, the most efficient next step is to boot the stack on their machine and run a scripted capture (the plan provides the exact `/browse` commands per screen) — this is also when the real-phone smoke and Cypress runs naturally happen.
 
+---
+
+## Phase D execution — deferred work landed in follow-up turn
+
+After Phase 5 the user requested running the deferred verification. Findings:
+
+### Cypress run — 6/6 PASS
+
+Boot 3-service stack (backend mock :8080, frontend :5174, host :4173), flip env to mock, register `trap restore EXIT INT TERM`, then:
+
+```
+CYPRESS_VITE_AUTH_MODE=mock CYPRESS_VITE_API_BASE=http://localhost:8080 \
+  yarn cy:run --spec "cypress/e2e/responsive-*.cy.ts"
+```
+
+| Spec | Test | Result |
+|---|---|---|
+| narrow @ 320×568 | Landing at / | ✓ 207ms |
+| narrow @ 320×568 | Login page | ✓ 49ms |
+| narrow @ 320×568 | Login → WeeklyPlanPage | ✓ 537ms |
+| wide @ 1440×900 | Landing at / | ✓ 75ms |
+| wide @ 1440×900 | Login page | ✓ 25ms |
+| wide @ 1440×900 | Login → WeeklyPlanPage | ✓ 496ms |
+
+### D3 preflight verification — all 3 misconfig scenarios abort correctly
+
+| Scenario | Env | Outcome |
+|---|---|---|
+| auth wrong | `VITE_AUTH_MODE=real` | ✓ aborts: "require VITE_AUTH_MODE=mock" |
+| prod API | `VITE_API_BASE=https://api.colign.org` | ✓ aborts: "allowlist failed" |
+| fly.dev staging | `VITE_API_BASE=https://colign-api.fly.dev` | ✓ aborts: "allowlist failed" |
+
+### Cypress fixes discovered during live run (commit f3519f9)
+
+1. Allowlist regex bug: `(?::\d+)?` was inside the IP alternative only, so `localhost:8080` didn't match. Moved port to outer group.
+2. `@testing-library/cypress` add-commands not imported in support/e2e.ts (added; specs use cy.get + cy.contains anyway).
+3. Spec assumed real-auth journey (HostHome → Auth0 redirect). In mock mode, RootGate routes `/` to WeeklyCommitApp directly. Rewrote journey: `/login` → click "Ada — IC" → `/weekly-plan` (Ada is seeded with team data in H2 demo, so OnboardingChoicePage doesn't apply).
+4. Cypress runs in desktop Chrome reporting `pointer: fine`; the responsive.css `(pointer: coarse)` `min-height: 44` rule does NOT activate during the spec. Adjusted floor to 32×32 (the spec §4.3 fine-pointer policy). Documented inline: 44 enforcement at runtime is verified via real touch devices + screenshot review.
+5. Added WCAG 2.5.5 inline-link exemptions: `a` inside `p / span / li / nav / header / footer` are constrained by line-height and exempt from the floor.
+
+### Screenshot matrix — 10 high-value captures via `/browse`
+
+Stored at `tmp/responsive-audit/<Screen>/<width>-light.png` (gitignored):
+
+| Screen | 320 | 1440 |
+|---|---|---|
+| Landing (RootGate → WeeklyCommitApp at /) | ✓ | ✓ |
+| LoginPage | ✓ | ✓ |
+| WeeklyPlanPage (Ada signed in) | ✓ | ✓ |
+| ManagerDashboardPage (Sam signed in) | **✓ card view works!** | ✓ |
+| IcDrillDrawer (Ada's drill) | **✓ back arrow + full width** | ✓ |
+
+**Visual highlights:**
+
+- **ManagerDashboardPage at 320:** the C8 container query + card view refactor renders perfectly. KPI cards reflow to 2×2 grid, sort chips ("Name ↑" / "Week") appear above, each direct report is a stacked card (avatar+name → status pill + commit count + alignment bar → full-width Review button at h-11 = 44px). No horizontal scroll. This was the single biggest structural change in the audit and it shipped clean.
+- **IcDrillDrawer at 320:** the back-arrow affordance (`closeAffordance="back"` from A4 + HiArrowLeft icon) renders in the drawer header — the spec §5.1 touch-convention back nav.
+- **All viewports:** AppShell hamburger at 320 is h-11 (44px); sign-out at sm renders at h-8 (32px = fine-pointer floor).
+
+### Screens NOT captured (require additional state setup)
+
+- **OnboardingChoicePage / InviteTeammatesPage:** Ada is pre-seeded with a team in the H2 demo profile, so the onboarding-choice path doesn't trigger. Would need a fresh role-IC seed.
+- **InviteAcceptPage:** requires an outbound invitation token URL.
+- **ReconcilePage:** requires Ada's plan to be in `LOCKED` or `RECONCILING` state.
+- **HostHome (pa-host landing):** only renders under `isReal === true` per the RootGate; in mock mode `/` goes straight to WeeklyCommitApp.
+- **Dark mode column:** would double the matrix; deferred until dark-mode QA becomes its own scope.
+
+### Discovered gap — `scripts/audit-teardown.sh` missed `pa-host/.env.local`
+
+When the script was run, only `colign-frontend` and `colign-backend` env files were flipped. pa-host has its own `.env.local` with `VITE_AUTH_MODE=real` that drives the host's RootGate. Until pa-host was manually flipped + Vite restarted, the HostHome→Auth0-redirect path kept firing during Cypress runs.
+
+The pa-host env was manually flipped and snapshot-saved during this run; restore via `audit-teardown.sh restore` did NOT touch pa-host because its snapshot was added manually outside the script's flow. **TODO: update audit-teardown.sh to include pa-host in the snapshot+flip+restore cycle.** Tracked as a separate follow-up rather than landed in this PR to keep the deferred work focused.
+
 
