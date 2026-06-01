@@ -5,13 +5,37 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import pkg from "./package.json" with { type: "json" };
 
-// `||` (not `??`) so an EMPTY-STRING env var still falls back.
-// `vercel env pull` masks sensitive prod values as "" — without this guard
-// the build would compile the remote entry as "" and the federation runtime
-// would resolve every chunk against the host origin (404 → SPA index.html →
-// MIME error → blank page).
-const COLIGN_REMOTE_URL =
-  process.env.COLIGN_REMOTE_URL || "http://localhost:5174/remoteEntry.js";
+// `||` (not `??`) so an EMPTY-STRING env var still falls back to localhost
+// during dev / non-Vercel builds. `vercel env pull` masks sensitive prod
+// values as "" — the localhost fallback would otherwise be silently baked
+// into prod, the federation runtime would resolve every chunk against the
+// host origin (404 → SPA index.html → MIME error → blank page).
+//
+// Vercel guard below catches that exact case: when this build is targeting
+// Vercel production (`VERCEL_ENV=production`, set by `vercel build --prod`
+// and by Vercel's own infra) AND the URL is empty, fail loudly with the
+// remediation steps inline. Dev (`vite serve`) and local non-Vercel
+// `vite build` invocations stay quiet and use the localhost fallback.
+const RAW_REMOTE_URL = process.env.COLIGN_REMOTE_URL ?? "";
+if (process.env.VERCEL_ENV === "production" && !RAW_REMOTE_URL) {
+  throw new Error(
+    [
+      "[pa-host build] COLIGN_REMOTE_URL is empty but VERCEL_ENV=production.",
+      "",
+      "If the build continued it would bake `http://localhost:5174/remoteEntry.js`",
+      "into the production bundle and colign.org would render blank (the MF runtime",
+      "404s, falls back to the SPA shell, and the browser rejects it as a MIME",
+      "mismatch). Two fixes:",
+      "",
+      "  1. Mark COLIGN_REMOTE_URL non-Sensitive in the Vercel project, then",
+      "     re-run `vercel env pull` and `vercel build --prod`.",
+      "  2. Pass it inline for this build:",
+      "     COLIGN_REMOTE_URL=https://colign-frontend.vercel.app/remoteEntry.js \\",
+      "       vercel build --prod",
+    ].join("\n"),
+  );
+}
+const COLIGN_REMOTE_URL = RAW_REMOTE_URL || "http://localhost:5174/remoteEntry.js";
 
 export default defineConfig({
   plugins: [
