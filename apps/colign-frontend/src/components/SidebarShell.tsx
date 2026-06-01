@@ -34,8 +34,9 @@ const COLLAPSED_STORAGE_KEY = "colign_sidebar_collapsed";
  *     [user avatar + name + role badge]   ← click → Settings / Sign out popover
  *
  *   Collapsed (thin rail ~56px, state persisted in localStorage):
- *     [workspace avatar]
- *     [toggle]
+ *     [workspace avatar]   ← hover-morphs to a sidebar icon + "Open sidebar"
+ *                            tooltip; clicking expands the rail. No separate
+ *                            toggle button below it.
  *     [Plan icon / Reconcile icon / Team icon]
  *     [user avatar]   ← click → same popover, anchored wider than the chip
  *
