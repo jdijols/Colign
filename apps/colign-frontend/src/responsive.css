@@ -8,6 +8,52 @@
  * such block is fenced with a section header for navigability.
  */
 
+/* === Section C8: TeamRollupTable container query === */
+@layer components {
+  .team-rollup-container {
+    container-type: inline-size;
+  }
+  .team-rollup-table-view { display: block; }
+  .team-rollup-card-view { display: none; }
+  .team-rollup-card-view-controls { display: none; }
+  @container (max-width: 639.98px) {
+    .team-rollup-table-view { display: none; }
+    .team-rollup-card-view {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .team-rollup-card-view-controls {
+      display: flex;
+      flex-direction: row;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+  }
+}
+
+/* === Section C9: IcDrillDrawer full-screen on coarse+narrow === */
+@layer components {
+  .ic-drill-drawer-content {
+    container-type: inline-size;
+  }
+  /* Container-query rule for internal commit list */
+  @container (max-width: 479.98px) {
+    .ic-drill-drawer-content .ic-drill-commit-list {
+      grid-template-columns: 1fr !important;
+      line-height: 1.7;
+    }
+  }
+  /* Viewport rule: coarse pointer + narrow viewport → drawer is full-screen.
+     Drawer panel renders as <aside role="dialog">. */
+  @media (pointer: coarse) and (max-width: 767.98px) {
+    #colign-root aside[role="dialog"] {
+      width: 100% !important;
+      max-width: none !important;
+    }
+  }
+}
+
 /* === Section A2: global touch & pointer policy === */
 @layer utilities {
   /* Coarse pointers (touch): primary interactive elements ≥ 44×44 */

@@ -58,9 +58,42 @@ export function TeamRollupTable({ onSelectMember }: Props) {
   const to = data ? Math.min((page + 1) * perPage, data.totalElements) : 0;
 
   return (
-    <div className="space-y-3">
-      <TableScroller>
-        <Table>
+    <div
+      className="space-y-3 team-rollup-container"
+      style={{ containerType: "inline-size" }}
+    >
+      {/* Sort chip row — visible only in card mode (container < 640px) via responsive.css */}
+      <div className="team-rollup-card-view-controls">
+        <button
+          type="button"
+          onClick={() => toggleSort("displayName")}
+          className={cn(
+            "rounded-full px-4 py-2 text-xs font-medium border min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900",
+            sort === "displayName"
+              ? "bg-neutral-900 text-neutral-50 border-neutral-900 dark:bg-white dark:text-neutral-900"
+              : "border-neutral-200 dark:border-neutral-800 text-neutral-600"
+          )}
+        >
+          Name {sort === "displayName" ? (dir === "asc" ? "↑" : "↓") : ""}
+        </button>
+        <button
+          type="button"
+          onClick={() => toggleSort("weekStartDate")}
+          className={cn(
+            "rounded-full px-4 py-2 text-xs font-medium border min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900",
+            sort === "weekStartDate"
+              ? "bg-neutral-900 text-neutral-50 border-neutral-900 dark:bg-white dark:text-neutral-900"
+              : "border-neutral-200 dark:border-neutral-800 text-neutral-600"
+          )}
+        >
+          Week {sort === "weekStartDate" ? (dir === "asc" ? "↑" : "↓") : ""}
+        </button>
+      </div>
+
+      {/* Table view — visible at container ≥ 640px */}
+      <div className="team-rollup-table-view">
+        <TableScroller>
+          <Table>
           <THead>
             <tr>
               <TH
@@ -120,6 +153,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                     onClick={() => onSelectMember(m)}
                     className="cursor-pointer"
                     data-cy="team-row"
+                    data-clickable="true"
                   >
                     <TD className="whitespace-nowrap">
                       <div className="flex items-center gap-2.5">
@@ -195,7 +229,25 @@ export function TeamRollupTable({ onSelectMember }: Props) {
             )}
           </TBody>
         </Table>
-      </TableScroller>
+        </TableScroller>
+      </div>
+
+      {/* Card view — visible at container < 640px */}
+      <div className="team-rollup-card-view">
+        {isFetching && !data ? (
+          <div className="py-8 text-center text-sm text-neutral-600">
+            <Spinner size="sm" /> Loading team…
+          </div>
+        ) : (data?.content ?? []).length === 0 ? (
+          <div className="py-8 text-center text-sm text-neutral-600">
+            No direct reports linked to your account.
+          </div>
+        ) : (
+          data?.content.map((m) => (
+            <TeamRollupCard key={m.userId} member={m} onSelect={onSelectMember} />
+          ))
+        )}
+      </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-1">
         <span className="text-xs text-neutral-600 dark:text-neutral-400">
@@ -205,6 +257,93 @@ export function TeamRollupTable({ onSelectMember }: Props) {
         </span>
         <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
+    </div>
+  );
+}
+
+function TeamRollupCard({
+  member,
+  onSelect,
+}: {
+  member: TeamMemberDto;
+  onSelect: (m: TeamMemberDto) => void;
+}) {
+  const plan = member.currentPlan;
+  const tier = alignmentTier(plan?.alignment.alignmentPct ?? 0);
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      data-clickable="true"
+      onClick={() => onSelect(member)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(member);
+        }
+      }}
+      className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-white dark:bg-neutral-950 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
+    >
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div className="h-7 w-7 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-semibold text-neutral-600 dark:text-neutral-300">
+          {initials(member.displayName)}
+        </div>
+        <div className="leading-tight flex-1 min-w-0">
+          <div className="text-fluid-base font-medium text-neutral-900 dark:text-neutral-50 truncate">
+            {member.displayName}
+          </div>
+          <div className="text-xs text-neutral-600 dark:text-neutral-400 font-mono truncate">
+            {member.email}
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center gap-3 flex-wrap">
+        {plan ? (
+          <PlanStatePill state={plan.state} size="xs" />
+        ) : (
+          <Badge tone="neutral" size="xs">
+            No plan
+          </Badge>
+        )}
+        {plan ? (
+          <span className="text-xs text-neutral-600 tabular-nums shrink-0">
+            {plan.commits.length} commit{plan.commits.length === 1 ? "" : "s"}
+          </span>
+        ) : null}
+        {plan ? (
+          <div className="flex items-center gap-2 ml-auto shrink-0">
+            <div className="h-1.5 w-20 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+              <div
+                className={cn("h-1.5 rounded-full", tier.bar)}
+                style={{
+                  width: `${Math.max(0, Math.min(100, plan.alignment.alignmentPct))}%`,
+                }}
+                role="progressbar"
+                aria-valuenow={plan.alignment.alignmentPct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`${member.displayName} alignment ${plan.alignment.alignmentPct}%`}
+              />
+            </div>
+            <span className={cn("text-xs font-medium tabular-nums", tier.label)}>
+              {plan.alignment.alignmentPct}%
+            </span>
+          </div>
+        ) : null}
+      </div>
+      <Button
+        variant="secondary"
+        size="lg"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(member);
+        }}
+        className="mt-3 w-full"
+        leftIcon={<HiOutlineEye className="h-4 w-4" />}
+        aria-label={`Review ${member.displayName}'s week`}
+      >
+        Review
+      </Button>
     </div>
   );
 }
