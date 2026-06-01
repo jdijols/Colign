@@ -4,107 +4,68 @@
 
 **Goal:** Land the responsiveness contract from the design spec across `apps/colign-frontend` + `apps/pa-host`, audit and fix 9 user-facing screens at 5 viewport widths × 2 color modes, and add a CI regression layer so future PRs can't drift.
 
-**Architecture:** Three phases of foundation work land BEFORE the audit so the audit captures a clean baseline against the new contract: (A) token contract + touch policy stylesheet + component size token updates; (B) tooling (env teardown script); (C) per-screen audit in user-journey order, with deep refactors (TeamRollupTable card view, IcDrillDrawer full-screen) folded into the audit task for their respective screens; (D) Cypress regression layer + final results doc. Backend changes and the committed-mock-key rotation are explicitly deferred per spec §9.4.
+**Architecture:** Phase A lands the foundation contract (Tailwind tokens + touch policy CSS + component size bumps). Phase B adds tooling — env teardown + Vite middleware hardening. Phase C audits screens in user-journey order, with the heavier refactors (TeamRollupTable card view, IcDrillDrawer full-screen on coarse+narrow) folded into their screen tasks. Phase D scaffolds Cypress (no config exists today), authors two regression specs, and finalizes the results doc. Backend changes and the committed-mock-key rotation are deferred per spec §9.4.
 
-**Tech Stack:** React 18 + Vite 5 + Tailwind 3 + Flowbite-react (colign-frontend); Vite 5 + plain CSS (pa-host); Vitest + Testing Library (unit/component tests); Cypress 13 (E2E); gstack `/browse` skill (screenshot capture).
+**Tech Stack:** React 18 + Vite 5 + Tailwind 3 + Flowbite-react (colign-frontend); Vite 5 + plain CSS (pa-host); Vitest + Testing Library (unit); Cypress 13 (E2E); gstack `/browse` skill (screenshots).
 
 **Source spec:** [docs/superpowers/specs/2026-05-31-responsive-ui-audit-design.md](../specs/2026-05-31-responsive-ui-audit-design.md)
 
+**Revision note (2026-05-31, r2):** plan revised in response to 5-persona ce-doc-review findings. Dropped A2 (CSS custom properties with zero consumers — same anti-pattern the spec rejected for pa-host). Simplified A5 (Drawer primitive stays untouched; full-screen logic moves inside IcDrillDrawer). Fixed Drawer prop name (`width`, not `size`) and icon import (`HiX`, not `HiOutlineX`). Replaced JS hook with CSS `@media` for drawer full-screen. Switched Cypress preflight from blocklist to allowlist regex. Added explicit `trap` registration step + JWT TTL bump to 14400. Fixed `audit-teardown.sh` env-file logic to append-or-replace (current backend `.env.local` has no `COLIGN_AUTH_MODE` line, so the old `sed` would silently no-op). Added D0 Cypress scaffold task (no config exists today). Removed leftover `@[640px]:` Tailwind variants in C8 (no plugin installed). Fixed `Button variant="outline"` → `variant="secondary"` in C8. Added Phase B Vite middleware shell-injection fix before Phase C actively exercises the surface. Restated spec §4.2 asymmetry in C1 (touch policy doesn't reach pa-host; HostHome is in scope but already compliant).
+
 ---
 
-## Phase A — Foundation contract (tasks A1–A6)
-
-The token contract, touch policy stylesheet, and cross-cutting component size token updates must land first so the per-screen audit captures a clean baseline.
+## Phase A — Foundation contract
 
 ### Task A1: Add fluid type + spacing tokens to Tailwind config
 
 **Files:**
 - Modify: `apps/colign-frontend/tailwind.config.js`
-- Test: `apps/colign-frontend/src/lib/tokens.test.ts` (create)
+- Create: `apps/colign-frontend/src/lib/tokens.test.ts`
 
-- [ ] **Step 1: Write the failing test**
-
-Create `apps/colign-frontend/src/lib/tokens.test.ts`:
+- [ ] **Step 1: Write failing test** — `apps/colign-frontend/src/lib/tokens.test.ts`
 
 ```ts
 import { describe, expect, it } from "vitest";
 import tailwindConfig from "../../tailwind.config.js";
 
-describe("Tailwind fluid token contract", () => {
-  it("exposes the fluid type scale per spec §4.2", () => {
+describe("Tailwind fluid token contract (spec §4.2)", () => {
+  it("exposes the fluid type scale", () => {
     const fontSize = tailwindConfig.theme.extend.fontSize as Record<string, string>;
-    expect(fontSize["fluid-sm"]).toBe(
-      "clamp(0.8125rem, 0.78rem + 0.16vw, 0.875rem)"
-    );
-    expect(fontSize["fluid-base"]).toBe(
-      "clamp(0.9375rem, 0.91rem + 0.16vw, 1rem)"
-    );
-    expect(fontSize["fluid-lg"]).toBe(
-      "clamp(1.0625rem, 1.02rem + 0.22vw, 1.125rem)"
-    );
-    expect(fontSize["fluid-xl"]).toBe(
-      "clamp(1.25rem, 1.18rem + 0.36vw, 1.5rem)"
-    );
-    expect(fontSize["fluid-2xl"]).toBe(
-      "clamp(1.5rem, 1.36rem + 0.71vw, 2rem)"
-    );
-    expect(fontSize["fluid-3xl"]).toBe(
-      "clamp(1.875rem, 1.55rem + 1.61vw, 3rem)"
-    );
+    expect(fontSize["fluid-sm"]).toBe("clamp(0.8125rem, 0.78rem + 0.16vw, 0.875rem)");
+    expect(fontSize["fluid-base"]).toBe("clamp(0.9375rem, 0.91rem + 0.16vw, 1rem)");
+    expect(fontSize["fluid-lg"]).toBe("clamp(1.0625rem, 1.02rem + 0.22vw, 1.125rem)");
+    expect(fontSize["fluid-xl"]).toBe("clamp(1.25rem, 1.18rem + 0.36vw, 1.5rem)");
+    expect(fontSize["fluid-2xl"]).toBe("clamp(1.5rem, 1.36rem + 0.71vw, 2rem)");
+    expect(fontSize["fluid-3xl"]).toBe("clamp(1.875rem, 1.55rem + 1.61vw, 3rem)");
   });
-
-  it("exposes section-fluid spacing per spec §4.2", () => {
+  it("exposes section-fluid spacing", () => {
     const spacing = tailwindConfig.theme.extend.spacing as Record<string, string>;
-    expect(spacing["section-fluid"]).toBe(
-      "clamp(1.5rem, 1.0rem + 2.5vw, 4rem)"
-    );
+    expect(spacing["section-fluid"]).toBe("clamp(1.5rem, 1.0rem + 2.5vw, 4rem)");
   });
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 2: Verify it fails** — `cd apps/colign-frontend && yarn vitest run src/lib/tokens.test.ts` → FAIL.
 
-Run: `cd apps/colign-frontend && yarn vitest run src/lib/tokens.test.ts`
-Expected: FAIL — keys do not exist on `theme.extend`.
-
-- [ ] **Step 3: Add tokens to `tailwind.config.js`**
-
-In `apps/colign-frontend/tailwind.config.js`, extend `theme.extend`:
+- [ ] **Step 3: Add tokens to `tailwind.config.js`** — extend `theme.extend`:
 
 ```js
-theme: {
-  extend: {
-    colors: { /* existing colignAccent block stays */ },
-    fontFamily: { /* existing sans/mono blocks stay */ },
-    fontSize: {
-      "fluid-sm": "clamp(0.8125rem, 0.78rem + 0.16vw, 0.875rem)",
-      "fluid-base": "clamp(0.9375rem, 0.91rem + 0.16vw, 1rem)",
-      "fluid-lg": "clamp(1.0625rem, 1.02rem + 0.22vw, 1.125rem)",
-      "fluid-xl": "clamp(1.25rem, 1.18rem + 0.36vw, 1.5rem)",
-      "fluid-2xl": "clamp(1.5rem, 1.36rem + 0.71vw, 2rem)",
-      "fluid-3xl": "clamp(1.875rem, 1.55rem + 1.61vw, 3rem)",
-    },
-    spacing: {
-      "section-fluid": "clamp(1.5rem, 1.0rem + 2.5vw, 4rem)",
-    },
-  },
+fontSize: {
+  "fluid-sm": "clamp(0.8125rem, 0.78rem + 0.16vw, 0.875rem)",
+  "fluid-base": "clamp(0.9375rem, 0.91rem + 0.16vw, 1rem)",
+  "fluid-lg": "clamp(1.0625rem, 1.02rem + 0.22vw, 1.125rem)",
+  "fluid-xl": "clamp(1.25rem, 1.18rem + 0.36vw, 1.5rem)",
+  "fluid-2xl": "clamp(1.5rem, 1.36rem + 0.71vw, 2rem)",
+  "fluid-3xl": "clamp(1.875rem, 1.55rem + 1.61vw, 3rem)",
+},
+spacing: {
+  "section-fluid": "clamp(1.5rem, 1.0rem + 2.5vw, 4rem)",
 },
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 4: Verify it passes** — `yarn vitest run src/lib/tokens.test.ts` → PASS.
 
-Run: `cd apps/colign-frontend && yarn vitest run src/lib/tokens.test.ts`
-Expected: PASS — both `it` blocks green.
-
-- [ ] **Step 5: Rebuild compiled CSS + check disk**
-
-Run: `cd apps/colign-frontend && yarn build:css`
-Expected: exits 0, `src/colign-compiled.css` regenerated.
-
-Run: `grep -c "fluid-base" apps/colign-frontend/src/colign-compiled.css`
-Expected: at least 1 occurrence — confirms Tailwind emitted the utility class.
-
-(Per [colign-dev-runbook](../../../../.claude/projects/-Users-jasondijols-Documents-Code-Projects-Colign/memory/colign-dev-runbook.md) gotcha #1, always grep -c the marker on disk BEFORE committing frontend changes.)
+- [ ] **Step 5: Rebuild CSS + verify on disk** — `yarn build:css` then `grep -c "fluid-base" src/colign-compiled.css` → ≥ 1 (per dev-runbook gotcha #1).
 
 - [ ] **Step 6: Commit**
 
@@ -117,73 +78,32 @@ git commit -m "feat(responsive): add fluid type + spacing tokens per spec §4.2"
 
 ---
 
-### Task A2: Mirror Tailwind tokens as CSS custom properties on :root
+### Task A2: Create the touch & pointer policy stylesheet
 
-**Files:**
-- Modify: `apps/colign-frontend/src/index.css`
-
-CSS custom properties give non-Tailwind code paths (raw CSS, future components, debugging in DevTools) a way to read the same fluid values. Per spec §4.2: "A `:root` CSS custom property block... mirrors these same values."
-
-- [ ] **Step 1: Inspect current `index.css` structure**
-
-Run: `head -40 apps/colign-frontend/src/index.css`
-Note where `@tailwind base; @tailwind components; @tailwind utilities;` directives live.
-
-- [ ] **Step 2: Add `@layer base :root` block**
-
-Inside `apps/colign-frontend/src/index.css`, after the `@tailwind` directives:
-
-```css
-@layer base {
-  :root {
-    --text-fluid-sm: clamp(0.8125rem, 0.78rem + 0.16vw, 0.875rem);
-    --text-fluid-base: clamp(0.9375rem, 0.91rem + 0.16vw, 1rem);
-    --text-fluid-lg: clamp(1.0625rem, 1.02rem + 0.22vw, 1.125rem);
-    --text-fluid-xl: clamp(1.25rem, 1.18rem + 0.36vw, 1.5rem);
-    --text-fluid-2xl: clamp(1.5rem, 1.36rem + 0.71vw, 2rem);
-    --text-fluid-3xl: clamp(1.875rem, 1.55rem + 1.61vw, 3rem);
-    --space-section-fluid: clamp(1.5rem, 1.0rem + 2.5vw, 4rem);
-  }
-}
-```
-
-- [ ] **Step 3: Rebuild + verify on disk**
-
-Run: `cd apps/colign-frontend && yarn build:css`
-Run: `grep -c "text-fluid-base" apps/colign-frontend/src/colign-compiled.css`
-Expected: at least 2 occurrences (one for the Tailwind utility added in A1, one for the `:root` block from A2).
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add apps/colign-frontend/src/index.css apps/colign-frontend/src/colign-compiled.css
-git commit -m "feat(responsive): mirror fluid tokens as :root CSS custom properties"
-```
-
----
-
-### Task A3: Create the touch & pointer policy stylesheet
+(Note: prior r1 had a "mirror tokens as :root CSS custom properties" task here — dropped in r2. The properties had zero current consumers and would have repeated the same sync-tax anti-pattern the spec rejected for pa-host. If a non-Tailwind context ever needs a fluid value, add the custom property at that point with a concrete consumer.)
 
 **Files:**
 - Create: `apps/colign-frontend/src/responsive.css`
 - Modify: `apps/colign-frontend/src/main.tsx`
 
-Per spec §4.3 + §4.4, the touch policy stylesheet must compete on equal footing with Tailwind's `important: "#colign-root"` scoping. We use Option 2 from §4.4: author rules inside `@layer utilities` and scope to `#colign-root` for matched specificity. This keeps the rules in one file and lets them override Tailwind utilities at the same specificity tier.
+**Scope reminder:** this stylesheet is scoped to `#colign-root` to match the specificity of Tailwind utilities under `important: "#colign-root"`. It DOES NOT reach `pa-host` (which mounts under `#pa-root` and has no Tailwind). Per spec §4.2, that asymmetry is intentional — HostHome already meets the contract via inline styles, and no token bridge is needed.
 
-- [ ] **Step 1: Create `responsive.css`**
-
-Create `apps/colign-frontend/src/responsive.css`:
+- [ ] **Step 1: Create `responsive.css`** at `apps/colign-frontend/src/responsive.css`:
 
 ```css
 /*
  * Responsive UI touch & pointer policy — implements spec §4.3.
+ * Scoped to #colign-root to compete with Tailwind utilities compiled
+ * under important: "#colign-root" (spec §4.4).
  *
- * Scoped to #colign-root to match the specificity of Tailwind utilities
- * that compile to `#colign-root .foo` under important: "#colign-root".
- * See spec §4.4.
+ * This file ALSO holds component-scoped container-query rules added in
+ * Phase C (TeamRollupTable card view, IcDrillDrawer full-screen). Each
+ * such block is fenced with a section header for navigability.
  */
+
+/* === Section A3: global touch & pointer policy === */
 @layer utilities {
-  /* === Coarse pointers (touch): primary interactive elements ≥ 44×44 === */
+  /* Coarse pointers (touch): primary interactive elements ≥ 44×44 */
   @media (pointer: coarse) {
     #colign-root button:not([data-dense-control="true"]):not(th button):not([aria-label*="agination" i]):not([data-testid*="pagination"]),
     #colign-root a[role="button"]:not([data-dense-control="true"]),
@@ -193,8 +113,7 @@ Create `apps/colign-frontend/src/responsive.css`:
       min-height: 44px;
       min-width: 44px;
     }
-
-    /* Checkboxes/radios get the larger hit-target via padding on their label */
+    /* Label-wrapped checkboxes/radios get the hit-target via the label */
     #colign-root label:has(input[type="checkbox"]),
     #colign-root label:has(input[type="radio"]) {
       min-height: 44px;
@@ -202,49 +121,29 @@ Create `apps/colign-frontend/src/responsive.css`:
       align-items: center;
     }
   }
-
-  /* === Fine pointers (cursor): allow denser desktop layouts === */
+  /* Fine pointers (cursor): denser desktop layouts allowed */
   @media (pointer: fine) {
     #colign-root button:not([data-dense-control="true"]):not(th button) {
       min-height: 32px;
     }
   }
-
-  /* === Hover capability gating === */
-  /* Affordances that hide behind hover-only are an accessibility risk on
-     touch devices. The audit prefers always-visible by default; this block
-     ensures any future :hover-only chrome stays revealed on (hover: none). */
+  /* Hover gating — always-visible on touch */
   @media (hover: none) {
     #colign-root [data-hover-only="true"] {
       opacity: 1 !important;
       visibility: visible !important;
     }
   }
-
-  /* === Viewport units: dvh propagation === */
-  /* Any element using vh-based sizing should fall back gracefully to dvh
-     where authored. This is documentation-only; per-component dvh usage is
-     applied at the component level. */
 }
 ```
 
-- [ ] **Step 2: Import `responsive.css` from `main.tsx`**
-
-Read: `apps/colign-frontend/src/main.tsx` — find the line that imports `./index.css` (or compiled CSS).
-
-Add immediately after that import:
+- [ ] **Step 2: Import `responsive.css` from `main.tsx`** — after the existing `./index.css` import, add:
 
 ```tsx
 import "./responsive.css";
 ```
 
-- [ ] **Step 3: Rebuild + verify on disk**
-
-Run: `cd apps/colign-frontend && yarn build`
-Expected: build succeeds. (CSS-only changes don't require a separate test pass here; the visual verification happens in Task A6 + audit phase.)
-
-Run: `grep -rn "responsive.css" apps/colign-frontend/src/main.tsx`
-Expected: at least one match — confirms the import landed on disk.
+- [ ] **Step 3: Build + verify on disk** — `yarn build` then `grep -n "responsive.css" src/main.tsx` → 1 match.
 
 - [ ] **Step 4: Commit**
 
@@ -255,85 +154,56 @@ git commit -m "feat(responsive): add touch & pointer policy stylesheet"
 
 ---
 
-### Task A4: Update `Button` SIZES so coarse pointers meet the 44px floor
+### Task A3: Update `Button` SIZES so coarse pointers meet the 44px floor
 
 **Files:**
 - Modify: `apps/colign-frontend/src/components/ui/Button.tsx`
-- Test: `apps/colign-frontend/src/components/ui/Button.test.tsx` (create or extend)
+- Create: `apps/colign-frontend/src/components/ui/Button.test.tsx`
 
-Per feasibility-review finding: existing Button uses fixed-height utilities (`h-7`/`h-9`/`h-10` = 28/36/40 px). The responsive.css `min-height: 44px` rule WILL override these on coarse pointers — but only at runtime, in browser, with the media query active. Component tests run in jsdom which does not simulate `(pointer: coarse)`. So the test asserts the size-prop → class-name contract, and we rely on responsive.css for runtime enforcement.
+Existing Button uses fixed-height utilities (`h-7`/`h-9`/`h-10` = 28/36/40 px). Padding-only overrides cannot lift these. We bump sizes so that on coarse pointers the runtime `min-height: 44px` from responsive.css applies cleanly, and on fine pointers the larger compile-time floor is still ergonomic.
 
-- [ ] **Step 1: Inspect current Button SIZES**
+**Cascade caveat (design-lens):** the bump touches every Button consumer (~21 call sites). After the change, manually screenshot one dense row (e.g., ReconcileRow at 1440) before committing to verify no visual breakage.
 
-Run: `grep -n "h-7\|h-9\|h-10\|SIZES" apps/colign-frontend/src/components/ui/Button.tsx`
+- [ ] **Step 1: Inspect current SIZES** — `grep -n "h-7\|h-9\|h-10\|SIZES" apps/colign-frontend/src/components/ui/Button.tsx`.
 
-Expected: lines 26-30 contain the SIZES map.
-
-- [ ] **Step 2: Write the failing test**
-
-Create or extend `apps/colign-frontend/src/components/ui/Button.test.tsx`:
+- [ ] **Step 2: Write failing test** — `apps/colign-frontend/src/components/ui/Button.test.tsx`
 
 ```tsx
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Button } from "./Button";
 
-describe("Button size contract", () => {
-  it("size=sm includes h-8 (32px) — meets pointer:fine floor", () => {
+describe("Button size contract (spec §4.3 + responsive.css)", () => {
+  it("size=sm → h-8 (32px) meets pointer:fine floor", () => {
     render(<Button size="sm">Tap</Button>);
-    const btn = screen.getByRole("button", { name: "Tap" });
-    expect(btn.className).toMatch(/\bh-8\b/);
+    expect(screen.getByRole("button", { name: "Tap" }).className).toMatch(/\bh-8\b/);
   });
-
-  it("size=md includes h-10 (40px) and runtime ≥44 via responsive.css on coarse", () => {
+  it("size=md → h-10 (40px); coarse pointers lift to 44 via responsive.css", () => {
     render(<Button size="md">Tap</Button>);
-    const btn = screen.getByRole("button", { name: "Tap" });
-    expect(btn.className).toMatch(/\bh-10\b/);
+    expect(screen.getByRole("button", { name: "Tap" }).className).toMatch(/\bh-10\b/);
   });
-
-  it("size=lg includes h-11 (44px) — meets coarse-pointer floor at compile time", () => {
+  it("size=lg → h-11 (44px) meets coarse floor at compile time", () => {
     render(<Button size="lg">Tap</Button>);
-    const btn = screen.getByRole("button", { name: "Tap" });
-    expect(btn.className).toMatch(/\bh-11\b/);
+    expect(screen.getByRole("button", { name: "Tap" }).className).toMatch(/\bh-11\b/);
   });
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [ ] **Step 3: Verify failures** — `yarn vitest run src/components/ui/Button.test.tsx` → 2 of 3 fail.
 
-Run: `cd apps/colign-frontend && yarn vitest run src/components/ui/Button.test.tsx`
-Expected: 2 of 3 fail (current sm=h-7, lg=h-10; md=h-9).
-
-- [ ] **Step 4: Update SIZES**
-
-In `apps/colign-frontend/src/components/ui/Button.tsx`, update the SIZES map:
+- [ ] **Step 4: Update SIZES** in `Button.tsx`:
 
 ```tsx
-// BEFORE: sm: 'h-7 px-2.5', md: 'h-9 px-3', lg: 'h-10 px-4'
-const SIZES = {
-  sm: "h-8 px-3 text-xs",
-  md: "h-10 px-4 text-sm",
-  lg: "h-11 px-5 text-sm",
-} as const;
+const SIZES: Record<Size, string> = {
+  sm: "h-8 px-3 text-xs gap-1",
+  md: "h-10 px-4 text-sm gap-1.5",
+  lg: "h-11 px-5 text-sm gap-2",
+};
 ```
 
-Reasoning:
-- `sm`: h-8 (32 px) matches the `pointer: fine` floor in responsive.css. Used for dense desktop chrome
-- `md`: h-10 (40 px) at compile time; runtime ≥44 on coarse via responsive.css
-- `lg`: h-11 (44 px) at compile time — primary CTAs always meet the touch floor regardless of pointer
+- [ ] **Step 5: Verify passes + full build** — `yarn vitest run && yarn build` → all green.
 
-- [ ] **Step 5: Run test to verify it passes**
-
-Run: `cd apps/colign-frontend && yarn vitest run src/components/ui/Button.test.tsx`
-Expected: all 3 PASS.
-
-- [ ] **Step 6: Verify no broken usages**
-
-Run: `cd apps/colign-frontend && yarn build`
-Expected: TypeScript build succeeds — SIZES literal is `as const`, no consumers broken.
-
-Run: `grep -rn 'size="sm"\|size="md"\|size="lg"' apps/colign-frontend/src --include="*.tsx" | head -20`
-Note any high-traffic usages to spot-check during the per-screen audit.
+- [ ] **Step 6: Visual regression spot-check** — boot the stack (mock auth not needed here — login screens don't render Button-primitive buttons). Open `http://localhost:4173/` after a login, navigate to a dense screen (ReconcilePage if available, else WeeklyPlanPage at 1440 width) via `/browse screenshot --viewport-width 1440 --viewport-height 900 --output tmp/a3-cascade-check.png`. Visually verify dense rows don't break.
 
 - [ ] **Step 7: Commit**
 
@@ -345,120 +215,97 @@ git commit -m "feat(responsive): bump Button sizes — md=h-10, lg=h-11 for 44px
 
 ---
 
-### Task A5: Update `Drawer` close button to ≥44×44 and add `BackArrow` variant prop
+### Task A4: Update `Drawer` close button to ≥44×44 + add `closeAffordance` prop ONLY
 
 **Files:**
 - Modify: `apps/colign-frontend/src/components/ui/Drawer.tsx`
 
-Per spec §5.1, IcDrillDrawer's full-screen mode needs a back-arrow affordance replacing the X. We add a `closeAffordance` prop to Drawer with `"x"` (default) and `"back"` variants. The drawer container itself takes a new `fullScreen` prop that consumers (only IcDrillDrawer, today) can flip based on their container query / pointer state.
+**Critical correction from r1:** existing Drawer uses prop name `width` (not `size`) and imports `HiX` (not `HiOutlineX`). We KEEP the `width` prop name unchanged to avoid breaking IcDrillDrawer (the only consumer, which passes `width="xl"`). The `fullScreen` mode lives INSIDE IcDrillDrawer (Task C9), not as a Drawer primitive concern.
 
-- [ ] **Step 1: Inspect current Drawer close button + width logic**
+The only change to the Drawer primitive is:
+1. Bump close button h-10 → h-11 (`HiX` icon stays)
+2. Add a new `closeAffordance?: "x" | "back"` prop with default `"x"`. When `"back"`, swap icon to `HiArrowLeft` and aria-label to "Back to team list" (per spec §5.1)
 
-Run: `grep -n "h-10 w-10\|WIDTHS\|max-w-\|aria-label.*Close" apps/colign-frontend/src/components/ui/Drawer.tsx`
+- [ ] **Step 1: Locate close button** — `grep -n "HiX\|h-10\|width\|aria-label.*Close" apps/colign-frontend/src/components/ui/Drawer.tsx`.
 
-Expected: WIDTHS object around line 15-19; close button around line 140-148.
+- [ ] **Step 2: Update close button + add `closeAffordance`**
 
-- [ ] **Step 2: Update close button + add affordance variants**
+In `Drawer.tsx`:
 
-Locate the close-button render block in `Drawer.tsx`. Replace the existing `<button>...HiOutlineX...</button>` with:
-
-```tsx
-<button
-  type="button"
-  onClick={onClose}
-  aria-label={closeAffordance === "back" ? "Back to previous view" : "Close"}
-  className="inline-flex h-11 w-11 items-center justify-center rounded-md text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
->
-  {closeAffordance === "back" ? (
-    <HiOutlineArrowLeft className="h-5 w-5" />
-  ) : (
-    <HiOutlineX className="h-5 w-5" />
-  )}
-</button>
-```
-
-Add `HiOutlineArrowLeft` to the imports at the top of `Drawer.tsx`:
+1. Update the imports — keep the existing `HiX` import and add `HiArrowLeft`:
 
 ```tsx
-import { HiOutlineX, HiOutlineArrowLeft } from "react-icons/hi";
+import { HiX, HiArrowLeft } from "react-icons/hi";
 ```
 
-- [ ] **Step 3: Add `closeAffordance` and `fullScreen` props**
-
-Update the Drawer component prop interface and the outer container width logic:
+2. Add `closeAffordance` to the props interface (immediately under `width`):
 
 ```tsx
 interface DrawerProps {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  size?: keyof typeof WIDTHS;
-  closeAffordance?: "x" | "back"; // NEW — default "x"
-  fullScreen?: boolean; // NEW — overrides size when true; used by IcDrillDrawer per spec §5.1
+  width?: "md" | "lg" | "xl";       // EXISTING — DO NOT RENAME
+  closeAffordance?: "x" | "back";    // NEW — default "x"
+  title?: string;
+  description?: string;
 }
 
 export function Drawer({
   open,
   onClose,
   children,
-  size = "md",
+  width = "md",
   closeAffordance = "x",
-  fullScreen = false,
+  title,
+  description,
 }: DrawerProps) {
-  const widthClass = fullScreen ? "w-full max-w-none" : WIDTHS[size];
-  // ... rest uses widthClass instead of WIDTHS[size]
+  // ... existing body unchanged ...
 }
 ```
 
-- [ ] **Step 4: Run existing Drawer tests + build**
+3. In the close-button JSX block, replace the existing button's `className` and inner `<HiX>` with:
 
-Run: `cd apps/colign-frontend && yarn vitest run --reporter=basic | grep -i drawer`
-Expected: existing tests pass (close-button class names changed but role+aria-label unchanged).
+```tsx
+<button
+  type="button"
+  onClick={onClose}
+  aria-label={closeAffordance === "back" ? "Back to team list" : "Close"}
+  className="inline-flex h-11 w-11 items-center justify-center rounded-md text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
+>
+  {closeAffordance === "back" ? (
+    <HiArrowLeft className="h-5 w-5" />
+  ) : (
+    <HiX className="h-4 w-4" />
+  )}
+</button>
+```
 
-Run: `cd apps/colign-frontend && yarn build`
-Expected: build succeeds.
+- [ ] **Step 3: Build + run existing tests** — `yarn vitest run --reporter=basic | grep -i drawer` then `yarn build` → all pass.
+
+- [ ] **Step 4: Verify on disk** — `grep -n "h-11 w-11\|closeAffordance\|HiArrowLeft" apps/colign-frontend/src/components/ui/Drawer.tsx` → 3+ matches.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add apps/colign-frontend/src/components/ui/Drawer.tsx
-git commit -m "feat(responsive): Drawer close ≥44×44 + add back-arrow + fullScreen prop"
+git commit -m "feat(responsive): Drawer close ≥44×44 + closeAffordance prop"
 ```
 
 ---
 
-### Task A6: Bump `AppShell` hamburger to ≥44×44
+### Task A5: Bump `AppShell` hamburger to ≥44×44
 
 **Files:**
 - Modify: `apps/colign-frontend/src/components/AppShell.tsx`
 
-Per spec §6.4, the hamburger is `h-10 w-10` (40 px). Trivial fix to h-11 w-11.
+- [ ] **Step 1: Locate** — `grep -n "h-10 w-10\|HiOutlineMenu" apps/colign-frontend/src/components/AppShell.tsx`.
 
-- [ ] **Step 1: Locate the hamburger button**
+- [ ] **Step 2: Update** — replace `h-10 w-10` with `h-11 w-11` in the hamburger button's className.
 
-Run: `grep -n "h-10 w-10\|HiOutlineMenu" apps/colign-frontend/src/components/AppShell.tsx`
+- [ ] **Step 3: Verify + build** — `grep -n "h-11 w-11" apps/colign-frontend/src/components/AppShell.tsx` → 1 match; `yarn build` → succeeds.
 
-Expected: line ~84-96 contains the button with `h-10 w-10`.
-
-- [ ] **Step 2: Update**
-
-Replace `h-10 w-10` with `h-11 w-11` in the hamburger button. Specific change to make the rendered diff exactly one character pair (10→11) in two places:
-
-```tsx
-className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-md text-neutral-600 ..."
-```
-
-- [ ] **Step 3: Verify on disk**
-
-Run: `grep -n "h-11 w-11" apps/colign-frontend/src/components/AppShell.tsx`
-Expected: one match. (per dev-runbook gotcha #1)
-
-- [ ] **Step 4: Build**
-
-Run: `cd apps/colign-frontend && yarn build`
-Expected: succeeds.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add apps/colign-frontend/src/components/AppShell.tsx
@@ -467,41 +314,27 @@ git commit -m "feat(responsive): AppShell hamburger ≥44×44 (h-11 w-11)"
 
 ---
 
-## Phase B — Tooling (tasks B1)
+## Phase B — Tooling
 
-### Task B1: Create `scripts/audit-teardown.sh`
+### Task B1: Create `scripts/audit-teardown.sh` (append-or-replace)
 
 **Files:**
 - Create: `scripts/audit-teardown.sh`
+- Modify: `.gitignore`
 
-Per spec §6.3, this script snapshots and restores `.env.local` files so the audit's auth-mode flips can never strand the codebase in mock mode. The audit workflow MUST `trap restore EXIT` so an interrupted run still restores.
+**Critical fix from r1:** the current backend `.env.local` has NO `COLIGN_AUTH_MODE` line. A naive `sed 's/^X=.*/X=mock/'` would silently no-op and the `echo "✓ flipped"` would lie. The script below APPENDS the line when absent, REPLACES when present.
 
-- [ ] **Step 1: Verify the script directory exists**
-
-Run: `ls scripts/ | head -5`
-Expected: directory listing showing existing scripts (e.g., `mock-jwt.mjs`).
-
-- [ ] **Step 2: Write the script**
-
-Create `scripts/audit-teardown.sh` with the following content:
+- [ ] **Step 1: Write the script** — `scripts/audit-teardown.sh`:
 
 ```bash
 #!/usr/bin/env bash
-# scripts/audit-teardown.sh
-#
-# Snapshots .env.local files at audit start so audit-mode flips can never
-# strand the repo in mock auth mode. Per spec §6.3 — replaces a "hard step
-# at end of workflow" sentence with mechanically-enforced restore.
+# scripts/audit-teardown.sh — implements spec §6.3 mechanical env restore.
 #
 # Usage:
-#   scripts/audit-teardown.sh flip       # snapshot + flip to mock
-#   scripts/audit-teardown.sh restore    # restore from snapshot
-#
-# Inside the audit workflow:
-#   trap 'scripts/audit-teardown.sh restore' EXIT INT TERM
+#   trap 'scripts/audit-teardown.sh restore' EXIT INT TERM   # MUST be registered
 #   scripts/audit-teardown.sh flip
 #   # ... audit work ...
-#   # restore runs automatically on exit
+#   scripts/audit-teardown.sh restore   # also runs via trap on early exit
 
 set -euo pipefail
 
@@ -510,33 +343,42 @@ SNAPSHOT_DIR="$REPO_ROOT/.audit-snapshot"
 FRONTEND_ENV="$REPO_ROOT/apps/colign-frontend/.env.local"
 BACKEND_ENV="$REPO_ROOT/apps/colign-backend/.env.local"
 
+# Append-or-replace a KEY=VALUE line in a .env file.
+# Avoids the sed-only-replaces footgun when KEY is absent.
+set_env_var() {
+  local file="$1"
+  local key="$2"
+  local value="$3"
+  if [ ! -f "$file" ]; then
+    echo "WARNING: $file does not exist; skipping $key flip"
+    return 0
+  fi
+  if grep -q "^${key}=" "$file"; then
+    # Replace in place. The sed -i.bak portable workaround keeps macOS + GNU consistent.
+    sed -i.bak "s|^${key}=.*|${key}=${value}|" "$file"
+    rm -f "$file.bak"
+    echo "  ✓ $key replaced in $(basename "$(dirname "$file")")/.env.local"
+  else
+    echo "" >> "$file"  # ensure newline before append
+    echo "${key}=${value}" >> "$file"
+    echo "  ✓ $key appended to $(basename "$(dirname "$file")")/.env.local"
+  fi
+}
+
 cmd_flip() {
   if [ -d "$SNAPSHOT_DIR" ]; then
-    echo "ERROR: $SNAPSHOT_DIR already exists. Either an audit is in progress, or a prior run did not restore cleanly."
-    echo "Inspect the snapshot, then either run 'restore' or remove $SNAPSHOT_DIR manually."
+    echo "ERROR: $SNAPSHOT_DIR already exists. Run 'restore' or remove it manually." >&2
     exit 1
   fi
   mkdir -p "$SNAPSHOT_DIR"
-
-  if [ -f "$FRONTEND_ENV" ]; then
-    cp "$FRONTEND_ENV" "$SNAPSHOT_DIR/frontend.env.local"
-    sed -i.bak 's/^VITE_AUTH_MODE=.*/VITE_AUTH_MODE=mock/' "$FRONTEND_ENV"
-    rm -f "$FRONTEND_ENV.bak"
-    echo "✓ Frontend flipped to VITE_AUTH_MODE=mock"
-  else
-    echo "WARNING: $FRONTEND_ENV does not exist; nothing to flip on frontend"
-  fi
-
-  if [ -f "$BACKEND_ENV" ]; then
-    cp "$BACKEND_ENV" "$SNAPSHOT_DIR/backend.env.local"
-    sed -i.bak 's/^COLIGN_AUTH_MODE=.*/COLIGN_AUTH_MODE=mock/' "$BACKEND_ENV"
-    rm -f "$BACKEND_ENV.bak"
-    echo "✓ Backend flipped to COLIGN_AUTH_MODE=mock"
-  else
-    echo "WARNING: $BACKEND_ENV does not exist; nothing to flip on backend"
-  fi
-
-  echo "Snapshot stored at $SNAPSHOT_DIR — DO NOT delete until 'restore' has run."
+  [ -f "$FRONTEND_ENV" ] && cp "$FRONTEND_ENV" "$SNAPSHOT_DIR/frontend.env.local"
+  [ -f "$BACKEND_ENV" ] && cp "$BACKEND_ENV" "$SNAPSHOT_DIR/backend.env.local"
+  echo "Snapshot stored at $SNAPSHOT_DIR — DO NOT delete until 'restore' runs."
+  echo "Flipping to mock auth mode..."
+  set_env_var "$FRONTEND_ENV" "VITE_AUTH_MODE" "mock"
+  set_env_var "$BACKEND_ENV" "COLIGN_AUTH_MODE" "mock"
+  echo "✓ Flipped. Register the trap NOW if you haven't:"
+  echo "    trap 'scripts/audit-teardown.sh restore' EXIT INT TERM"
 }
 
 cmd_restore() {
@@ -544,89 +386,139 @@ cmd_restore() {
     echo "No snapshot at $SNAPSHOT_DIR — nothing to restore."
     return 0
   fi
-
-  if [ -f "$SNAPSHOT_DIR/frontend.env.local" ]; then
-    cp "$SNAPSHOT_DIR/frontend.env.local" "$FRONTEND_ENV"
-    echo "✓ Frontend env restored"
-  fi
-  if [ -f "$SNAPSHOT_DIR/backend.env.local" ]; then
-    cp "$SNAPSHOT_DIR/backend.env.local" "$BACKEND_ENV"
-    echo "✓ Backend env restored"
-  fi
-
+  [ -f "$SNAPSHOT_DIR/frontend.env.local" ] && cp "$SNAPSHOT_DIR/frontend.env.local" "$FRONTEND_ENV" && echo "  ✓ Frontend env restored"
+  [ -f "$SNAPSHOT_DIR/backend.env.local" ]  && cp "$SNAPSHOT_DIR/backend.env.local"  "$BACKEND_ENV"  && echo "  ✓ Backend env restored"
   rm -rf "$SNAPSHOT_DIR"
-  echo "Snapshot removed. Auth mode restored."
+  echo "✓ Snapshot removed. Auth mode restored."
 }
 
 case "${1:-}" in
   flip) cmd_flip ;;
   restore) cmd_restore ;;
-  *)
-    echo "Usage: $0 {flip|restore}"
-    exit 64
-    ;;
+  *) echo "Usage: $0 {flip|restore}"; exit 64 ;;
 esac
 ```
 
-- [ ] **Step 3: Make executable**
+- [ ] **Step 2: Make executable** — `chmod +x scripts/audit-teardown.sh`.
 
-Run: `chmod +x scripts/audit-teardown.sh`
+- [ ] **Step 3: Add `.audit-snapshot/` to `.gitignore`** — `grep -q "^.audit-snapshot/" .gitignore || echo ".audit-snapshot/" >> .gitignore`.
 
-- [ ] **Step 4: Add `.audit-snapshot/` to `.gitignore`**
+- [ ] **Step 4: Smoke-test (does NOT flip)** —
 
-Run: `grep -q "^.audit-snapshot/" .gitignore || echo ".audit-snapshot/" >> .gitignore`
+  - `scripts/audit-teardown.sh restore` → "No snapshot... nothing to restore." (exit 0)
+  - `scripts/audit-teardown.sh badcommand` → usage message, exit 64
+  - Real flip happens in Phase C pre-checks.
 
-Then verify:
-Run: `grep "audit-snapshot" .gitignore`
-Expected: one match.
-
-- [ ] **Step 5: Smoke-test the script (does not flip anything yet)**
-
-Run: `scripts/audit-teardown.sh restore`
-Expected: outputs "No snapshot at .audit-snapshot — nothing to restore." and exits 0.
-
-Run: `scripts/audit-teardown.sh nonexistent`
-Expected: outputs usage message and exits 64.
-
-(We don't run `flip` here — that would actually flip the env files. The real flip + restore cycle happens in Phase C.)
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add scripts/audit-teardown.sh .gitignore
-git commit -m "feat(responsive): audit-teardown.sh for env snapshot+restore per spec §6.3"
+git commit -m "feat(responsive): audit-teardown.sh — append-or-replace env flip per spec §6.3"
 ```
 
 ---
 
-## Phase C — Per-screen audit (tasks C1–C9)
+### Task B2: Harden the Vite `/__dev__/mint` middleware (shell injection)
 
-Each screen task follows the same shape: capture baseline → identify issues → apply fixes → recapture → log to results doc. For screens where deep refactors are required (TeamRollupTable card view, IcDrillDrawer full-screen), the fix step expands accordingly.
+**Files:**
+- Modify: `apps/colign-frontend/vite.config.ts`
 
-**Pre-Phase-C startup checks (RUN ONCE before C1):**
+Spec §9.4 flags this as P1 pre-existing. The autonomous-loop rail allows `vite.config.ts` edits (only the shared-singleton list is off-limits). Since Phase C will actively exercise this middleware throughout the audit (every JWT mint goes through it implicitly), fixing it before C is the right time. The fix is small: swap `execSync` (shell string) for `execFileSync` (argv array — no shell).
 
-- [ ] **Verify mock JWT minting works** (per spec §6.3 precondition)
+- [ ] **Step 1: Inspect the middleware** — `grep -n "execSync\|__dev__/mint" apps/colign-frontend/vite.config.ts`.
 
-Run: `node scripts/mock-jwt.mjs --email audit-ic@colign.test --role IC --ttl 3600`
-Expected: outputs a JWT (3 base64-encoded segments separated by dots).
+- [ ] **Step 2: Replace `execSync` with `execFileSync`** — change the imports:
 
-If this fails, STOP. The audit cannot proceed without a working mock JWT minter. Diagnose before continuing.
+```ts
+import { execFileSync } from "node:child_process";
+```
 
-- [ ] **Flip to audit mode**
+And replace the call site (currently `execSync(\`node "${scriptPath}" --email "${email}" ...\`)`) with:
 
-Run: `scripts/audit-teardown.sh flip`
-Expected: confirms snapshot + flip. From here on, both env files have `*_AUTH_MODE=mock`.
+```ts
+const stdout = execFileSync(
+  "node",
+  [scriptPath, "--email", email, "--role", role, "--ttl", String(ttl), "--audience", audience],
+  { encoding: "utf8" }
+);
+```
 
-- [ ] **Boot the stack in mock mode**
+(Argv passes arguments to Node directly. No shell, no interpolation, no injection surface — regardless of what characters the query params contain.)
 
-Open three terminals (or use a process manager):
-- Backend: `cd apps/colign-backend && set -a && source .env.local && set +a && SPRING_PROFILES_ACTIVE=h2 COLIGN_AUTH_MODE=mock JAVA_HOME=/opt/homebrew/opt/openjdk@21 PATH=$JAVA_HOME/bin:/opt/homebrew/bin:$PATH ./mvnw spring-boot:run`
-- Frontend (remote): `cd apps/colign-frontend && ./node_modules/.bin/vite --port 5174`
-- Host: `cd apps/pa-host && ./node_modules/.bin/vite --port 4173`
+- [ ] **Step 3: Remove the now-unused `execSync` import** if it was imported separately. Verify with `grep -n "execSync" vite.config.ts` → 0 matches.
 
-Per dev runbook: user opens `:4173`, NOT `:5174`. The frontend is the federated remote consumed by the host.
+- [ ] **Step 4: Smoke-test the middleware** — boot frontend (`./node_modules/.bin/vite --port 5174`); in another terminal run:
 
-- [ ] **Initialize the results doc**
+```bash
+curl -sS "http://localhost:5174/__dev__/mint?email=audit-ic@colign.test&role=IC&ttl=3600&audience=https%3A%2F%2Fapi.colign.org"
+```
+
+Expected: JSON response containing a 3-segment JWT. (If this fails, do NOT proceed — diagnose first.)
+
+Then verify the shell-injection branch is closed by attempting a payload that would have executed previously:
+
+```bash
+curl -sS "http://localhost:5174/__dev__/mint?email=audit-ic@colign.test%22%24(touch+%2Ftmp%2Fpwned)%22&role=IC&ttl=3600&audience=test"
+ls /tmp/pwned 2>&1   # should report "No such file or directory"
+```
+
+Expected: the second curl either returns a JWT minted with a literal weird email, or a backend reject — but `/tmp/pwned` MUST NOT exist.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add apps/colign-frontend/vite.config.ts
+git commit -m "fix(security): replace execSync with execFileSync in /__dev__/mint middleware"
+```
+
+---
+
+## Phase C — Per-screen audit
+
+### Pre-Phase-C startup checklist (RUN ONCE, in order)
+
+- [ ] **Verify mock JWT minting works** —
+
+```bash
+node scripts/mock-jwt.mjs --email audit-ic@colign.test --role IC --ttl 14400
+```
+
+Expected: outputs a 3-segment JWT. If this fails, STOP.
+
+(Spec §6.3 precondition. TTL 14400 = 4 hours, matches the Vite middleware default and covers the full audit window.)
+
+- [ ] **Capture-hygiene reminder** — confirm we'll use audit-only emails for the entire audit:
+  - IC: `audit-ic@colign.test`
+  - MANAGER: `audit-mgr@colign.test`
+  - Never use a real user's email during the audit. Screenshots will display `me?.email` in AppShell on every authenticated screen.
+
+- [ ] **Flip to audit mode + register restore trap** —
+
+In the SAME shell that will run the audit:
+
+```bash
+scripts/audit-teardown.sh flip
+trap 'scripts/audit-teardown.sh restore' EXIT INT TERM
+```
+
+The trap MUST be registered in the same shell process; opening a new terminal for backend/frontend/host afterwards is fine.
+
+(Verify with `trap -p` → at least one entry for EXIT INT TERM.)
+
+- [ ] **Boot the three-service stack** —
+
+Terminal 1 (backend, mock mode):
+```bash
+cd apps/colign-backend && set -a && source .env.local && set +a && SPRING_PROFILES_ACTIVE=h2 COLIGN_AUTH_MODE=mock JAVA_HOME=/opt/homebrew/opt/openjdk@21 PATH=$JAVA_HOME/bin:/opt/homebrew/bin:$PATH ./mvnw spring-boot:run
+```
+
+Terminal 2 (frontend remote): `cd apps/colign-frontend && ./node_modules/.bin/vite --port 5174`
+
+Terminal 3 (host): `cd apps/pa-host && ./node_modules/.bin/vite --port 4173`
+
+Per dev runbook: user opens `:4173`, NOT `:5174`.
+
+- [ ] **Initialize results doc** —
 
 Create `docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md`:
 
@@ -634,167 +526,115 @@ Create `docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md`:
 # Responsive UI Audit Results
 
 **Audit date:** 2026-05-31
-**Spec:** [docs/superpowers/specs/2026-05-31-responsive-ui-audit-design.md](2026-05-31-responsive-ui-audit-design.md)
+**Spec:** [2026-05-31-responsive-ui-audit-design.md](2026-05-31-responsive-ui-audit-design.md)
 **Plan:** [docs/superpowers/plans/2026-05-31-responsive-ui-audit.md](../plans/2026-05-31-responsive-ui-audit.md)
 
-Per-screen findings appended below as the audit progresses.
+Per-screen findings appended below.
 
 ---
 ```
 
-Commit:
-```bash
-git add docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md
-git commit -m "docs(audit): initialize responsive UI audit results doc"
-```
+Commit: `docs(audit): initialize results doc`.
 
 ---
 
 ### Task C1: Audit `HostHome` (pa-host landing)
 
 **Files:**
-- Capture: `tmp/responsive-audit/HostHome/before/*.png`, `tmp/responsive-audit/HostHome/after/*.png`
+- Capture: `tmp/responsive-audit/HostHome/{before,after}/*.png`
 - Modify (if issues found): `apps/pa-host/src/HostHome.tsx`
-- Append to: `docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md`
+- Append to results doc
 
-- [ ] **Step 1: Capture baseline matrix (10 screenshots)**
+**Asymmetry reminder (spec §4.2 / r2 review):** the `responsive.css` touch policy from Phase A does NOT reach HostHome — pa-host mounts under `#pa-root` and has no Tailwind. HostHome's CTA already uses `minHeight: 44`; footer links use `colign-caption-link` (≥24×24 tap zone). So HostHome is in scope for the visual audit but already satisfies the contract via inline styles. Do NOT modify the headline `clamp(44px, 8.5vw, 108px)` formula unless the screenshot reveals an actual rendering defect — the formula was deliberately chosen for brand intent and the math (`8.5vw` at 320 = 27.2px, clamped up to 44px min) confirms it never overflows.
 
-For each width in {320, 375, 768, 1024, 1440} and each mode in {light, dark}:
+- [ ] **Step 1: Capture baseline (5×2 = 10 shots)** — via `/browse screenshot http://localhost:4173/ --viewport-width <W> --viewport-height 900 --output tmp/responsive-audit/HostHome/before/<W>-<mode>.png --color-scheme <mode>` for {320,375,768,1024,1440} × {light,dark}.
 
-Run via the `/browse` skill:
-```
-/browse screenshot http://localhost:4173/ \
-  --viewport-width <W> --viewport-height 900 \
-  --output tmp/responsive-audit/HostHome/before/<W>-<mode>.png \
-  --color-scheme <mode>
-```
+- [ ] **Step 2: Review against checklist** —
+  - ☐ No horizontal scroll on `<body>` at any width
+  - ☐ No text clipping or overlap
+  - ☐ Get started CTA fully tappable, ≥44×44
+  - ☐ Footer links don't collide with brand/CTA; wrap correctly at 320
+  - ☐ Headline `text-wrap: balance` not producing awkward breaks at 320
+  - ☐ Dark mode layout matches light (color-only differences are out of scope)
 
-(Concretely: 10 captures — 320-light, 320-dark, 375-light, 375-dark, 768-light, 768-dark, 1024-light, 1024-dark, 1440-light, 1440-dark.)
+Log findings to results doc under `## HostHome`, organized by WCAG-fail / broken-on-mobile / polish.
 
-- [ ] **Step 2: Review screenshots against checklist**
+- [ ] **Step 3: Apply fixes ONLY for WCAG-fail or broken-on-mobile issues** — likely culprits if any:
+  - Footer wrap at 320: add `flex-wrap` to the footer container
+  - Skip link tap area: increase padding on `.sr-only` focus state
+  - Do NOT modify the headline clamp formula (see asymmetry reminder above)
 
-For each width × mode, check:
-- ☐ No horizontal scroll on `<body>`
-- ☐ No text clipping or overlap
-- ☐ "Get started" CTA is fully tappable and ≥44×44
-- ☐ Footer links don't collide with brand/CTA
-- ☐ Headline `text-wrap: balance` not producing awkward line breaks at 320
-- ☐ Dark mode: layout matches light (color-only differences are out of scope)
+Per dev-runbook gotcha #1: `grep -c <marker>` the file on disk after every edit before committing.
 
-Log findings to the results doc under a new `## HostHome` heading, organized by severity bucket (WCAG-fail / broken-on-mobile / polish).
+- [ ] **Step 4: Capture after-matrix** — same 10 widths × modes into `.../after/`.
 
-- [ ] **Step 3: Apply fixes if any "WCAG-fail" or "broken-on-mobile" issues**
-
-Common fixes for HostHome (anticipate based on review of the current code):
-- If footer wraps badly at 320: add `flex-wrap` to the footer container
-- If headline `clamp(44px, 8.5vw, 108px)` produces too-large headline at 320: tighten the formula
-- If `prefers-reduced-motion` user sees broken layout: verify the CTA still renders
-
-Make targeted edits to `apps/pa-host/src/HostHome.tsx`. Per dev-runbook gotcha #1: after each edit, `grep -c <marker>` the file on disk before committing.
-
-- [ ] **Step 4: Capture after-matrix (same 10 widths × modes)**
-
-Run `/browse` 10 times again with `--output tmp/responsive-audit/HostHome/after/<W>-<mode>.png`.
-
-- [ ] **Step 5: Append to results doc**
-
-Append a section like:
+- [ ] **Step 5: Append findings to results doc** (template):
 
 ```markdown
 ## HostHome (pa-host landing)
-
 **Audited at:** 320 / 375 / 768 / 1024 / 1440 px × light + dark
 
-**Findings:**
-- WCAG-fail: (list, or "none")
-- Broken-on-mobile: (list, or "none")
-- Polish: (list, or "none")
+**Findings:** WCAG-fail: <list or "none">. Broken-on-mobile: <list>. Polish: <list>.
 
-**Fixes applied:**
-- (list of bullet points, with file paths and brief description)
+**Fixes applied:** <bullet list with file paths>
 
 **Screenshots:** `tmp/responsive-audit/HostHome/{before,after}/`
 ```
 
-- [ ] **Step 6: Commit (only if changes applied)**
+- [ ] **Step 6: Commit** — code commit if changes applied, doc-only commit otherwise.
 
-```bash
-git add apps/pa-host/src/HostHome.tsx \
-        docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md
-git commit -m "feat(responsive): HostHome — <one-line summary of fixes>"
-```
-
-(If no code changes were needed, commit ONLY the results doc with message `docs(audit): HostHome — clean, no fixes required`.)
-
-- [ ] **Step 7: Smoke check (per autonomous-loop rail)**
-
-Re-run the onboarding journey via `/browse` at 320 and 1440 to confirm HostHome → Login still navigates correctly. If anything breaks, STOP — the rail says not to break the onboarding journey under any circumstances.
+- [ ] **Step 7: Onboarding-journey smoke check** at 320 + 1440 via /browse — confirm HostHome → Login still navigates. STOP if anything broke.
 
 ---
 
 ### Task C2: Audit `LoginPage`
 
-Same shape as C1. Public screen, no auth needed.
+Same shape as C1. Public, no auth.
 
-- [ ] **Step 1: Capture baseline at `http://localhost:4173/login`** (or whatever route LoginPage mounts at — verify via `apps/colign-frontend/src/main.tsx` or routing config)
-
-Capture 10 screenshots into `tmp/responsive-audit/LoginPage/before/`.
-
-- [ ] **Step 2: Checklist review**
-
-Anticipated issues:
-- Auth0 redirect button touch-target size on mobile
-- "Continue with Google" button width at 320 — Flowbite-react default may overflow
-- Sign-in form padding on iOS — `env(safe-area-inset-bottom)` if there's a sticky CTA
-
-- [ ] **Step 3: Apply fixes if needed**
-
-Modify: `apps/colign-frontend/src/pages/LoginPage.tsx` (only if issues found).
-
-- [ ] **Step 4: Capture after-matrix into `tmp/responsive-audit/LoginPage/after/`**
-
-- [ ] **Step 5: Append findings to results doc**
-
-- [ ] **Step 6: Commit**
-
-- [ ] **Step 7: Smoke check at 320 + 1440 — confirms HostHome → Login → (back) → HostHome still works**
+- [ ] **Step 1: Determine LoginPage route** — `grep -n "LoginPage\|/login" apps/colign-frontend/src/main.tsx` or App routing config.
+- [ ] **Step 2: Capture baseline (10 shots)**
+- [ ] **Step 3: Checklist review** — Auth0 redirect button ≥44×44, Continue-with-Google button no overflow at 320, sign-in form padding, sticky CTA with `env(safe-area-inset-bottom)` if applicable
+- [ ] **Step 4: Apply fixes if needed** in `apps/colign-frontend/src/pages/LoginPage.tsx`
+- [ ] **Step 5: Capture after** + **Step 6: Append + commit** + **Step 7: Smoke check**
 
 ---
 
 ### Task C3: Audit `OnboardingChoicePage`
 
-**Pre-step:** mint IC JWT, inject into localStorage:
+**Pre-step:** mint IC JWT and inject into localStorage. Use `/browse evaluate` on the open page:
 
-Run: `node scripts/mock-jwt.mjs --email audit-ic@colign.test --role IC` and copy the JWT. Use `/browse evaluate` to set:
 ```js
-localStorage.setItem('colign_jwt', '<jwt>');
+localStorage.setItem('colign_jwt', '<paste-jwt-here>');
 localStorage.setItem('colign_email', 'audit-ic@colign.test');
 localStorage.setItem('colign_role', 'IC');
+location.reload();   // MUST reload — authSlice initializes from localStorage at module load only
 ```
 
-Then navigate to `http://localhost:4173/` — the AuthGate should let the IC user through to the onboarding choice page.
+(The `location.reload()` is critical — without it the Redux store stays at unauthenticated state even though localStorage is updated.)
 
-- [ ] **Step 1: Capture baseline at the onboarding choice screen** — 10 screenshots
-- [ ] **Step 2: Checklist review** — IC choice buttons ≥44×44, no text clipping on the choice card descriptions
-- [ ] **Step 3: Apply fixes if needed** in `apps/colign-frontend/src/pages/OnboardingChoicePage.tsx`
-- [ ] **Step 4: Capture after-matrix**
-- [ ] **Step 5: Append findings**
-- [ ] **Step 6: Commit**
-- [ ] **Step 7: Smoke check**
+- [ ] **Step 1: Navigate to `/` and verify OnboardingChoicePage renders** (the IC user with no team lands here)
+- [ ] **Step 2: Capture baseline (10 shots)**
+- [ ] **Step 3: Checklist** — IC choice buttons ≥44×44, no text clipping on the choice card descriptions
+- [ ] **Step 4: Apply fixes** in `apps/colign-frontend/src/pages/OnboardingChoicePage.tsx` if needed
+- [ ] **Step 5-7:** capture after + append + commit + smoke check
 
 ---
 
-### Task C4: Audit `InviteTeammatesPage`
+### Task C4: Audit `InviteTeammatesPage` (special: handle dense copy-link button)
 
-**Pre-step:** Use the same IC JWT path. From OnboardingChoicePage choose "Create a team" — that should land on InviteTeammatesPage.
+**Pre-step:** From OnboardingChoicePage choose "Create a team" → land on InviteTeammatesPage.
 
-- [ ] **Step 1: Capture baseline** — 10 screenshots
-- [ ] **Step 2: Checklist** — email-input chip widths at 320, "Send invites" CTA touch target, "Skip" link tap target ≥24 with spacing
-- [ ] **Step 3: Apply fixes in `apps/colign-frontend/src/pages/InviteTeammatesPage.tsx`**
-- [ ] **Step 4: Capture after**
-- [ ] **Step 5: Append findings**
-- [ ] **Step 6: Commit**
-- [ ] **Step 7: Smoke check the onboarding journey end-to-end**
+**Important — copy-link button (design-lens review):** `InviteRow` renders a copy-link button styled `px-2 py-1.5 text-xs` (≈ 28×28 px), which fails the 44×44 floor at narrow viewports and will fail the Cypress assertion in D1. Two valid resolutions during this task — pick ONE before C4's after-capture:
+
+1. **Convert to Button primitive** at `size="sm"`. Post-A3 that's h-8 (32px) + responsive.css lifts to 44 on coarse. **Preferred** for visual consistency.
+2. **Add `data-dense-control="true"` to the copy-link button**, plus a PR-description note justifying it. Use only if the visual design REQUIRES the smaller pill shape.
+
+Either way, document the choice in the results doc.
+
+- [ ] **Step 1: Capture baseline (10 shots)**
+- [ ] **Step 2: Checklist** — email-input chip widths at 320, "Send invites" CTA ≥44×44, "Skip" link tap area ≥24 with spacing, copy-link button per the resolution above
+- [ ] **Step 3: Apply fixes** including the copy-link decision in `apps/colign-frontend/src/pages/InviteTeammatesPage.tsx` (and `InviteRow` if it's a separate component)
+- [ ] **Step 4-7:** capture after + append + commit + smoke check
 
 ---
 
@@ -802,118 +642,130 @@ Then navigate to `http://localhost:4173/` — the AuthGate should let the IC use
 
 Public screen reached via an invitation token URL.
 
-- [ ] **Pre-step:** generate a real invitation token from the backend (via the InviteTeammatesPage flow). Copy the token URL.
-- [ ] **Step 1: Capture baseline at the invite-accept URL** — 10 screenshots
-- [ ] **Step 2: Checklist** — "Accept invitation" CTA ≥44×44, team-name display doesn't overflow at 320
-- [ ] **Step 3: Apply fixes in `apps/colign-frontend/src/pages/InviteAcceptPage.tsx`**
-- [ ] **Step 4: Capture after**
-- [ ] **Step 5: Append findings**
-- [ ] **Step 6: Commit**
-- [ ] **Step 7: Smoke check**
+- [ ] **Pre-step:** generate a real invitation token via the InviteTeammatesPage flow; copy the URL.
+- [ ] **Step 1-7:** same shape as C1 — capture, checklist (accept CTA ≥44, team name no overflow at 320), apply, capture, append, commit, smoke.
 
 ---
 
 ### Task C6: Audit `WeeklyPlanPage`
 
-Primary IC screen. Pre-step: ensure IC user from C3-C4 has reached the weekly plan (post-onboarding).
+Primary IC screen.
 
-- [ ] **Step 1: Capture baseline at the weekly plan view** — 10 screenshots
-- [ ] **Step 2: Checklist** — commit row touch targets, "Add commit" CTA, "Lock plan" / "Lock & reconcile" CTA pair at 320 (likely needs stacking), edit/delete icons inside commit rows
-- [ ] **Step 3: Apply fixes in `apps/colign-frontend/src/pages/WeeklyPlanPage.tsx`** + possibly `CommitRow.tsx` + `CommitForm.tsx`
-- [ ] **Step 4: Capture after**
-- [ ] **Step 5: Append findings**
-- [ ] **Step 6: Commit**
-- [ ] **Step 7: Smoke check**
+- [ ] **Step 1-7:** same shape. Checklist focuses: commit row touch targets, Add commit CTA, Lock plan / Lock & reconcile CTA pair at 320 (likely needs stacking), edit/delete icons inside commit rows. Fix files: `pages/WeeklyPlanPage.tsx` + possibly `CommitRow.tsx` + `CommitForm.tsx`.
 
 ---
 
 ### Task C7: Audit `ReconcilePage`
 
-Reached from WeeklyPlanPage via "Lock & reconcile" action (which transitions plan state to RECONCILING).
+Reached from WeeklyPlanPage via "Lock & reconcile".
 
-- [ ] **Step 1: Capture baseline** — 10 screenshots
-- [ ] **Step 2: Checklist** — reconcile-row controls, "Mark complete" / "Mark dropped" buttons, status pills, summary banner at 320
-- [ ] **Step 3: Apply fixes in `apps/colign-frontend/src/pages/ReconcilePage.tsx`** + `ReconcileRow.tsx`
-- [ ] **Step 4: Capture after**
-- [ ] **Step 5: Append findings**
-- [ ] **Step 6: Commit**
-- [ ] **Step 7: Smoke check**
+- [ ] **Step 1-7:** same shape. Checklist focuses: reconcile-row controls, "Mark complete" / "Mark dropped" buttons, status pills, summary banner at 320. Fix files: `pages/ReconcilePage.tsx` + `ReconcileRow.tsx`.
 
 ---
 
 ### Task C8: Audit `ManagerDashboardPage` + refactor `TeamRollupTable` (container query + card view)
 
-**Pre-step:** mint MANAGER JWT and re-inject localStorage with `MANAGER` role.
+**Pre-step:** mint MANAGER JWT and inject (note the `location.reload()`):
 
-Run: `node scripts/mock-jwt.mjs --email audit-mgr@colign.test --role MANAGER`
+```bash
+node scripts/mock-jwt.mjs --email audit-mgr@colign.test --role MANAGER --ttl 14400
+```
 
-Use `/browse evaluate` to set:
+Use `/browse evaluate`:
+
 ```js
 localStorage.setItem('colign_jwt', '<jwt>');
 localStorage.setItem('colign_email', 'audit-mgr@colign.test');
 localStorage.setItem('colign_role', 'MANAGER');
+location.reload();
 ```
 
-Navigate to `http://localhost:4173/manager` (or whatever route the manager dashboard mounts at).
+Navigate to the manager dashboard route (verify via grep on the manager route).
 
-- [ ] **Step 1: Capture baseline** at the manager dashboard — 10 screenshots. Expect the table to force horizontal scroll at 320; this is the issue the card view solves.
+- [ ] **Step 1: Capture baseline (10 shots)** — expect horizontal scroll on table at 320; that's the issue the card view solves.
 
-- [ ] **Step 2: Implement the container query + card view in `TeamRollupTable.tsx`**
+- [ ] **Step 2: Implement card view in `TeamRollupTable.tsx`**
 
-This is the largest single change in the audit. Per spec §5.1:
+The plan commits to **raw CSS @container** (no `@tailwindcss/container-queries` plugin). DO NOT use `@[640px]:hidden` / `@[640px]:block` — those Tailwind variants require a plugin not installed in this PR.
 
-1. Wrap the existing `<Table>` in a `<div>` with `container-type: inline-size` (use inline style for now — container-type isn't a Tailwind utility without a plugin):
-
-```tsx
-<div style={{ containerType: "inline-size" }}>
-  {/* existing TableScroller+Table block — render only when container ≥ 640px */}
-  <div className="hidden @[640px]:block">
-    <TableScroller>
-      <Table>
-        {/* existing table content */}
-      </Table>
-    </TableScroller>
-  </div>
-  {/* card view — render when container < 640px */}
-  <div className="@[640px]:hidden flex flex-col gap-2">
-    {(data?.content ?? []).map((m) => (
-      <TeamRollupCard key={m.userId} member={m} onSelect={onSelectMember} />
-    ))}
-  </div>
-</div>
-```
-
-Note: `@[640px]:` is Tailwind's container-query variant syntax (requires `@tailwindcss/container-queries` plugin) — OR write raw CSS. To avoid adding a plugin in this PR, hand-author the `@container` queries in `responsive.css`:
-
-Add to `apps/colign-frontend/src/responsive.css`:
+Add to `apps/colign-frontend/src/responsive.css` (appended after the global policy section):
 
 ```css
+/* === Section C8: TeamRollupTable container query === */
 @layer components {
   .team-rollup-container {
     container-type: inline-size;
   }
-  .team-rollup-table-view {
-    display: block;
-  }
-  .team-rollup-card-view {
-    display: none;
-  }
+  .team-rollup-table-view { display: block; }
+  .team-rollup-card-view { display: none; }
+  .team-rollup-card-view-controls { display: none; }
   @container (max-width: 639.98px) {
-    .team-rollup-table-view {
-      display: none;
-    }
-    .team-rollup-card-view {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
+    .team-rollup-table-view { display: none; }
+    .team-rollup-card-view { display: flex; flex-direction: column; gap: 0.5rem; }
+    .team-rollup-card-view-controls { display: flex; flex-direction: row; gap: 0.5rem; margin-bottom: 0.5rem; }
   }
 }
 ```
 
-Then use those class names in TeamRollupTable.
+In `TeamRollupTable.tsx`, restructure the return:
 
-2. Create the card sub-component (can be inline in the same file):
+```tsx
+return (
+  <div className="space-y-3 team-rollup-container">
+    {/* sort-chip row — visible only in card mode via responsive.css */}
+    <div className="team-rollup-card-view-controls">
+      <button
+        type="button"
+        onClick={() => toggleSort("displayName")}
+        className={cn(
+          "rounded-full px-4 py-2 text-xs font-medium border min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900",
+          sort === "displayName"
+            ? "bg-neutral-900 text-neutral-50 border-neutral-900 dark:bg-white dark:text-neutral-900"
+            : "border-neutral-200 dark:border-neutral-800 text-neutral-600"
+        )}
+      >
+        Name {sort === "displayName" ? (dir === "asc" ? "↑" : "↓") : ""}
+      </button>
+      <button
+        type="button"
+        onClick={() => toggleSort("weekStartDate")}
+        className={cn(
+          "rounded-full px-4 py-2 text-xs font-medium border min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900",
+          sort === "weekStartDate"
+            ? "bg-neutral-900 text-neutral-50 border-neutral-900 dark:bg-white dark:text-neutral-900"
+            : "border-neutral-200 dark:border-neutral-800 text-neutral-600"
+        )}
+      >
+        Week {sort === "weekStartDate" ? (dir === "asc" ? "↑" : "↓") : ""}
+      </button>
+    </div>
+
+    {/* Table view */}
+    <div className="team-rollup-table-view">
+      <TableScroller>
+        <Table>
+          {/* existing THead+TBody — add data-clickable="true" to every <TR onClick={...}> */}
+        </Table>
+      </TableScroller>
+    </div>
+
+    {/* Card view */}
+    <div className="team-rollup-card-view">
+      {(data?.content ?? []).map((m) => (
+        <TeamRollupCard key={m.userId} member={m} onSelect={onSelectMember} />
+      ))}
+    </div>
+
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-1">
+      {/* existing Showing X-Y of Z + Pagination */}
+    </div>
+  </div>
+);
+```
+
+In the existing `<TR onClick={...}>` inside the THead+TBody block, add `data-clickable="true"`. This wires the row into the Cypress 44×44 assertion's selector set (which already includes `tr[data-clickable="true"]`).
+
+Add the `TeamRollupCard` sub-component (inline in the same file):
 
 ```tsx
 function TeamRollupCard({
@@ -939,8 +791,8 @@ function TeamRollupCard({
       }}
       className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-white dark:bg-neutral-950 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
     >
-      <div className="flex items-center gap-2.5">
-        <div className="h-7 w-7 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-semibold text-neutral-600 dark:text-neutral-300">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div className="h-7 w-7 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-semibold text-neutral-600 dark:text-neutral-300">
           {initials(member.displayName)}
         </div>
         <div className="leading-tight flex-1 min-w-0">
@@ -955,12 +807,12 @@ function TeamRollupCard({
       <div className="mt-3 flex items-center gap-3 flex-wrap">
         {plan ? <PlanStatePill state={plan.state} size="xs" /> : <Badge tone="neutral" size="xs">No plan</Badge>}
         {plan ? (
-          <span className="text-xs text-neutral-600 tabular-nums">
+          <span className="text-xs text-neutral-600 tabular-nums shrink-0">
             {plan.commits.length} commit{plan.commits.length === 1 ? "" : "s"}
           </span>
         ) : null}
         {plan ? (
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 ml-auto shrink-0">
             <div className="h-1.5 w-20 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
               <div
                 className={cn("h-1.5 rounded-full", tier.bar)}
@@ -979,7 +831,7 @@ function TeamRollupCard({
         ) : null}
       </div>
       <Button
-        variant="outline"
+        variant="secondary"
         size="lg"
         onClick={(e) => {
           e.stopPropagation();
@@ -996,55 +848,42 @@ function TeamRollupCard({
 }
 ```
 
-3. Add a sort-chip row above the card view that exposes `displayName` and `weekStartDate` sort toggles:
+**Key fixes from r1:**
+- `variant="secondary"` (not `"outline"` — `outline` isn't in Button's Variant union)
+- `shrink-0` on fixed-width clusters (avatar, commit-count, alignment-bar) so the left flex column gets `min-w-0` truncation
+- `data-clickable="true"` on both TR and card
 
-```tsx
-<div className="team-rollup-card-view-controls @[640px]:hidden flex gap-2 mb-2">
-  <button
-    type="button"
-    onClick={() => toggleSort("displayName")}
-    className={cn(
-      "rounded-full px-3 py-1.5 text-xs font-medium border min-h-[44px]",
-      sort === "displayName"
-        ? "bg-neutral-900 text-neutral-50 border-neutral-900 dark:bg-white dark:text-neutral-900"
-        : "border-neutral-200 dark:border-neutral-800 text-neutral-600"
-    )}
-  >
-    Name {sort === "displayName" ? (dir === "asc" ? "↑" : "↓") : ""}
-  </button>
-  <button
-    type="button"
-    onClick={() => toggleSort("weekStartDate")}
-    className={cn(
-      "rounded-full px-3 py-1.5 text-xs font-medium border min-h-[44px]",
-      sort === "weekStartDate"
-        ? "bg-neutral-900 text-neutral-50 border-neutral-900 dark:bg-white dark:text-neutral-900"
-        : "border-neutral-200 dark:border-neutral-800 text-neutral-600"
-    )}
-  >
-    Week {sort === "weekStartDate" ? (dir === "asc" ? "↑" : "↓") : ""}
-  </button>
-</div>
+- [ ] **Step 3: Verify changes on disk**
+
+```bash
+grep -c "TeamRollupCard\|team-rollup-card-view\|data-clickable" apps/colign-frontend/src/components/TeamRollupTable.tsx
+# expected: ≥ 4 (function definition + usage + class names + data attribute)
+grep -c "team-rollup-card-view\|team-rollup-container" apps/colign-frontend/src/responsive.css
+# expected: ≥ 4
 ```
 
-(Note: the controls element gets a separate `@container` rule via the `.team-rollup-card-view-controls` class — add it to responsive.css alongside the existing @container block.)
+Verify NO `@[640px]:` strings leaked anywhere:
 
-- [ ] **Step 3: Verify changes landed on disk**
+```bash
+grep -rn "@\[640px\]:" apps/colign-frontend/src/ --include="*.tsx" --include="*.css"
+# expected: 0 matches
+```
 
-Run: `grep -c "TeamRollupCard" apps/colign-frontend/src/components/TeamRollupTable.tsx`
-Expected: at least 2 (function definition + usage).
+- [ ] **Step 4: Build + run tests** — `yarn build && yarn vitest run` → all green.
 
-Run: `grep -c "team-rollup-card-view" apps/colign-frontend/src/responsive.css`
-Expected: at least 2.
+- [ ] **Step 5: Capture after-matrix (10 shots)** — confirms card view at 320/375 and table view at 768/1024/1440.
 
-- [ ] **Step 4: Build + run existing component tests**
+- [ ] **Step 6: Spot-check at 280px** (foldable inner; not in the standard 5-width matrix per spec §6.2 but worth a sanity check given foldables are documented as the lower edge):
 
-Run: `cd apps/colign-frontend && yarn build && yarn vitest run`
-Expected: all green. TeamRollupTable's existing tests should still pass (the table mode is preserved at ≥640px containers).
+```
+/browse screenshot http://localhost:4173/<manager-route> \
+  --viewport-width 280 --viewport-height 800 \
+  --output tmp/responsive-audit/ManagerDashboardPage/after/280-light.png
+```
 
-- [ ] **Step 5: Capture after-matrix** — 10 screenshots, confirming card view at 320/375 and table view at 768/1024/1440
+Verify the card layout doesn't crush the avatar+name or push the alignment bar off-screen. If it does, log as polish; don't gate the audit on 280.
 
-- [ ] **Step 6: Append findings + commit**
+- [ ] **Step 7: Append + commit** —
 
 ```bash
 git add apps/colign-frontend/src/components/TeamRollupTable.tsx \
@@ -1053,125 +892,197 @@ git add apps/colign-frontend/src/components/TeamRollupTable.tsx \
 git commit -m "feat(responsive): TeamRollupTable container query + card view per spec §5.1"
 ```
 
-- [ ] **Step 7: Smoke check** — confirm the onboarding journey still completes for the IC role; manager dashboard still loads at all 5 widths
+- [ ] **Step 8: Smoke check** — onboarding journey for IC still completes; manager dashboard still loads at all widths.
 
 ---
 
-### Task C9: Audit `IcDrillDrawer` + add full-screen mode (container query + viewport rule + back affordance)
+### Task C9: Audit `IcDrillDrawer` + add full-screen mode (CSS-driven, no JS hook)
 
-Reached by clicking a member row in the (now-card-view) manager dashboard.
+Reached by clicking a member row/card on the now-refactored manager dashboard.
 
-- [ ] **Step 1: Capture baseline** — 10 screenshots, with the drawer opened on a member
+**Critical correction from r1:** the full-screen mode is now CSS-only — no `useCoarsePointerNarrow` hook, no `fullScreen` prop on the Drawer primitive. The Drawer's primitive only gained `closeAffordance` in A4; we use it here. Full-screen layout is achieved by CSS class targeting + `@media (pointer: coarse) and (max-width: 767.98px)` rules. This drops JS lifecycle complexity and avoids the initial-render flash where `match` was `false` before matchMedia fired.
 
-- [ ] **Step 2: Implement container query + full-screen mode**
+For the back-affordance, we set `closeAffordance="back"` directly when IcDrillDrawer renders — IcDrillDrawer is the only Drawer consumer that needs the back arrow, so a static prop value is correct.
 
-In `apps/colign-frontend/src/components/IcDrillDrawer.tsx`:
+- [ ] **Step 1: Capture baseline (10 shots)** — drawer opened on a member.
 
-1. Detect when to render full-screen — coarse pointer AND viewport < md. Use a media query hook:
+- [ ] **Step 2: Implement CSS full-screen + back affordance**
 
-```tsx
-function useCoarsePointerNarrow(): boolean {
-  const [match, setMatch] = useState(false);
-  useEffect(() => {
-    const mql = window.matchMedia("(pointer: coarse) and (max-width: 767.98px)");
-    const update = () => setMatch(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
-  return match;
-}
-```
-
-2. Pass `fullScreen` and `closeAffordance` props to Drawer:
+In `apps/colign-frontend/src/components/IcDrillDrawer.tsx`, change the Drawer wrap to:
 
 ```tsx
-export function IcDrillDrawer({ member, onClose }: Props) {
-  const fullScreen = useCoarsePointerNarrow();
-  return (
-    <Drawer
-      open={!!member}
-      onClose={onClose}
-      size="md"
-      fullScreen={fullScreen}
-      closeAffordance={fullScreen ? "back" : "x"}
-    >
-      <div style={{ containerType: "inline-size" }} className="ic-drill-drawer-content">
-        {/* existing drawer content */}
-      </div>
-    </Drawer>
-  );
-}
+<Drawer
+  open={!!member}
+  onClose={onClose}
+  width="xl"
+  closeAffordance="back"   // NEW — back arrow + "Back to team list" aria-label
+  title={`${member?.displayName ?? ""}'s week`}
+  description={member?.email}
+>
+  <div className="ic-drill-drawer-content">
+    {/* existing drawer content unchanged */}
+  </div>
+</Drawer>
 ```
 
-3. Add the container-query rules to `responsive.css`:
+(Note: `width="xl"` is preserved. The Drawer panel's `xl` width applies on cursor + wide viewports; the CSS below overrides to full-width on coarse+narrow.)
+
+Add to `apps/colign-frontend/src/responsive.css` (appended after the C8 section):
 
 ```css
+/* === Section C9: IcDrillDrawer full-screen on coarse+narrow === */
 @layer components {
   .ic-drill-drawer-content {
-    /* defaults match current layout */
+    container-type: inline-size;
   }
+  /* Container-query rule for internal commit list */
   @container (max-width: 479.98px) {
     .ic-drill-drawer-content .ic-drill-commit-list {
       grid-template-columns: 1fr !important;
       line-height: 1.7;
     }
   }
+  /* Viewport rule: coarse pointer + narrow viewport → drawer is full-screen.
+     Targets the aside panel that Drawer renders (verify selector during impl). */
+  @media (pointer: coarse) and (max-width: 767.98px) {
+    #colign-root aside[role="dialog"] {
+      width: 100% !important;
+      max-width: none !important;
+    }
+  }
 }
 ```
 
-(The `.ic-drill-commit-list` selector assumes the commit list has that class — add it if it doesn't.)
+If the commit list in IcDrillDrawer doesn't already have a `.ic-drill-commit-list` class, add it to the appropriate `<div>` or `<ul>` in the existing IcDrillDrawer JSX.
 
-- [ ] **Step 3: Verify on disk**
+- [ ] **Step 3: Verify the aside selector matches**
 
-Run: `grep -c "useCoarsePointerNarrow\|fullScreen\|closeAffordance" apps/colign-frontend/src/components/IcDrillDrawer.tsx`
-Expected: at least 3.
+Run: `grep -n "aside\|role=\"dialog\"" apps/colign-frontend/src/components/ui/Drawer.tsx`
 
-- [ ] **Step 4: Build + run tests**
+Confirm Drawer's panel renders as `<aside role="dialog">`. If it renders as a different element (e.g., a `<div>` with `role="dialog"`), update the CSS selector accordingly.
 
-Run: `cd apps/colign-frontend && yarn build && yarn vitest run`
-Expected: all green.
+Then verify changes landed:
 
-- [ ] **Step 5: Capture after-matrix** — confirm side-drawer at 1024/1440, full-screen at 320/375
+```bash
+grep -c "closeAffordance=\"back\"\|ic-drill-drawer-content" apps/colign-frontend/src/components/IcDrillDrawer.tsx
+# expected: ≥ 2
+grep -c "ic-drill-drawer-content\|ic-drill-commit-list" apps/colign-frontend/src/responsive.css
+# expected: ≥ 3
+```
 
-- [ ] **Step 6: Append findings + commit**
+- [ ] **Step 4: Build + run tests** — `yarn build && yarn vitest run` → all green.
+
+- [ ] **Step 5: Capture after-matrix** — confirm side-drawer at 1024/1440 (cursor desktop), full-screen at 320/375 (coarse phone-class).
+
+   On a desktop browser the matchMedia for `(pointer: coarse)` is false, so 320/375 capture via headless `/browse` will likely STILL show the side-drawer unless `/browse` exposes a touch-emulation flag. If it doesn't, document this limitation in the results doc — verification of the coarse+narrow path then falls to the real-phone smoke test in D4.
+
+- [ ] **Step 6: Append + commit**
 
 ```bash
 git add apps/colign-frontend/src/components/IcDrillDrawer.tsx \
         apps/colign-frontend/src/responsive.css \
         docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md
-git commit -m "feat(responsive): IcDrillDrawer full-screen on coarse+narrow per spec §5.1"
+git commit -m "feat(responsive): IcDrillDrawer back-affordance + CSS full-screen on coarse+narrow"
 ```
 
-- [ ] **Step 7: Smoke check the manager journey end-to-end**
+- [ ] **Step 7: Smoke check** — manager journey end-to-end still works.
 
 ---
 
-**Post-Phase-C cleanup:**
+### Post-Phase-C cleanup
 
-- [ ] **Restore real auth mode**
+- [ ] **Restore real auth mode** — `scripts/audit-teardown.sh restore` (the `EXIT` trap will also try to run this, but explicit-first is safer if the trap stack is unclear).
 
-Run: `scripts/audit-teardown.sh restore`
-Expected: confirms restore + cleanup of `.audit-snapshot/`.
+- [ ] **Verify restore on disk**
 
-- [ ] **Verify restore landed**
+```bash
+grep "VITE_AUTH_MODE\|COLIGN_AUTH_MODE" apps/colign-frontend/.env.local apps/colign-backend/.env.local
+```
 
-Run: `grep "VITE_AUTH_MODE\|COLIGN_AUTH_MODE" apps/colign-frontend/.env.local apps/colign-backend/.env.local`
-Expected: both files show `*_AUTH_MODE=real` (or whatever the pre-audit values were).
+Expected: frontend shows `VITE_AUTH_MODE=real`; backend shows either `COLIGN_AUTH_MODE=real` or no line at all (backend's original `.env.local` had no `COLIGN_AUTH_MODE` line; restore copies the pre-flip snapshot which was the no-line state). If backend snapshot was a no-line state, the post-restore file should ALSO be no-line — that's expected. The startup guard (deferred per §9.4) would protect prod from running mock-mode silently.
 
 ---
 
-## Phase D — Regression layer + completion (tasks D1–D4)
+## Phase D — Regression layer + completion
 
-### Task D1: Write `responsive-narrow.cy.ts`
+### Task D0: Scaffold Cypress configuration + directory
 
 **Files:**
-- Create: `apps/colign-frontend/cypress/e2e/responsive-narrow.cy.ts`
+- Create: `apps/colign-frontend/cypress.config.ts`
+- Create: `apps/colign-frontend/cypress/support/e2e.ts`
+- Create: `apps/colign-frontend/cypress/fixtures/.gitkeep`
+
+Cypress is installed as a dependency but no config or `cypress/` directory exists today. D1/D2/D3 would fail immediately without this scaffold.
+
+- [ ] **Step 1: Create `cypress.config.ts`**
+
+`apps/colign-frontend/cypress.config.ts`:
+
+```ts
+import { defineConfig } from "cypress";
+
+export default defineConfig({
+  e2e: {
+    baseUrl: "http://localhost:4173",
+    specPattern: "cypress/e2e/**/*.cy.{ts,tsx}",
+    supportFile: "cypress/support/e2e.ts",
+    video: false,
+    screenshotOnRunFailure: true,
+    // Pass through dev-only env vars so the responsive preflight can inspect them.
+    env: {
+      VITE_AUTH_MODE: process.env.VITE_AUTH_MODE ?? "real",
+      VITE_API_BASE: process.env.VITE_API_BASE ?? "http://localhost:8080",
+    },
+  },
+});
+```
+
+- [ ] **Step 2: Create support entry**
+
+`apps/colign-frontend/cypress/support/e2e.ts`:
+
+```ts
+// Cypress E2E support entry. Imports run before every spec file.
+// Add custom commands here if needed; for now it's intentionally empty.
+export {};
+```
+
+- [ ] **Step 3: Create fixtures placeholder**
+
+```bash
+mkdir -p apps/colign-frontend/cypress/fixtures
+touch apps/colign-frontend/cypress/fixtures/.gitkeep
+```
+
+- [ ] **Step 4: Verify scaffold**
+
+```bash
+ls apps/colign-frontend/cypress/
+# expected: fixtures/ support/
+cat apps/colign-frontend/cypress.config.ts | head -1
+# expected: import { defineConfig } from "cypress";
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add apps/colign-frontend/cypress.config.ts \
+        apps/colign-frontend/cypress/support/e2e.ts \
+        apps/colign-frontend/cypress/fixtures/.gitkeep
+git commit -m "chore(cypress): scaffold config + support entry for responsive specs"
+```
+
+---
+
+### Task D1: Write `responsive-narrow.cy.ts` + shared assertions
+
+**Files:**
 - Create: `apps/colign-frontend/cypress/support/responsive-assertions.ts`
+- Create: `apps/colign-frontend/cypress/e2e/responsive-narrow.cy.ts`
 
-- [ ] **Step 1: Create the shared assertions support file**
+- [ ] **Step 1: Create assertions helper**
 
-Create `apps/colign-frontend/cypress/support/responsive-assertions.ts`:
+`apps/colign-frontend/cypress/support/responsive-assertions.ts`:
 
 ```ts
 const DENSE_SELECTORS = [
@@ -1181,7 +1092,9 @@ const DENSE_SELECTORS = [
   '[data-dense-control="true"]',
 ];
 
-const PROD_API_PATTERN = /^(https?:\/\/)?api\.colign\.org/i;
+// SPEC §6.6 — ALLOWLIST. Only permit localhost/127/LAN IPs. Reject everything else
+// including staging.*, *.fly.dev, *.vercel.app, and api.colign.org.
+const DEV_API_PATTERN = /^https?:\/\/(localhost|127\.0\.0\.1|\d+\.\d+\.\d+\.\d+(?::\d+)?)(\/.*)?$/i;
 
 export function preflight(): void {
   const authMode = Cypress.env("VITE_AUTH_MODE") || "";
@@ -1191,20 +1104,17 @@ export function preflight(): void {
     );
   }
   const apiBase = Cypress.env("VITE_API_BASE") || "";
-  if (PROD_API_PATTERN.test(apiBase)) {
+  if (!DEV_API_PATTERN.test(apiBase)) {
     throw new Error(
-      `Responsive specs MUST NOT target the production API (VITE_API_BASE="${apiBase}"). Aborting.`
+      `Responsive specs MUST target a local dev backend (VITE_API_BASE matched allowlist failed; got "${apiBase}"). Aborting.`
     );
   }
 }
 
 export function assertNoHorizontalScroll(): void {
   cy.window().then((win) => {
-    const root = win.document.querySelector("#colign-root") ?? win.document.documentElement;
-    const element = root as Element;
-    expect(element.scrollWidth, "no horizontal scroll inside #colign-root").to.be.at.most(
-      element.clientWidth + 1 // 1px slack for rounding
-    );
+    const root = (win.document.querySelector("#colign-root") ?? win.document.documentElement) as Element;
+    expect(root.scrollWidth, "no horizontal scroll inside #colign-root").to.be.at.most(root.clientWidth + 1);
   });
 }
 
@@ -1212,7 +1122,7 @@ export function assertTouchTargets(): void {
   cy.window().then((win) => {
     const root = win.document.querySelector("#colign-root") ?? win.document.documentElement;
     const candidates = root.querySelectorAll(
-      'a, button, input, select, [role="button"], tr[data-clickable="true"]'
+      'a, button, input, select, [role="button"], tr[data-clickable="true"], [data-clickable="true"]'
     );
     const exceptionMatches = (el: Element): boolean =>
       DENSE_SELECTORS.some((sel) => el.matches(sel) || el.closest(sel) !== null);
@@ -1229,9 +1139,11 @@ export function assertTouchTargets(): void {
 }
 ```
 
-- [ ] **Step 2: Create `responsive-narrow.cy.ts`**
+(Note about `assertTouchTargets`: Cypress runs in a desktop browser reporting `pointer: fine`, so the runtime `min-height: 44px` rule from responsive.css does NOT apply during the spec. The assertion catches compile-time-baked sizes — `h-11`, `min-h-[44px]`. This is intentional: the spec's enforced floor on coarse is the responsive.css rule; the Cypress narrow run validates the compile-time floor for elements that should be touch-friendly regardless.)
 
-Create `apps/colign-frontend/cypress/e2e/responsive-narrow.cy.ts`:
+- [ ] **Step 2: Create the narrow spec**
+
+`apps/colign-frontend/cypress/e2e/responsive-narrow.cy.ts`:
 
 ```ts
 import {
@@ -1241,7 +1153,10 @@ import {
 } from "../support/responsive-assertions";
 
 describe("Responsive @ 320×568 (narrow stress test)", () => {
-  before(() => {
+  // Run preflight at each `it` level too — Cypress treats a throw in `before()`
+  // as a hook failure but other describe blocks in the same run will still
+  // execute. Per-it preflight ensures every assertion runs only when env is OK.
+  beforeEach(() => {
     preflight();
     cy.viewport(320, 568);
   });
@@ -1251,23 +1166,19 @@ describe("Responsive @ 320×568 (narrow stress test)", () => {
     assertNoHorizontalScroll();
     assertTouchTargets();
 
-    cy.findByTestId("landing-get-started").click();
-    // Login mock auth: backend issues a mock JWT in mock mode
+    cy.get('[data-cy="landing-get-started"]').click();
     cy.findByRole("button", { name: /sign in/i }).click();
     assertNoHorizontalScroll();
     assertTouchTargets();
 
-    // OnboardingChoicePage — pick "Create a team"
     cy.findByRole("button", { name: /create a team/i }).click();
     assertNoHorizontalScroll();
     assertTouchTargets();
 
-    // InviteTeammatesPage — skip
     cy.findByRole("link", { name: /skip/i }).click();
     assertNoHorizontalScroll();
     assertTouchTargets();
 
-    // WeeklyPlanPage
     cy.findByRole("heading", { name: /this week/i, level: 1 }).should("be.visible");
     assertNoHorizontalScroll();
     assertTouchTargets();
@@ -1275,20 +1186,15 @@ describe("Responsive @ 320×568 (narrow stress test)", () => {
 });
 ```
 
-- [ ] **Step 3: Verify file on disk**
-
-Run: `grep -c "describe.*320" apps/colign-frontend/cypress/e2e/responsive-narrow.cy.ts`
-Expected: 1.
+- [ ] **Step 3: Verify on disk** — `grep -c "describe.*320\|preflight\|assertNoHorizontalScroll" apps/colign-frontend/cypress/e2e/responsive-narrow.cy.ts` → ≥ 3.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add apps/colign-frontend/cypress/e2e/responsive-narrow.cy.ts \
         apps/colign-frontend/cypress/support/responsive-assertions.ts
-git commit -m "test(responsive): add 320px regression spec for onboarding journey"
+git commit -m "test(responsive): 320px regression spec with allowlist preflight"
 ```
-
-(Don't run the Cypress spec yet — it requires mock-auth env vars set, which the next task validates.)
 
 ---
 
@@ -1297,9 +1203,7 @@ git commit -m "test(responsive): add 320px regression spec for onboarding journe
 **Files:**
 - Create: `apps/colign-frontend/cypress/e2e/responsive-wide.cy.ts`
 
-- [ ] **Step 1: Create the wide spec**
-
-Create `apps/colign-frontend/cypress/e2e/responsive-wide.cy.ts`:
+- [ ] **Step 1: Create the wide spec** — identical journey at 1440×900:
 
 ```ts
 import {
@@ -1309,7 +1213,7 @@ import {
 } from "../support/responsive-assertions";
 
 describe("Responsive @ 1440×900 (desktop target)", () => {
-  before(() => {
+  beforeEach(() => {
     preflight();
     cy.viewport(1440, 900);
   });
@@ -1319,7 +1223,7 @@ describe("Responsive @ 1440×900 (desktop target)", () => {
     assertNoHorizontalScroll();
     assertTouchTargets();
 
-    cy.findByTestId("landing-get-started").click();
+    cy.get('[data-cy="landing-get-started"]').click();
     cy.findByRole("button", { name: /sign in/i }).click();
     assertNoHorizontalScroll();
     assertTouchTargets();
@@ -1339,156 +1243,168 @@ describe("Responsive @ 1440×900 (desktop target)", () => {
 });
 ```
 
-- [ ] **Step 2: Verify on disk**
-
-Run: `grep -c "describe.*1440" apps/colign-frontend/cypress/e2e/responsive-wide.cy.ts`
-Expected: 1.
+- [ ] **Step 2: Verify** — `grep -c "describe.*1440" apps/colign-frontend/cypress/e2e/responsive-wide.cy.ts` → 1.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add apps/colign-frontend/cypress/e2e/responsive-wide.cy.ts
-git commit -m "test(responsive): add 1440px regression spec for onboarding journey"
+git commit -m "test(responsive): 1440px regression spec for onboarding journey"
 ```
 
 ---
 
-### Task D3: Run both Cypress specs against the running stack + verify preflight aborts on misconfig
+### Task D3: Run both Cypress specs + verify preflight aborts on misconfig
 
-**Files:**
-- (Verify only — no source changes; results recorded in audit doc)
+- [ ] **Step 1: Flip to mock + register restore trap** (in the same shell as Cypress will run):
 
-- [ ] **Step 1: Boot the stack in MOCK mode** (specifically for these specs)
+```bash
+scripts/audit-teardown.sh flip
+trap 'scripts/audit-teardown.sh restore' EXIT INT TERM
+```
 
-Run: `scripts/audit-teardown.sh flip`
-(Per the runbook this leaves both env files in mock mode. We'll restore at the end.)
-
-Boot backend + frontend + host in the same shells as before.
+Boot the three-service stack as in Phase C if not already running.
 
 - [ ] **Step 2: Run both specs**
 
-Run: `cd apps/colign-frontend && CYPRESS_VITE_AUTH_MODE=mock CYPRESS_VITE_API_BASE=http://localhost:8080 yarn cy:run --spec "cypress/e2e/responsive-narrow.cy.ts,cypress/e2e/responsive-wide.cy.ts"`
-Expected: both specs pass. If they fail, log the failure to the audit results doc and STOP — diagnose before committing fixes.
+```bash
+cd apps/colign-frontend
+CYPRESS_VITE_AUTH_MODE=mock CYPRESS_VITE_API_BASE=http://localhost:8080 \
+  yarn cy:run --spec "cypress/e2e/responsive-narrow.cy.ts,cypress/e2e/responsive-wide.cy.ts"
+```
 
-- [ ] **Step 3: Verify preflight aborts**
+Expected: both specs pass. If they fail, capture the failure to the results doc and STOP — diagnose before continuing.
 
-Run: `cd apps/colign-frontend && CYPRESS_VITE_AUTH_MODE=real yarn cy:run --spec "cypress/e2e/responsive-narrow.cy.ts"`
-Expected: suite aborts in the `before` hook with the "VITE_AUTH_MODE=mock" error. Records pass.
+- [ ] **Step 3: Verify preflight aborts on misconfig — three scenarios**
 
-Run: `cd apps/colign-frontend && CYPRESS_VITE_AUTH_MODE=mock CYPRESS_VITE_API_BASE=https://api.colign.org yarn cy:run --spec "cypress/e2e/responsive-narrow.cy.ts"`
-Expected: suite aborts with the "MUST NOT target production API" error.
+```bash
+# 3a) auth mode wrong → abort
+CYPRESS_VITE_AUTH_MODE=real CYPRESS_VITE_API_BASE=http://localhost:8080 \
+  yarn cy:run --spec "cypress/e2e/responsive-narrow.cy.ts" 2>&1 | grep -i "VITE_AUTH_MODE=mock"
+# expected: the abort error fires
 
-- [ ] **Step 4: Restore env**
+# 3b) production API → abort (allowlist rejects it)
+CYPRESS_VITE_AUTH_MODE=mock CYPRESS_VITE_API_BASE=https://api.colign.org \
+  yarn cy:run --spec "cypress/e2e/responsive-narrow.cy.ts" 2>&1 | grep -i "local dev backend"
+# expected: the abort error fires
 
-Run: `scripts/audit-teardown.sh restore`
+# 3c) Fly.dev staging URL → abort (allowlist rejects it)
+CYPRESS_VITE_AUTH_MODE=mock CYPRESS_VITE_API_BASE=https://colign-api.fly.dev \
+  yarn cy:run --spec "cypress/e2e/responsive-narrow.cy.ts" 2>&1 | grep -i "local dev backend"
+# expected: the abort error fires
+```
 
-- [ ] **Step 5: Append a "Regression layer verification" section to the results doc**
+If any of 3a-3c does NOT fire the abort error, the allowlist regex is wrong — fix it before continuing.
 
-Briefly note: both specs pass; preflight aborts on each misconfig branch. List the command + outcome for each.
+- [ ] **Step 4: Restore (trap will handle this, but also explicit)** — `scripts/audit-teardown.sh restore`.
 
-- [ ] **Step 6: Commit the results doc update**
+- [ ] **Step 5: Append a "Regression layer verification" section** to the results doc with the command + outcome for each scenario (passes, allowlist rejections).
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md
-git commit -m "docs(audit): verify Cypress regression specs + CI preflight"
+git commit -m "docs(audit): verify Cypress specs + allowlist preflight (3 scenarios)"
 ```
 
 ---
 
 ### Task D4: Real-phone smoke test + finalize results doc
 
-This is the only step that requires a HUMAN to perform — the autonomous loop pauses here per its completion rules. The spec §8 requires this for DoD.
+**This is the only step that requires a human.** The autonomous loop pauses here per spec §8.
 
-- [ ] **Step 1: Human runs onboarding on a real touch device**
+- [ ] **Step 1: Surface the smoke-test prompt to the user**
 
-Instructions to log inline in this task's results-doc section:
-> Pull up `https://colign.org` (or local `http://<dev-machine-ip>:4173` if testing against the audit branch) on an actual phone — iPhone or Android. Complete: HostHome → Get started → Sign in → Create a team → Skip invites → land on Weekly Plan → add one commit. Note any friction or visible breakage.
+Output a message:
 
-The agent CANNOT do this autonomously; output a "Real-phone smoke test required" prompt and wait for the human's note.
+> **Real-phone smoke test required (spec §8).** Open `https://colign.org` (or `http://<dev-machine-ip>:4173` for the audit branch) on an actual touch device. Complete: HostHome → Get started → Sign in → Create a team → Skip invites → land on Weekly Plan → add one commit. Report PASS/FAIL and any friction observed.
 
-- [ ] **Step 2: Capture the human's note in the results doc**
+Wait for the user's response.
 
-Append a `## Real-phone smoke test` section to `docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md` with the human's verbatim note + a "PASS / FAIL" status.
+- [ ] **Step 2: Capture the user's note** in the results doc as a `## Real-phone smoke test` section, verbatim, with PASS/FAIL.
 
-- [ ] **Step 3: Write the summary section**
+- [ ] **Step 3: Write the summary**
 
-Append a final `## Summary` section with:
+Append `## Summary` to the results doc with:
 - Number of screens audited
-- Number of WCAG-fail / broken-on-mobile / polish findings (per bucket totals)
-- Number of fixes applied (commits during Phase C, counted via `git log --oneline | grep "feat(responsive)"`)
-- Deferred items (anything logged as "polish" that didn't get fixed; the backend startup guard from spec §9.4)
-- Pre-existing security flags (committed mock private key, Vite shell injection) — link to spec §9.4
+- Per-bucket findings counts (WCAG-fail / broken-on-mobile / polish)
+- Number of fixes applied (`git log --oneline | grep "feat(responsive)" | wc -l`)
+- Deferred items (polish that didn't get fixed; backend startup guard per §9.4)
+- Pre-existing security flags (committed mock key, ongoing) — link to spec §9.4
 
-- [ ] **Step 4: Commit the final results doc**
+- [ ] **Step 4: Commit final results**
 
 ```bash
 git add docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md
 git commit -m "docs(audit): finalize responsive UI audit results"
 ```
 
-- [ ] **Step 5: Send the results doc to the user via SendUserFile**
+- [ ] **Step 5: Send results doc to user via SendUserFile** — files=[results doc path], status=proactive, caption="Responsive UI audit results — final".
 
-Use the SendUserFile tool with:
-- `files`: `["docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md"]`
-- `status`: `"proactive"`
-- `caption`: `"Responsive UI audit results — final"`
-
-- [ ] **Step 6: STOP — do not push to remote**
-
-Per the autonomous-loop completion rule: this is the final phase. Halt and surface the summary to the user. The user decides when to push.
+- [ ] **Step 6: STOP — do not push to remote.** Per the autonomous-loop completion rule, this is the final phase. Surface the summary and halt; the user decides when to push.
 
 ---
 
 ## Self-review
 
-### Spec coverage
-
-Mapping each spec section to its implementing task(s):
+### Spec coverage map
 
 - **§1 Goal** — Phases A-D collectively
-- **§2 Non-goals** — respected in scope (no Flowbite rewrites, no Percy infra, dark-mode triage rule applied in C1-C9)
-- **§3 Standards** — Task A1 codifies the fluid scale; A4-A6 codify touch targets; pointer/hover queries are in A3
-- **§4.1 Breakpoint contract** — already exists; no Tailwind config change needed for breakpoints (only fontSize/spacing)
-- **§4.2 Design tokens** — A1 + A2
-- **§4.3 Touch & pointer policy** — A3 + A4 + A5 + A6
-- **§4.4 Specificity gotcha** — A3 resolves it by using `#colign-root` scoping in `responsive.css`
-- **§5.1 Container queries** — TeamRollupTable in C8; IcDrillDrawer in C9
-- **§5.2 Where NOT** — respected (Card primitive excluded; no other components touched for CQ)
-- **§5.3 Browser support** — no polyfill added (correct per spec)
-- **§6.1 Tool** — `/browse` used in Phase C
-- **§6.2 Viewport matrix** — 5 widths × 2 modes in every C task
-- **§6.3 Auth strategy** — Phase C pre-step + Task B1 teardown script
-- **§6.4 Per-screen audit loop** — C1-C9, ordered per spec
-- **§6.5 Screenshot storage** — `tmp/responsive-audit/` (gitignored)
-- **§6.6 Regression layer + dense-control exceptions** — D1 + D2 + D3 + the `responsive-assertions.ts` support file encodes the exception list
+- **§2 Non-goals** — respected; dark-mode triage rule applied in C* tasks
+- **§3 Standards / browser support matrix** — A1 codifies fluid scale; A3-A5 codify touch targets; A2 pointer/hover queries
+- **§4.1 Breakpoints** — Tailwind defaults unchanged (no spec-level change needed)
+- **§4.2 Design tokens** — A1; the dropped A2 (CSS vars) is documented as an intentional removal in the §4.2 asymmetry note in C1
+- **§4.3 Touch & pointer policy** — A2 + A3 + A4 + A5
+- **§4.4 Specificity gotcha** — A2 scopes everything to `#colign-root`
+- **§5.1 Container queries** — C8 (TeamRollupTable card view) + C9 (IcDrillDrawer full-screen via CSS, not JS)
+- **§5.2 Where NOT** — respected; Card primitive not touched
+- **§5.3 Browser support** — covered in spec §3 browser matrix
+- **§6.1 Tool** — `/browse` used throughout Phase C
+- **§6.2 Viewport matrix** — 5×2 per screen
+- **§6.3 Auth strategy + trap requirement** — Pre-Phase-C registers `trap`; B1 supports the contract
+- **§6.4 Per-screen audit loop** — C1-C9 in user-journey order
+- **§6.5 Screenshot storage + hygiene** — `tmp/responsive-audit/`; capture-hygiene reminder in Pre-Phase-C
+- **§6.6 Regression layer + dense-control exceptions** — D0+D1+D2+D3; allowlist regex enforced
 - **§7 Files touched** — covered (backend deferred per §9.4)
-- **§8 Definition of done** — A1-A6 + C1-C9 fixes deliver visual matrix pass; D1-D3 deliver Cypress; D4 delivers real-phone smoke + auth restore; token contract verified by A1 test
-- **§9 Strategic / pre-existing notes** — D4 summary surfaces them in the results doc
+- **§8 Definition of done** — A* + C* deliver matrix pass; D1-D3 deliver Cypress; D4 delivers real-phone smoke + auth restore
+- **§9 Strategic / pre-existing notes** — D4 summary surfaces them; B2 partially addresses §9.4 P1 by hardening the Vite middleware
 
-**Gaps identified during self-review:** none requiring new tasks. The backend guard (§9.4) is documented as deferred, not implemented — consistent with the autonomous-loop rail.
+**Gaps:** none requiring new tasks. Backend startup guard (§9.4 P0) is deferred per autonomous-loop rail; committed mock private key (§9.4 P0) deferred per spec.
 
 ### Placeholder scan
 
-Searched for "TBD", "TODO", "implement later", "fill in details", "Similar to Task N". None present in this plan.
+Searched for "TBD", "TODO", "implement later", "fill in details", "Similar to Task N". None present. The phrase "if issues found" in C1-C7 is the audit's intentional discovery shape (checklist is concrete; fix code is conditional because we genuinely don't know what we'll find).
 
-The phrase "if issues found" appears in C1-C7 — this is NOT a placeholder; it's the audit's intentional discovery shape. The CHECKLIST step is concrete (what to verify); the FIX step is conditional because we genuinely don't know what we'll find. Common-fix examples are provided per screen as anticipatory guidance.
+### Type consistency check
 
-### Type consistency
+- `closeAffordance: "x" | "back"` added in A4 (Drawer) → consumed in C9 with `closeAffordance="back"`. Match.
+- Drawer `width` prop kept (not renamed to `size`). IcDrillDrawer passes `width="xl"` unchanged. Match.
+- `data-clickable="true"` introduced in C8 (TR + Card) → exercised by Cypress selector in D1 (`tr[data-clickable="true"], [data-clickable="true"]`). Match.
+- `team-rollup-container` / `team-rollup-table-view` / `team-rollup-card-view` / `team-rollup-card-view-controls` defined in C8 responsive.css block → used in C8 TeamRollupTable JSX. Match (4 classes consistently named).
+- `ic-drill-drawer-content` / `ic-drill-commit-list` defined in C9 responsive.css → used in C9 IcDrillDrawer JSX. Match.
+- Cypress `DENSE_SELECTORS` and `DEV_API_PATTERN` defined in `responsive-assertions.ts` D1 → consumed only within the same file's helpers. Match.
 
-- `closeAffordance` and `fullScreen` props introduced in A5 (Drawer) — consumed in C9 (IcDrillDrawer). Names match.
-- `useCoarsePointerNarrow` defined inline in C9 — used only within that task. No cross-task type drift.
-- `TeamRollupCard` defined inline in C8 — used only within that task.
-- `DENSE_SELECTORS` array in `responsive-assertions.ts` (D1) — selectors match those in the spec §6.6 exception list verbatim.
-- `assertNoHorizontalScroll` / `assertTouchTargets` / `preflight` exported from `responsive-assertions.ts` in D1 — imported by D1 and D2 with matching names.
+No type/name drift detected.
 
-No type drift detected.
+### Cross-cutting fixes verified in self-review
+
+- ✅ Drawer prop is `width` (preserved) not `size` (no rename)
+- ✅ `HiX` imported (existing) + `HiArrowLeft` added (new)
+- ✅ Button `variant="secondary"` (not `"outline"`)
+- ✅ No `@[640px]:` Tailwind variants anywhere
+- ✅ Cypress preflight = ALLOWLIST regex, rejects api.colign.org / *.fly.dev / staging.*
+- ✅ `trap` registration is an explicit step in Pre-Phase-C and D3
+- ✅ `audit-teardown.sh` APPENDS missing env vars (fixes backend `.env.local` no-line case)
+- ✅ JWT TTL = 14400 in all mint commands (4hr covers full audit window)
+- ✅ `location.reload()` follows every localStorage.setItem in C3/C8 (Redux re-init)
+- ✅ Vite shell injection fixed in B2 before Phase C exercises it
+- ✅ Cypress directory + config scaffolded in D0 before D1/D2/D3
+- ✅ `tr[data-clickable="true"]` selector matches actual elements (added to TR + Card in C8)
 
 ---
 
 ## Execution handoff
 
-Plan complete and saved to `docs/superpowers/plans/2026-05-31-responsive-ui-audit.md`.
+Plan complete and saved to `docs/superpowers/plans/2026-05-31-responsive-ui-audit.md`. Per the autonomous-loop instruction in the user's initiation prompt, execution proceeds via `/superpowers:executing-plans` (Phase 4 of the loop).
 
-Per the autonomous-loop instruction in the user's initiation prompt: **execution proceeds via `/superpowers:executing-plans` (Phase 4 of the loop)**. The execution sub-skill choice was pre-decided by the loop; no choice prompt fires here.
-
-**Estimated work:** ~25 commits across A1-D4, ~1-3 hours wall-clock for an experienced operator (variable based on issue density discovered during Phase C audit).
+**Estimated work:** ~22 commits across A1-D4, ~2-4 hours wall-clock for an experienced operator (variable based on issue density discovered during Phase C audit).
