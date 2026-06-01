@@ -34,6 +34,9 @@ public class Team extends AbstractAuditingEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
     @Column(name = "lead_user_id")
     private Long leadUserId;
 }
