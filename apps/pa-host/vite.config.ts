@@ -5,8 +5,13 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import pkg from "./package.json" with { type: "json" };
 
+// `||` (not `??`) so an EMPTY-STRING env var still falls back.
+// `vercel env pull` masks sensitive prod values as "" — without this guard
+// the build would compile the remote entry as "" and the federation runtime
+// would resolve every chunk against the host origin (404 → SPA index.html →
+// MIME error → blank page).
 const COLIGN_REMOTE_URL =
-  process.env.COLIGN_REMOTE_URL ?? "http://localhost:5174/remoteEntry.js";
+  process.env.COLIGN_REMOTE_URL || "http://localhost:5174/remoteEntry.js";
 
 export default defineConfig({
   plugins: [
