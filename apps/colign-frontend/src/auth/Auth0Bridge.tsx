@@ -42,17 +42,18 @@ export function Auth0Bridge({ children }: { children: ReactNode }) {
           const role = roles.includes("ADMIN")
             ? ("ADMIN" as const)
             : roles.includes("MANAGER")
-            ? ("MANAGER" as const)
-            : ("IC" as const);
-          dispatch(signIn({
-            token,
-            email: user.email ?? user.sub ?? "anonymous",
-            role,
-          }));
+              ? ("MANAGER" as const)
+              : ("IC" as const);
+          dispatch(
+            signIn({
+              token,
+              email: user.email ?? user.sub ?? "anonymous",
+              role,
+            }),
+          );
         })
         .catch((err) => {
           if (cancelled) return;
-          // eslint-disable-next-line no-console
           console.error("Auth0 token fetch failed:", err);
           // Surface it so AuthGate can show a retry instead of hanging on
           // "Signing you in…". The most common cause is consent_required —

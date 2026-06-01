@@ -1,26 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  HiArrowRight,
-  HiInformationCircle,
-  HiLockClosed,
-  HiPlus,
-} from "react-icons/hi";
+import { HiArrowRight, HiInformationCircle, HiLockClosed, HiPlus } from "react-icons/hi";
 import {
   useGetCurrentPlanQuery,
   useLockPlanMutation,
   useStartReconciliationMutation,
 } from "@/api/plans";
 import { useDeleteCommitMutation } from "@/api/commits";
-import {
-  Alert,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  CardTitle,
-  Spinner,
-} from "@/components/ui";
+import { Alert, Button, Card, CardBody, CardHeader, CardTitle, Spinner } from "@/components/ui";
 import { CommitForm } from "@/components/CommitForm";
 import { CommitRow } from "@/components/CommitRow";
 import { PlanStatePill } from "@/components/PlanStatePill";
@@ -172,7 +159,7 @@ export function WeeklyPlanPage() {
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
             {canEdit ? (
               <>
-                When you're done editing,{" "}
+                When you’re done editing,{" "}
                 <strong className="text-neutral-900 dark:text-neutral-100">lock the plan</strong>{" "}
                 for the week — or skip ahead and reconcile in one step.
               </>

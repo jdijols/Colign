@@ -18,8 +18,14 @@ interface Props {
  * or deeply-nested portals. Good enough for v1; spec §11 documents the gap.
  */
 export function ConfirmDialog({
-  open, title, body, confirmLabel, cancelLabel = "Cancel",
-  destructive = false, onCancel, onConfirm,
+  open,
+  title,
+  body,
+  confirmLabel,
+  cancelLabel = "Cancel",
+  destructive = false,
+  onCancel,
+  onConfirm,
 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
@@ -38,8 +44,11 @@ export function ConfirmDialog({
 
   return (
     <div
+      role="presentation"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}
     >
       <div
         ref={dialogRef}
@@ -48,7 +57,10 @@ export function ConfirmDialog({
         aria-labelledby="confirm-title"
         className="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4"
       >
-        <h2 id="confirm-title" className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
+        <h2
+          id="confirm-title"
+          className="text-lg font-semibold text-neutral-900 dark:text-neutral-50"
+        >
           {title}
         </h2>
         <div className="mt-3 text-sm text-neutral-700 dark:text-neutral-300">{body}</div>

@@ -48,9 +48,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 function AuthLoading() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white dark:bg-neutral-950">
-      <span className="text-sm text-neutral-600 dark:text-neutral-400">
-        Signing you in…
-      </span>
+      <span className="text-sm text-neutral-600 dark:text-neutral-400">Signing you in…</span>
     </div>
   );
 }
@@ -68,7 +66,7 @@ function AuthFailed({ error }: { error: string }) {
     <div className="min-h-screen flex items-center justify-center bg-white dark:bg-neutral-950 p-6">
       <div className="w-full max-w-sm text-center">
         <h1 className="text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
-          Couldn't finish signing in
+          Couldn’t finish signing in
         </h1>
         <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
           {isConsent
@@ -81,18 +79,14 @@ function AuthFailed({ error }: { error: string }) {
         <div className="mt-6 flex flex-col gap-2">
           <button
             type="button"
-            onClick={() =>
-              loginWithRedirect({ appState: { returnTo: "/weekly-commit" } })
-            }
+            onClick={() => loginWithRedirect({ appState: { returnTo: "/weekly-commit" } })}
             className="w-full rounded-md bg-neutral-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950"
           >
             Try again
           </button>
           <button
             type="button"
-            onClick={() =>
-              logout({ logoutParams: { returnTo: window.location.origin } })
-            }
+            onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
             className="w-full rounded-md px-4 py-2.5 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 transition-colors"
           >
             Sign out

@@ -27,7 +27,7 @@ export function ReconcilePage() {
 
   const reconciledCount = useMemo(
     () => (data?.commits ?? []).filter((c) => c.reconciliation).length,
-    [data]
+    [data],
   );
   const allReconciled =
     !!data && data.commits.length > 0 && reconciledCount === data.commits.length;
@@ -138,9 +138,7 @@ export function ReconcilePage() {
                   : `${data.commits.length - reconciledCount} commit(s) still need a reconciliation.`}
               </p>
               <Button
-                onClick={() =>
-                  action(() => finalize(data.id).unwrap(), "Finalize reconciliation")
-                }
+                onClick={() => action(() => finalize(data.id).unwrap(), "Finalize reconciliation")}
                 disabled={!allReconciled || finalizing}
                 data-cy="finalize-reconciliation"
                 leftIcon={<HiCheck className="h-3.5 w-3.5" />}
@@ -155,7 +153,7 @@ export function ReconcilePage() {
               <Alert tone="success" title="Reconciliation complete.">
                 Reconciliation complete for week of{" "}
                 <span className="font-mono tabular-nums">{data.weekStartDate}</span>. Missed commits
-                were carried forward to next week's plan.
+                were carried forward to next week’s plan.
               </Alert>
             </CardBody>
           )}

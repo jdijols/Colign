@@ -62,7 +62,7 @@ export function InviteTeammatesPage() {
           <InviteForm teamId={teamId} secondaryAction={skipOrDone} />
         </div>
         <p className="mt-8 text-center text-xs text-neutral-500 dark:text-neutral-500 leading-relaxed">
-          You'll become a manager automatically once a report joins.
+          You’ll become a manager automatically once a report joins.
         </p>
       </div>
     </div>

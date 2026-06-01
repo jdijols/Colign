@@ -38,10 +38,7 @@ export function InviteAcceptPage() {
     data: preview,
     isLoading: previewLoading,
     isError: previewError,
-  } = usePreviewInvitationQuery(
-    { token: token ?? "" },
-    { skip: !token }
-  );
+  } = usePreviewInvitationQuery({ token: token ?? "" }, { skip: !token });
 
   const [acceptInvitation, { isLoading: accepting }] = useAcceptInvitationMutation();
   const [acceptError, setAcceptError] = useState<string | null>(null);
@@ -73,10 +70,10 @@ export function InviteAcceptPage() {
             (status === 403
               ? "This invitation is for a different email. Sign in with the address it was sent to."
               : status === 409
-              ? "You're already on a different team. Leave it before joining this one."
-              : status === 410
-              ? "This invitation isn't valid anymore."
-              : "Couldn't accept the invitation. Try again.")
+                ? "You're already on a different team. Leave it before joining this one."
+                : status === 410
+                  ? "This invitation isn't valid anymore."
+                  : "Couldn't accept the invitation. Try again."),
         );
       });
   }, [token, authToken, preview, hasAttempted, acceptInvitation, navigate]);
@@ -157,7 +154,7 @@ export function InviteAcceptPage() {
         </div>
 
         <h1 className="mt-8 text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 text-center leading-tight">
-          You're invited to
+          You’re invited to
           <br />
           <span className="text-neutral-600 dark:text-neutral-400">{preview.teamName}</span>
         </h1>
@@ -207,15 +204,7 @@ function Centered({ message }: { message: string }) {
   );
 }
 
-function EndState({
-  kind,
-  title,
-  body,
-}: {
-  kind: "info" | "error";
-  title: string;
-  body: string;
-}) {
+function EndState({ kind, title, body }: { kind: "info" | "error"; title: string; body: string }) {
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-950 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm text-center">

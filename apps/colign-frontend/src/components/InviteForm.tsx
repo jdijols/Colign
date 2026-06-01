@@ -50,8 +50,8 @@ export function InviteForm({ teamId, secondaryAction, onSent }: Props) {
           (status === 400
             ? "That email doesn't look right."
             : status === 502
-            ? "Couldn't deliver the email. Check the Resend key and try again."
-            : "Couldn't send the invitation. Please try again."),
+              ? "Couldn't deliver the email. Check the Resend key and try again."
+              : "Couldn't send the invitation. Please try again."),
       );
     }
   }
@@ -59,11 +59,17 @@ export function InviteForm({ teamId, secondaryAction, onSent }: Props) {
   return (
     <>
       <form onSubmit={submit} aria-label="Invite a teammate">
-        <label htmlFor="invite-email" className="sr-only">Email</label>
+        <label htmlFor="invite-email" className="sr-only">
+          Email
+        </label>
         <input
           id="invite-email"
           data-cy="invite-email-input"
           type="email"
+          // The invite form is the entire purpose of this surface — the
+          // single input is what the user came here to type. Auto-focus is
+          // the expected UX on a one-input form.
+          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -75,14 +81,33 @@ export function InviteForm({ teamId, secondaryAction, onSent }: Props) {
         <fieldset className="mt-3" aria-label="Relationship">
           <legend className="sr-only">How will they join?</legend>
           <div className="grid grid-cols-2 gap-2">
-            <RelationshipChip value="REPORT" current={relationship} onChange={setRelationship} title="As a report" subtitle="You'll be their manager" />
-            <RelationshipChip value="PEER" current={relationship} onChange={setRelationship} title="As a peer" subtitle="Same team, no manager link" />
+            <RelationshipChip
+              value="REPORT"
+              current={relationship}
+              onChange={setRelationship}
+              title="As a report"
+              subtitle="You'll be their manager"
+            />
+            <RelationshipChip
+              value="PEER"
+              current={relationship}
+              onChange={setRelationship}
+              title="As a peer"
+              subtitle="Same team, no manager link"
+            />
           </div>
         </fieldset>
 
-        {error && <p role="alert" className="mt-3 text-sm text-rose-700 dark:text-rose-400">{error}</p>}
+        {error && (
+          <p role="alert" className="mt-3 text-sm text-rose-700 dark:text-rose-400">
+            {error}
+          </p>
+        )}
         {justSent && (
-          <p role="status" className="mt-3 inline-flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-400">
+          <p
+            role="status"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-400"
+          >
             <HiCheckCircle className="h-4 w-4" aria-hidden />
             Invitation sent to {justSent}
           </p>
@@ -112,7 +137,11 @@ export function InviteForm({ teamId, secondaryAction, onSent }: Props) {
 }
 
 function RelationshipChip({
-  value, current, onChange, title, subtitle,
+  value,
+  current,
+  onChange,
+  title,
+  subtitle,
 }: {
   value: InvitationRelationship;
   current: InvitationRelationship;
@@ -143,9 +172,13 @@ function RelationshipChip({
 function PendingInvitesList({ invites }: { invites: InvitationDto[] }) {
   return (
     <div className="mt-8 border-t border-neutral-200 dark:border-neutral-800 pt-6">
-      <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-50 mb-3">Invitations</h2>
+      <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-50 mb-3">
+        Invitations
+      </h2>
       <ul className="space-y-2">
-        {invites.map((inv) => <InviteRow key={inv.id} invite={inv} />)}
+        {invites.map((inv) => (
+          <InviteRow key={inv.id} invite={inv} />
+        ))}
       </ul>
     </div>
   );
@@ -155,9 +188,11 @@ function InviteRow({ invite }: { invite: InvitationDto }) {
   const [copied, setCopied] = useState(false);
   const relationshipLabel = invite.relationship === "REPORT" ? "report" : "peer";
   const statusColor =
-    invite.status === "ACCEPTED" ? "text-emerald-700 dark:text-emerald-400"
-    : invite.status === "EXPIRED" || invite.status === "REVOKED" ? "text-neutral-500 dark:text-neutral-500"
-    : "text-neutral-700 dark:text-neutral-300";
+    invite.status === "ACCEPTED"
+      ? "text-emerald-700 dark:text-emerald-400"
+      : invite.status === "EXPIRED" || invite.status === "REVOKED"
+        ? "text-neutral-500 dark:text-neutral-500"
+        : "text-neutral-700 dark:text-neutral-300";
 
   async function copy() {
     try {

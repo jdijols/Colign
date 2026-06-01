@@ -15,7 +15,18 @@
     "build": "yarn workspace colign-frontend build && yarn workspace pa-host build",
     "test:frontend": "yarn workspace colign-frontend test",
     "cy:run": "yarn workspace colign-frontend cy:run",
-    "mock-jwt": "node scripts/mock-jwt.mjs"
+    "mock-jwt": "node scripts/mock-jwt.mjs",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10"
+  },
+  "lint-staged": {
+    "apps/colign-frontend/src/**/*.{ts,tsx}": [
+      "yarn workspace colign-frontend eslint --max-warnings=0 --fix",
+      "yarn workspace colign-frontend prettier --write"
+    ]
   },
   "engines": {
     "node": ">=20.0.0",

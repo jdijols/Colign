@@ -38,7 +38,7 @@ export function OnboardingChoicePage() {
       setError(
         status === 409
           ? "You're already on a team."
-          : "Couldn't create the team. Please try again."
+          : "Couldn't create the team. Please try again.",
       );
     }
   }
@@ -54,8 +54,7 @@ export function OnboardingChoicePage() {
           {firstName ? `Welcome, ${firstName}.` : "Welcome."}
         </h1>
         <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 text-center leading-relaxed">
-          Name your team to get started. You can invite people and rename it
-          afterwards.
+          Name your team to get started. You can invite people and rename it afterwards.
         </p>
 
         <form onSubmit={submit} className="mt-8" aria-label="Create a team">
@@ -66,6 +65,9 @@ export function OnboardingChoicePage() {
             id="team-name"
             data-cy="team-name-input"
             type="text"
+            // First-input-on-an-onboarding-form pattern — the user reached
+            // this page specifically to name their team.
+            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -75,10 +77,7 @@ export function OnboardingChoicePage() {
           />
 
           {error && (
-            <p
-              role="alert"
-              className="mt-2 text-sm text-rose-700 dark:text-rose-400"
-            >
+            <p role="alert" className="mt-2 text-sm text-rose-700 dark:text-rose-400">
               {error}
             </p>
           )}
@@ -89,7 +88,9 @@ export function OnboardingChoicePage() {
             disabled={!name.trim() || isLoading}
             className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-neutral-900 dark:bg-white px-4 py-3 text-sm font-medium text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950"
           >
-            {isLoading ? "Creating…" : (
+            {isLoading ? (
+              "Creating…"
+            ) : (
               <>
                 Create team
                 <HiArrowRight className="h-4 w-4" aria-hidden />
@@ -99,8 +100,8 @@ export function OnboardingChoicePage() {
         </form>
 
         <p className="mt-6 text-center text-xs text-neutral-500 dark:text-neutral-500 leading-relaxed">
-          Joining a team instead? Open the invite link from your email — it drops
-          you straight onto their team.
+          Joining a team instead? Open the invite link from your email — it drops you straight onto
+          their team.
         </p>
       </div>
     </div>
