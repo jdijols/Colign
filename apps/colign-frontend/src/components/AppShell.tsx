@@ -7,7 +7,8 @@ import { signOut } from "@/auth/authSlice";
 import { isReal } from "@/auth/auth0Config";
 import { useGetMeQuery } from "@/api/me";
 import { ColignBrand } from "@/components/Brand";
-import { Button, ThemeToggle } from "@/components/ui";
+import { ThemeToggle } from "@/components/ui";
+import { UserMenu } from "@/components/UserMenu";
 import { cn } from "@/lib/cn";
 
 /**
@@ -71,15 +72,14 @@ export function AppShell() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            <div className="hidden lg:flex items-center gap-2 text-xs text-neutral-600 pr-2 border-r border-neutral-200 dark:border-neutral-800">
-              <span className="font-mono">{email}</span>
-              <span className="text-neutral-300 dark:text-neutral-700">·</span>
-              <span className="uppercase tracking-wider">{role}</span>
-            </div>
             <ThemeToggle />
-            <Button variant="ghost" size="sm" onClick={handleSignOut} data-cy="sign-out">
-              Sign out
-            </Button>
+            <UserMenu
+              email={email}
+              role={role}
+              avatarUrl={null /* user avatar comes in a later PR via /me extension */}
+              displayName={me?.displayName ?? email}
+              onSignOut={handleSignOut}
+            />
 
             <button
               type="button"
