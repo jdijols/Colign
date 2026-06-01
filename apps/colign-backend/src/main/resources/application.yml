@@ -60,11 +60,10 @@ colign:
     # is defense-in-depth for any direct cross-origin call.
     allowed-origins: ${COLIGN_CORS_ORIGINS:http://localhost:4173,http://localhost:5173,http://localhost:5174,http://localhost:3000}
   app:
-    # Base URL the invitation accept link is built against. The controller
-    # appends "/invite/{token}". For pa-host on dev that's :4173/weekly-commit
-    # because the colign remote is mounted at /weekly-commit/*. Swap to a
-    # public origin (e.g. https://app.colign.org/weekly-commit) for prod.
-    base-url: ${COLIGN_APP_BASE_URL:http://localhost:4173/weekly-commit}
+    # Base URL the invitation accept link is built against; the service appends
+    # "/invite/{token}". The app is mounted at the host root, so dev is :4173
+    # with no path prefix. Prod overrides via COLIGN_APP_BASE_URL=https://colign.org.
+    base-url: ${COLIGN_APP_BASE_URL:http://localhost:4173}
   invitations:
     # Days a pending invitation stays valid. After this it returns 410 GONE
     # on preview/accept and the invitee must request a fresh one.

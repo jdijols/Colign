@@ -18,8 +18,8 @@ primary_region = "iad"  # us-east-1-adjacent: near Resend (us-east-1) + the Auth
   COLIGN_AUTH_AUDIENCE = "https://api.colign.org"
   COLIGN_AUTH0_ISSUER = "https://dev-xpbf6g232kcce8nc.us.auth0.com/"
   COLIGN_AUTH0_JWKS = "https://dev-xpbf6g232kcce8nc.us.auth0.com/.well-known/jwks.json"
-  COLIGN_CORS_ORIGINS = "https://app.colign.org"
-  COLIGN_APP_BASE_URL = "https://app.colign.org/weekly-commit"
+  COLIGN_CORS_ORIGINS = "https://colign.org,https://app.colign.org"
+  COLIGN_APP_BASE_URL = "https://colign.org"
   RESEND_FROM = "Colign <onboarding@colign.org>"
   PORT = "8080"
 

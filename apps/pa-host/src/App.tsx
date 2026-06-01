@@ -1,6 +1,5 @@
 import { Suspense, lazy } from "react";
 import { Route, Routes } from "react-router-dom";
-import { HostHome } from "./HostHome";
 
 // MF-lazy import. The host has no compile-time dep on colign-frontend;
 // remoteEntry.js is fetched at runtime from COLIGN_REMOTE_URL (defaults to
@@ -14,23 +13,42 @@ const ArchitectureSite = lazy(() => import("./architecture/ArchitectureSite"));
 
 /**
  * The host is intentionally chrome-less. Each surface owns its own navigation:
- *   /                 → HostHome (full-bleed marketing landing, no nav)
- *   /weekly-commit/*  → WeeklyCommitApp (MF remote; renders its own AppShell —
- *                       identical chrome whether embedded here or standalone on
- *                       :5174, per the brief's "runs standalone" requirement)
- *   /architecture/*   → ArchitectureSite (owns its own Sidebar)
+ *   /architecture/*  → ArchitectureSite (owns its own Sidebar)
+ *   /*               → WeeklyCommitApp (MF remote; renders its own AppShell —
+ *                      identical chrome whether embedded here or standalone on
+ *                      :5174, per the brief's "runs standalone" requirement)
  *
- * Previously a HostShell wrapped the app + architecture routes with a second
- * nav bar, which stacked on top of each child's own chrome (duplicate brand +
- * Sign out). Removed — the remote/sub-app are the single source of chrome.
+ * The app IS the root experience: colign.org/ is the product (login,
+ * onboarding, weekly plan, invites), not a separate marketing landing. The
+ * remote's routes are relative, so the same bundle serves standalone on :5174
+ * and here at the host root. The former HostHome marketing landing is retired
+ * from the root — the app's own login page is the logged-out entry point.
+ * Re-add HostHome at a dedicated path if a separate marketing surface is
+ * needed later.
+ *
+ * Route ordering: architecture/* is matched ahead of the /* catch-all by
+ * react-router's specificity ranking, so the architecture site still resolves.
  */
 export default function App() {
   return (
     <Routes>
-      <Route index element={<HostHome />} />
+      <Route
+        path="architecture/*"
+        element={
+          <Suspense
+            fallback={
+              <div style={{ padding: 32, color: "var(--muted)" }}>
+                Loading architecture…
+              </div>
+            }
+          >
+            <ArchitectureSite />
+          </Suspense>
+        }
+      />
 
       <Route
-        path="weekly-commit/*"
+        path="/*"
         element={
           <Suspense
             fallback={
@@ -45,21 +63,6 @@ export default function App() {
             <div id="colign-root">
               <WeeklyCommitApp />
             </div>
-          </Suspense>
-        }
-      />
-
-      <Route
-        path="architecture/*"
-        element={
-          <Suspense
-            fallback={
-              <div style={{ padding: 32, color: "var(--muted)" }}>
-                Loading architecture…
-              </div>
-            }
-          >
-            <ArchitectureSite />
           </Suspense>
         }
       />

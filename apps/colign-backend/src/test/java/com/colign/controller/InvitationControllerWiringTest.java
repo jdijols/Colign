@@ -136,7 +136,7 @@ class InvitationControllerWiringTest {
                     String resp = result.getResponse().getContentAsString();
                     assertThat(resp).contains("\"email\":\"new-hire@example.com\"");
                     assertThat(resp).contains("\"relationship\":\"REPORT\"");
-                    assertThat(resp).contains("\"acceptUrl\":\"http://localhost:4173/weekly-commit/invite/");
+                    assertThat(resp).contains("\"acceptUrl\":\"http://localhost:4173/invite/");
                 });
 
         assertThat(invitations.findAll())
