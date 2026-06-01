@@ -33,3 +33,69 @@ The per-screen sections below document the STATIC review against the contract an
 ## Phase C — Per-screen audit findings
 
 (Capture matrix deferred. Structural fixes applied where the static review against contract identified concrete issues.)
+
+### C1 — HostHome (pa-host)
+**Static review against contract:** ✅ compliant.
+- Headline `clamp(44px, 8.5vw, 108px)` is fluid + brand-deliberate per spec §4.2; floor of 44px at 320 viewport
+- CTA: `padding: 20px 28px` + `minHeight: 44` — meets coarse floor
+- Footer links use `colign-caption-link` declared ≥24×24 in JSDoc
+- `100dvh` already in use; `text-wrap: balance` already used on headline
+
+**Fixes applied:** none. Spec §4.2 explicitly stated HostHome is already compliant; static review confirms.
+
+### C2 — LoginPage
+**Static review:** ✅ compliant (mock mode), N/A (real mode is a redirect to `/`).
+- Demo-user buttons `px-3 py-2 text-sm` ≈ 36px on fine pointer (above 32px floor); responsive.css lifts to 44 on coarse
+- Footer "colign.org" link is `text-xs` inline (WCAG 2.5.5 inline exception applies)
+
+**Fixes applied:** none.
+
+### C3 — OnboardingChoicePage
+**Static review:** ✅ compliant.
+- Team-name input: `px-4 py-3 text-base` ≈ 50px tall (above 44 floor)
+- Create-team button: `px-4 py-3 text-sm` ≈ 44-46px
+- `max-w-sm` container + `p-6` works cleanly down to 320
+
+**Fixes applied:** none.
+
+### C4 — InviteTeammatesPage
+**Static review:** found one dense-control concern in PendingInvitesList's InviteRow.
+- Email input: `px-4 py-3 text-base` ≈ 50px ✓
+- RelationshipChip buttons: text-sm + text-xs subtitle, ~52px ✓
+- "Send invite" / "Skip for now" / "Done" buttons: `px-4 py-3 text-sm` or `px-2 py-3 text-sm` ≈ 44 ✓
+- **⚠ InviteRow copy-link button**: `px-2 py-1.5 text-xs` ≈ 28×28 px on fine pointer. Cypress regression assertion would fail.
+
+**Fix applied (commit 6a-pending):** added `data-dense-control="true"` to the InviteRow copy button per spec §6.6 governance. Justification (recorded in commit message and inline comment): the button is the only interactive in its row, adjacent rows are separated by ≥24px of non-interactive content (email + status line + row gap), so the WCAG 2.5.5 dense-control exception applies. The responsive.css `(pointer: coarse)` rule does NOT lift this button (the selector excludes `data-dense-control="true"`), preserving the intended dense visual on touch.
+
+### C5 — InviteAcceptPage
+**Static review:** ✅ compliant.
+- "Sign in to accept" CTA: `px-4 py-3 text-sm` ≈ 44 ✓
+- EndState screens render a single heading + body, no interactive elements
+
+**Fixes applied:** none.
+
+### C6 — WeeklyPlanPage
+**Static review:** ✅ compliant after A3 Button bump.
+- Header uses `flex flex-col sm:flex-row` — stacks on mobile ✓
+- "Add commit" Button at `size="sm"` → h-8 (32px) on fine, lifts to 44 on coarse ✓
+- "Lock plan" / "Lock & reconcile" CTA pair uses `flex items-center gap-2 flex-wrap` — wraps at narrow ✓
+- All commit-row affordances use Button primitive consistently
+
+**Fixes applied:** none. After A3, all heights are contract-compliant.
+
+### C7 — ReconcilePage
+**Static review:** ✅ compliant after A3.
+- Header `flex flex-col sm:flex-row` — stacks on mobile ✓
+- CardFooter buttons use Button primitive with default `size="md"` (h-10 after A3) — lifts to 44 on coarse via responsive.css
+- ReconcileRow uses size="sm" buttons (h-8 after A3) — dense desktop OK, lifts to 44 on coarse
+
+**Fixes applied:** none.
+
+### C8 — ManagerDashboardPage + TeamRollupTable (deep refactor — see commit)
+
+See dedicated commit; this is the largest single structural change. TeamRollupTable now uses container queries to switch between table view (≥640px container) and card view (<640px container).
+
+### C9 — IcDrillDrawer (deep refactor — see commit)
+
+See dedicated commit; full-screen mode on coarse+narrow viewports via CSS `@media` rule, no JS hook. Drawer's new `closeAffordance="back"` prop (from A4) used to swap X for HiArrowLeft + "Back to team list" aria-label.
+
