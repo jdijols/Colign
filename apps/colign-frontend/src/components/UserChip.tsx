@@ -1,4 +1,5 @@
-import { ThemeToggle } from "@/components/ui";
+import { Link } from "react-router-dom";
+import { HiOutlineCog, HiOutlineLogout } from "react-icons/hi";
 import { usePopover } from "@/lib/usePopover";
 import { cn } from "@/lib/cn";
 
@@ -18,14 +19,21 @@ const ROLE_LABEL: Record<Props["role"], string> = {
 
 /**
  * User account chip pinned at the bottom of the sidebar. Click expands a
- * popover anchored above the chip containing exactly two items: theme toggle
- * and sign out. Esc / click-outside dismisses; focus returns to the chip on
- * close (via usePopover).
+ * popover anchored above the chip containing exactly two items:
+ *   - Settings — links to /settings (workspace + appearance + members).
+ *   - Sign out.
+ *
+ * The Theme toggle is NOT in this popover — it lives inside Settings under
+ * an "Appearance" section. This matches Notion / Linear / ChatGPT, where
+ * theme is a settings concern, not an always-visible chrome control.
  */
 export function UserChip({ email, role, avatarUrl, displayName, onSignOut }: Props) {
   const { open, setOpen, triggerRef, panelRef } = usePopover<HTMLButtonElement, HTMLDivElement>();
   const initial = (displayName || email || "?").charAt(0).toUpperCase();
   const name = displayName || email;
+
+  const menuItem =
+    "flex items-center gap-2.5 w-full px-2.5 py-2 text-sm rounded-md text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:bg-neutral-100 dark:focus-visible:bg-neutral-800";
 
   return (
     <div className="relative border-t border-neutral-200 dark:border-neutral-800">
@@ -38,14 +46,14 @@ export function UserChip({ email, role, avatarUrl, displayName, onSignOut }: Pro
         aria-label="Open account menu"
         data-cy="sidebar-user-chip"
         className={cn(
-          "w-full flex items-center gap-2.5 px-3 py-3 text-left",
+          "w-full flex items-center gap-2.5 px-3 py-2.5 text-left",
           "hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
         )}
       >
         <span
           aria-hidden
-          className="h-7 w-7 rounded-full bg-neutral-200 dark:bg-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center justify-center overflow-hidden flex-shrink-0"
+          className="h-7 w-7 rounded-full bg-neutral-100 dark:bg-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center justify-center overflow-hidden flex-shrink-0 ring-1 ring-neutral-200 dark:ring-neutral-700"
         >
           {avatarUrl ? (
             <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -60,7 +68,7 @@ export function UserChip({ email, role, avatarUrl, displayName, onSignOut }: Pro
           >
             {name}
           </span>
-          <span className="block text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+          <span className="block text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mt-0.5">
             {ROLE_LABEL[role]}
           </span>
         </span>
@@ -73,13 +81,16 @@ export function UserChip({ email, role, avatarUrl, displayName, onSignOut }: Pro
           aria-label="Account"
           className="absolute left-2 right-2 bottom-full mb-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-lg p-1 z-40"
         >
-          <div
+          <Link
+            to="settings"
             role="menuitem"
-            className="flex items-center justify-between px-2 py-1.5 text-sm text-neutral-700 dark:text-neutral-300"
+            data-cy="sidebar-settings"
+            onClick={() => setOpen(false)}
+            className={menuItem}
           >
-            <span>Theme</span>
-            <ThemeToggle />
-          </div>
+            <HiOutlineCog className="h-4 w-4 shrink-0" aria-hidden />
+            <span>Settings</span>
+          </Link>
           <button
             type="button"
             role="menuitem"
@@ -88,9 +99,10 @@ export function UserChip({ email, role, avatarUrl, displayName, onSignOut }: Pro
               setOpen(false);
               onSignOut();
             }}
-            className="block w-full text-left rounded-md px-2 py-1.5 text-sm text-neutral-900 dark:text-neutral-50 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            className={menuItem}
           >
-            Sign out
+            <HiOutlineLogout className="h-4 w-4 shrink-0" aria-hidden />
+            <span>Sign out</span>
           </button>
         </div>
       ) : null}

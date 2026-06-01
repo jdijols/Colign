@@ -22,16 +22,21 @@ describe("NavRail", () => {
     expect(screen.getByRole("link", { name: /team/i })).toBeInTheDocument();
   });
 
-  it("renders the four routes in fixed order for MANAGER", () => {
+  it("renders Plan / Reconcile / Team in fixed order for MANAGER", () => {
     renderWithRouter(<NavRail role="MANAGER" />);
     const links = screen.getAllByRole("link").map((el) => el.textContent?.trim());
-    expect(links).toEqual(["Plan", "Reconcile", "Team", "Settings"]);
+    expect(links).toEqual(["Plan", "Reconcile", "Team"]);
   });
 
-  it("renders three routes in fixed order for IC (no Team)", () => {
+  it("renders Plan / Reconcile only for IC (no Team)", () => {
     renderWithRouter(<NavRail role="IC" />);
     const links = screen.getAllByRole("link").map((el) => el.textContent?.trim());
-    expect(links).toEqual(["Plan", "Reconcile", "Settings"]);
+    expect(links).toEqual(["Plan", "Reconcile"]);
+  });
+
+  it("does NOT render a Settings link in the rail — that lives in the user-chip popover", () => {
+    renderWithRouter(<NavRail role="MANAGER" />);
+    expect(screen.queryByRole("link", { name: /settings/i })).not.toBeInTheDocument();
   });
 
   it("exposes data-cy selectors on every route link", () => {
@@ -39,6 +44,5 @@ describe("NavRail", () => {
     expect(document.querySelector('[data-cy="sidebar-plan"]')).toBeTruthy();
     expect(document.querySelector('[data-cy="sidebar-reconcile"]')).toBeTruthy();
     expect(document.querySelector('[data-cy="sidebar-team"]')).toBeTruthy();
-    expect(document.querySelector('[data-cy="sidebar-settings"]')).toBeTruthy();
   });
 });

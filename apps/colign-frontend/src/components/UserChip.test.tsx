@@ -28,17 +28,26 @@ describe("UserChip", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
-  // AE3: clicking the user chip opens a popover containing exactly Theme + Sign out;
-  // Esc dismisses.
-  it("Covers AE3. opens with Theme + Sign out, closes on Escape", async () => {
+  // AE3 (updated): the popover now holds Settings + Sign out; Theme moved to the
+  // Appearance section under /settings.
+  it("Covers AE3. opens with Settings + Sign out, closes on Escape", async () => {
     renderWithRouter(<UserChip {...baseProps} onSignOut={vi.fn()} />);
     await userEvent.click(screen.getByRole("button", { name: /account menu/i }));
     const panel = screen.getByRole("menu");
     expect(panel).toBeInTheDocument();
-    expect(panel.textContent).toMatch(/theme/i);
+    expect(panel.textContent).toMatch(/settings/i);
     expect(panel.textContent).toMatch(/sign out/i);
+    expect(panel.textContent).not.toMatch(/theme/i);
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("renders Settings as a link to /settings", async () => {
+    renderWithRouter(<UserChip {...baseProps} onSignOut={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: /account menu/i }));
+    const settingsLink = screen.getByRole("menuitem", { name: /settings/i });
+    expect(settingsLink.tagName.toLowerCase()).toBe("a");
+    expect(settingsLink.getAttribute("href")).toMatch(/settings$/);
   });
 
   it("calls onSignOut when Sign out is clicked and closes the popover", async () => {

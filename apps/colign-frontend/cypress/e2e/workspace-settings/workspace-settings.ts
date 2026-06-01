@@ -5,7 +5,8 @@ Given("I am signed in as a team lead", () => {
   cy.visit("/");
 });
 
-When("I open the workspace settings from the sidebar", () => {
+When("I open the workspace settings from the account menu", () => {
+  cy.get('[data-cy="sidebar-user-chip"]').click();
   cy.get('[data-cy="sidebar-settings"]').click();
   cy.location("pathname").should("include", "/settings");
 });

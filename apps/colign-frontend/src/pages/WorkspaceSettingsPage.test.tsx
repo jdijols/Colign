@@ -29,8 +29,13 @@ vi.mock("@/api/team", () => ({
 import { WorkspaceSettingsPage } from "./WorkspaceSettingsPage";
 
 const ME = {
-  id: 1, email: "u@example.com", displayName: "U",
-  role: "IC" as const, teamId: 42, managerId: null, needsInvite: false,
+  id: 1,
+  email: "u@example.com",
+  displayName: "U",
+  role: "IC" as const,
+  teamId: 42,
+  managerId: null,
+  needsInvite: false,
 };
 
 const TEAM = { id: 42, name: "Acme", description: null, avatarUrl: null, leadUserId: 1 };
@@ -40,20 +45,42 @@ describe("WorkspaceSettingsPage", () => {
     hoisted.getMe.mockReturnValue(mockQueryResult(ME));
     hoisted.listInvitations.mockReturnValue(mockQueryResult([]));
     hoisted.getTeam.mockReturnValue(mockQueryResult(TEAM));
-    hoisted.getTeamMembers.mockReturnValue(mockQueryResult({
-      content: [{ userId: 1, email: "u@example.com", displayName: "U", role: "IC", avatarUrl: null }],
-      totalElements: 1, totalPages: 1, number: 0, size: 50, first: true, last: true,
-    }));
+    hoisted.getTeamMembers.mockReturnValue(
+      mockQueryResult({
+        content: [
+          { userId: 1, email: "u@example.com", displayName: "U", role: "IC", avatarUrl: null },
+        ],
+        totalElements: 1,
+        totalPages: 1,
+        number: 0,
+        size: 50,
+        first: true,
+        last: true,
+      }),
+    );
     hoisted.updateFn.mockReturnValue({ unwrap: () => Promise.resolve(TEAM) });
     hoisted.removeFn.mockReturnValue({ unwrap: () => Promise.resolve() });
   });
-  afterEach(() => { cleanup(); vi.clearAllMocks(); });
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
 
-  it("renders three sections", () => {
+  it("renders four sections including Appearance", () => {
     renderWithRouter(<WorkspaceSettingsPage />);
     expect(screen.getByRole("region", { name: /team/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /appearance/i })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: /members/i })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: /invitations/i })).toBeInTheDocument();
+  });
+
+  it("renders three appearance options (Light / Dark / System) as a radio group", () => {
+    renderWithRouter(<WorkspaceSettingsPage />);
+    const group = screen.getByRole("radiogroup", { name: /appearance/i });
+    expect(group).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /light/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /dark/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /system/i })).toBeInTheDocument();
   });
 
   it("renders the team name input in the Team section", () => {

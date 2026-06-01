@@ -86,7 +86,9 @@ describe("SidebarShell", () => {
     // jsdom doesn't apply the md:hidden CSS, so both the hamburger and the
     // desktop rail are in the DOM. The drawer itself is the conditional bit.
     expect(document.querySelector('[data-cy="sidebar-drawer"]')).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: /open navigation/i }));
+    // Two toggles render in jsdom (desktop + mobile, since responsive classes don't apply).
+    // Either fires the same handler; click the first.
+    await userEvent.click(screen.getAllByRole("button", { name: /open sidebar/i })[0]);
     expect(document.querySelector('[data-cy="sidebar-drawer"]')).not.toBeNull();
 
     await userEvent.click(document.querySelector('[data-cy="sidebar-overlay"]')!);
@@ -99,7 +101,9 @@ describe("SidebarShell", () => {
         <div>page</div>
       </SidebarShell>,
     );
-    await userEvent.click(screen.getByRole("button", { name: /open navigation/i }));
+    // Two toggles render in jsdom (desktop + mobile, since responsive classes don't apply).
+    // Either fires the same handler; click the first.
+    await userEvent.click(screen.getAllByRole("button", { name: /open sidebar/i })[0]);
     expect(document.querySelector('[data-cy="sidebar-drawer"]')).not.toBeNull();
     await userEvent.keyboard("{Escape}");
     expect(document.querySelector('[data-cy="sidebar-drawer"]')).toBeNull();
@@ -111,7 +115,9 @@ describe("SidebarShell", () => {
         <div>page</div>
       </SidebarShell>,
     );
-    await userEvent.click(screen.getByRole("button", { name: /open navigation/i }));
+    // Two toggles render in jsdom (desktop + mobile, since responsive classes don't apply).
+    // Either fires the same handler; click the first.
+    await userEvent.click(screen.getAllByRole("button", { name: /open sidebar/i })[0]);
     const drawer = document.querySelector('[data-cy="sidebar-drawer"]')!;
     // The drawer's NavRail has the same links as the desktop rail; click any.
     const reconcileLink = drawer.querySelector('[data-cy="sidebar-reconcile"]') as HTMLElement;
@@ -127,7 +133,9 @@ describe("SidebarShell", () => {
       </SidebarShell>,
     );
     expect(document.body.style.overflow).toBe("");
-    await userEvent.click(screen.getByRole("button", { name: /open navigation/i }));
+    // Two toggles render in jsdom (desktop + mobile, since responsive classes don't apply).
+    // Either fires the same handler; click the first.
+    await userEvent.click(screen.getAllByRole("button", { name: /open sidebar/i })[0]);
     expect(document.body.style.overflow).toBe("hidden");
     await userEvent.keyboard("{Escape}");
     expect(document.body.style.overflow).toBe("");
