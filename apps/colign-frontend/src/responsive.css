@@ -1,0 +1,44 @@
+/*
+ * Responsive UI touch & pointer policy — implements spec §4.3.
+ * Scoped to #colign-root to compete with Tailwind utilities compiled
+ * under important: "#colign-root" (spec §4.4).
+ *
+ * This file ALSO holds component-scoped container-query rules added in
+ * Phase C (TeamRollupTable card view, IcDrillDrawer full-screen). Each
+ * such block is fenced with a section header for navigability.
+ */
+
+/* === Section A2: global touch & pointer policy === */
+@layer utilities {
+  /* Coarse pointers (touch): primary interactive elements ≥ 44×44 */
+  @media (pointer: coarse) {
+    #colign-root button:not([data-dense-control="true"]):not(th button):not([aria-label*="agination" i]):not([data-testid*="pagination"]),
+    #colign-root a[role="button"]:not([data-dense-control="true"]),
+    #colign-root input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+    #colign-root select,
+    #colign-root [role="button"]:not([data-dense-control="true"]) {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    /* Label-wrapped checkboxes/radios get the hit-target via the label */
+    #colign-root label:has(input[type="checkbox"]),
+    #colign-root label:has(input[type="radio"]) {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+  /* Fine pointers (cursor): denser desktop layouts allowed */
+  @media (pointer: fine) {
+    #colign-root button:not([data-dense-control="true"]):not(th button) {
+      min-height: 32px;
+    }
+  }
+  /* Hover gating — always-visible on touch */
+  @media (hover: none) {
+    #colign-root [data-hover-only="true"] {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+  }
+}

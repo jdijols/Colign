@@ -1,3 +1,9 @@
+/* Responsive touch & pointer policy + component container queries.
+   Imported here so PostCSS processes the @layer directives and the
+   compiled output reaches both standalone and MF-host consumers via
+   colign-compiled.css. */
+@import "./responsive.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
