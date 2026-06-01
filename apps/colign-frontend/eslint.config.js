@@ -10,6 +10,7 @@ export default [
   {
     ignores: [
       "dist",
+      ".vercel",
       "cypress",
       "cypress-results",
       "node_modules",
