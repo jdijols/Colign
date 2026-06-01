@@ -66,3 +66,4 @@ apps/*/src/*-compiled.css
 # --- Misc ---
 .gstack/
 .superpowers/
+.audit-snapshot/
