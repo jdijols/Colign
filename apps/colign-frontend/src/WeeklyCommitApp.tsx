@@ -22,6 +22,9 @@ import { AuthGate } from "@/auth/AuthGate";
 import { OnboardingGate } from "@/auth/OnboardingGate";
 import { LoginPage } from "@/pages/LoginPage";
 import { OnboardingChoicePage } from "@/pages/OnboardingChoicePage";
+import { StrategyRallyCryPage } from "@/pages/StrategyRallyCryPage";
+import { StrategyObjectivePage } from "@/pages/StrategyObjectivePage";
+import { StrategyOutcomePage } from "@/pages/StrategyOutcomePage";
 import { InviteTeammatesPage } from "@/pages/InviteTeammatesPage";
 import { InviteAcceptPage } from "@/pages/InviteAcceptPage";
 import { WeeklyPlanPage } from "@/pages/WeeklyPlanPage";
@@ -36,9 +39,10 @@ import { WorkspaceSettingsPage } from "@/pages/WorkspaceSettingsPage";
  * this component so router context + Auth0 client are available to the bridge.
  *
  * Route tiers:
- *   login                     — unauthenticated
- *   onboarding / create-team  — authenticated, team-agnostic (no team yet)
- *   index / reconcile / manager — authenticated AND on a team (OnboardingGate)
+ *   login                       — unauthenticated
+ *   onboarding / create-team    — authenticated, team-agnostic (no team yet)
+ *   onboarding/strategy/*       — authenticated + on a team, strategy not yet complete
+ *   index / reconcile / manager — authenticated AND on a team AND strategy complete
  *
  * Relative paths throughout so the same Routes match standalone (mounted at "/")
  * and hosted by PA (mounted at "/weekly-commit/*").
@@ -70,6 +74,13 @@ export default function WeeklyCommitApp() {
             }
           >
             <Route path="onboarding" element={<OnboardingChoicePage />} />
+            {/* Strategy onboarding wizard (Steps 1–3). Requires a team but NOT a
+                complete strategy chain — it's how an author completes it — so it
+                lives outside OnboardingGate and self-guards per page. */}
+            <Route path="onboarding/strategy/rally-cry" element={<StrategyRallyCryPage />} />
+            <Route path="onboarding/strategy/objective" element={<StrategyObjectivePage />} />
+            <Route path="onboarding/strategy/outcome" element={<StrategyOutcomePage />} />
+            {/* Step 4: invite teammates (or continue solo to the first weekly plan). */}
             <Route path="onboarding/invite" element={<InviteTeammatesPage />} />
           </Route>
 

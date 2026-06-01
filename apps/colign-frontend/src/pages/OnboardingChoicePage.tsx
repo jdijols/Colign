@@ -21,8 +21,8 @@ export function OnboardingChoicePage() {
 
   // Defensive guard: a user who already has a team has nothing to do on the
   // team-create page. Without this, any stray "back to onboarding" navigation
-  // (e.g., the invite-skip behavior fixed alongside this) drops them on a form
-  // that 409s on submit and looks like a redirect loop.
+  // (the InviteTeammatesPage Skip/Done bug fixed alongside this) drops them on
+  // a form that 409s on submit and looks like a redirect loop.
   if (me && me.teamId != null) {
     return <Navigate to="/" replace />;
   }
@@ -37,10 +37,10 @@ export function OnboardingChoicePage() {
     try {
       await createTeam({ name: trimmed }).unwrap();
       // getMe cache already holds the new teamId (see createTeam.onQueryStarted).
-      // Per the minimize-actions principle, the very next step IS inviting
-      // teammates — surface that screen instead of dropping the user into an
-      // empty My Week with no obvious next action.
-      navigate("invite", { relative: "path" });
+      // The creator must establish the team's strategy chain before weekly
+      // planning, so the next step is the strategy wizard (Rally Cry → Defining
+      // Objective → Outcome); inviting teammates follows as Step 4.
+      navigate("strategy/rally-cry", { relative: "path" });
     } catch (err) {
       const status = (err as { status?: number })?.status;
       setError(

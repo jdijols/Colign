@@ -7,17 +7,21 @@ import {
   useStartReconciliationMutation,
 } from "@/api/plans";
 import { useDeleteCommitMutation } from "@/api/commits";
+import { useListOutcomesQuery } from "@/api/outcomes";
 import { Alert, Button, Card, CardBody, CardHeader, CardTitle, Spinner } from "@/components/ui";
 import { CommitForm } from "@/components/CommitForm";
 import { CommitRow } from "@/components/CommitRow";
 import { PlanStatePill } from "@/components/PlanStatePill";
 import { AlignmentBar } from "@/components/AlignmentBar";
+import { StrategyAnchor } from "@/components/StrategyAnchor";
 
 export function WeeklyPlanPage() {
   const { data, isLoading, error } = useGetCurrentPlanQuery();
   const [lockPlan, { isLoading: locking }] = useLockPlanMutation();
   const [startRecon, { isLoading: startingRecon }] = useStartReconciliationMutation();
   const [deleteCommit] = useDeleteCommitMutation();
+  // Cached by RTK; StrategyAnchor reads the same key, so only one HTTP call.
+  const { data: outcomesPage } = useListOutcomesQuery({ size: 200 });
   const [adding, setAdding] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -83,8 +87,17 @@ export function WeeklyPlanPage() {
     }
   }
 
+  // When the plan is brand-new (no commits) AND the team has exactly one
+  // Outcome, surface that Outcome's title in the empty-state copy. Keeps the
+  // continuity with the strategy wizard the user just completed.
+  const outcomes = outcomesPage?.content ?? [];
+  const featuredOutcomeTitle = outcomes.length === 1 ? outcomes[0]!.title : null;
+  const isEmptyDraft = data.commits.length === 0 && !adding;
+
   return (
     <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6">
+      <StrategyAnchor />
+
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-wider text-neutral-600">My weekly plan</p>
@@ -109,7 +122,9 @@ export function WeeklyPlanPage() {
       <Card>
         <CardHeader>
           <CardTitle>Commits · {data.commits.length}</CardTitle>
-          {canEdit && !adding && (
+          {/* Top-right Add commit hides on empty plans — the hero CTA in the
+              body takes over to draw the eye through to the first commit. */}
+          {canEdit && !adding && data.commits.length > 0 && (
             <Button
               size="sm"
               onClick={() => setAdding(true)}
@@ -121,12 +136,36 @@ export function WeeklyPlanPage() {
           )}
         </CardHeader>
 
-        {data.commits.length === 0 && !adding ? (
+        {isEmptyDraft && canEdit ? (
+          <CardBody>
+            <div className="py-8 flex flex-col items-center text-center gap-5">
+              <p className="text-base text-neutral-700 dark:text-neutral-300 max-w-md">
+                {featuredOutcomeTitle ? (
+                  <>
+                    Pick a deliverable that moves{" "}
+                    <strong className="text-neutral-900 dark:text-neutral-50">
+                      “{featuredOutcomeTitle}”
+                    </strong>{" "}
+                    forward this week.
+                  </>
+                ) : (
+                  <>Pick a deliverable that advances your strategic Outcomes this week.</>
+                )}
+              </p>
+              <Button
+                size="lg"
+                onClick={() => setAdding(true)}
+                leftIcon={<HiPlus className="h-4 w-4" />}
+                data-cy="add-commit-hero"
+              >
+                Make your first commit
+              </Button>
+            </div>
+          </CardBody>
+        ) : isEmptyDraft ? (
           <CardBody>
             <p className="text-sm text-neutral-600">
-              No commits yet. Click{" "}
-              <strong className="text-neutral-700 dark:text-neutral-300">Add commit</strong> to
-              start your week — each commit must link to a strategic Outcome.
+              This plan is empty and locked — nothing to reconcile this week.
             </p>
           </CardBody>
         ) : data.commits.length > 0 ? (

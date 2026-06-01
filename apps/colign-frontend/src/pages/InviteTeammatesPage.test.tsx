@@ -75,12 +75,17 @@ describe("InviteTeammatesPage", () => {
     expect(submit).toBeEnabled();
   });
 
-  it("Skip for now navigates to the app root, NOT one level up (which is the team-create page)", async () => {
+  it("offers Skip for now (optional invite) when no invitations have been sent", () => {
     renderWithRouter(<InviteTeammatesPage />);
-    const skip = screen.getByRole("button", { name: /skip for now/i });
-    await userEvent.click(skip);
+    expect(screen.getByRole("button", { name: /skip for now/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^done/i })).not.toBeInTheDocument();
+  });
+
+  it("Skip navigates to the app root, NOT one level up (which is team-create)", async () => {
+    renderWithRouter(<InviteTeammatesPage />);
+    await userEvent.click(screen.getByRole("button", { name: /skip for now/i }));
     expect(hoisted.navigate).toHaveBeenCalledWith("/", { replace: true });
-    // Regression guard: must NOT be "..", which would land on
+    // Regression guard: must NOT be "..", which would land the user on
     // OnboardingChoicePage and feel like a redirect loop.
     expect(hoisted.navigate).not.toHaveBeenCalledWith(
       "..",
@@ -88,10 +93,27 @@ describe("InviteTeammatesPage", () => {
     );
   });
 
-  it("offers Skip for now (optional invite) when no invitations have been sent", () => {
+  it("Done navigates to the app root (same fix as Skip — they share onClick)", async () => {
+    hoisted.listInvitations.mockReturnValue(
+      mockQueryResult([
+        {
+          id: 7,
+          email: "ic@example.com",
+          teamId: 42,
+          inviterDisplayName: "Lead",
+          relationship: "REPORT" as const,
+          status: "PENDING" as const,
+          token: "tok-7",
+          acceptUrl: "http://localhost/invite/tok-7",
+          expiresAt: "2026-06-14T00:00:00Z",
+          acceptedAt: null,
+          createdAt: "2026-05-31T00:00:00Z",
+        },
+      ]),
+    );
     renderWithRouter(<InviteTeammatesPage />);
-    expect(screen.getByRole("button", { name: /skip for now/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^done/i })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /^done/i }));
+    expect(hoisted.navigate).toHaveBeenCalledWith("/", { replace: true });
   });
 
   it("keeps Send invite disabled until a valid email, independent of Skip", async () => {

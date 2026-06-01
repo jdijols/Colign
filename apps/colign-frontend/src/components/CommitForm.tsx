@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HiCheck, HiX } from "react-icons/hi";
 import { useAddCommitMutation } from "@/api/commits";
 import { useListOutcomesQuery } from "@/api/outcomes";
@@ -46,6 +46,17 @@ export function CommitForm({ planId, onDone, onCancel }: Props) {
   const [addCommit, { isLoading: submitting }] = useAddCommitMutation();
   const { data: outcomesPage, isLoading: loadingOutcomes } = useListOutcomesQuery({ size: 200 });
   const { data: chessTags, isLoading: loadingTags } = useListChessTagsQuery();
+
+  // Pre-select the Outcome when the team has exactly one. Saves a click on
+  // the empty-plan happy path right after the strategy wizard and keeps the
+  // continuity from "I just defined this Outcome" → "now I'll commit to it".
+  // No-op when the user has already chosen one, when there are 0 or 2+
+  // Outcomes, or while outcomes are still loading.
+  useEffect(() => {
+    if (outcomeId !== "") return;
+    const all = outcomesPage?.content ?? [];
+    if (all.length === 1) setOutcomeId(all[0]!.id);
+  }, [outcomesPage, outcomeId]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, { rallyCry: string; objectives: Map<string, OutcomeRefDto[]> }>();

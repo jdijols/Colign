@@ -16,6 +16,13 @@ export interface MeDto {
   needsInvite: boolean;
   teamName: string | null;
   teamAvatarUrl: string | null;
+  /**
+   * True once the caller's team has a complete strategy chain (≥1 Outcome, which
+   * implies its parent Objective and Rally Cry). Drives the onboarding gate:
+   * incomplete + author → strategy wizard; incomplete + IC → "ask your admin"
+   * empty state; complete → the weekly-plan app. False when the user has no team.
+   */
+  strategySetupComplete: boolean;
 }
 
 /**

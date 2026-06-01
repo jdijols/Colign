@@ -93,6 +93,39 @@ describe("CommitForm", () => {
     expect(onDone).toHaveBeenCalled();
   });
 
+  it("pre-selects the only Outcome when the team has exactly one (continuity from the strategy wizard)", async () => {
+    hoisted.listOutcomes.mockReturnValue(
+      mockQueryResult({
+        ...OUTCOMES_PAGE,
+        content: [OUTCOMES_PAGE.content[0]],
+        totalElements: 1,
+      }),
+    );
+    const onDone = vi.fn();
+    renderWithRouter(<CommitForm planId={7} onDone={onDone} onCancel={vi.fn()} />);
+
+    // The Outcome dropdown reports the pre-selected id without the user touching it.
+    const select = screen.getByLabelText(/which outcome does this support/i) as HTMLSelectElement;
+    expect(select.value).toBe("11");
+
+    // Submit is gated only on the title now — the Outcome is already chosen.
+    const submit = screen.getByRole("button", { name: /save commit/i });
+    await userEvent.type(screen.getByLabelText(/what are you committing to/i), "First commit");
+    expect(submit).not.toBeDisabled();
+    await userEvent.click(submit);
+    expect(hoisted.addCommit).toHaveBeenCalledWith({
+      planId: 7,
+      body: expect.objectContaining({ outcomeId: 11 }),
+    });
+  });
+
+  it("does NOT pre-select when the team has multiple Outcomes — the user picks deliberately", () => {
+    // Default OUTCOMES_PAGE has 2 outcomes; assert nothing got chosen for them.
+    renderWithRouter(<CommitForm planId={7} onDone={vi.fn()} onCancel={vi.fn()} />);
+    const select = screen.getByLabelText(/which outcome does this support/i) as HTMLSelectElement;
+    expect(select.value).toBe("");
+  });
+
   it("surfaces the mutation error when the API rejects", async () => {
     hoisted.addCommit.mockReturnValue({
       unwrap: () => Promise.reject(new Error("network exploded")),

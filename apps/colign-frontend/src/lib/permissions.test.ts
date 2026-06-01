@@ -12,6 +12,7 @@ const baseMe: MeDto = {
   needsInvite: false,
   teamName: null,
   teamAvatarUrl: null,
+  strategySetupComplete: true,
 };
 
 describe("canManageTeam", () => {
