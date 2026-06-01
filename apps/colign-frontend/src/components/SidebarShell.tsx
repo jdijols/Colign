@@ -83,11 +83,7 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
       className={cn(
         "hidden md:flex flex-col h-screen sticky top-0 overflow-hidden",
         "border-r border-neutral-200 dark:border-neutral-800",
-        // No width transition: animating the rail makes the labels appear to
-        // slide in from behind the right rail edge (overflow-hidden clips them
-        // until the rail finishes widening). Tiles already share an X column
-        // across states, so an instant toggle reads as "labels show / hide"
-        // rather than "tiles enter the scene."
+        "transition-[width] duration-200 ease-out",
         collapsed ? "w-14" : "w-60",
       )}
       aria-label="Primary navigation"
