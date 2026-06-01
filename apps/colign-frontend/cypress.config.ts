@@ -13,6 +13,23 @@ export default defineConfig({
     supportFile: "cypress/support/e2e.ts",
     video: false,
     screenshotOnRunFailure: true,
+    // cypress-multi-reporters bridges to both a human-friendly mochawesome
+    // HTML report and a machine-readable junit XML for CI ingest. Outputs
+    // land under cypress-results/ (gitignored).
+    reporter: "cypress-multi-reporters",
+    reporterOptions: {
+      reporterEnabled: "mochawesome, mocha-junit-reporter",
+      mochawesomeReporterOptions: {
+        reportDir: "cypress-results/mochawesome",
+        overwrite: true,
+        html: true,
+        json: true,
+      },
+      mochaJunitReporterReporterOptions: {
+        mochaFile: "cypress-results/junit/[hash].xml",
+        toConsole: false,
+      },
+    },
     // Pass through dev-only env vars so the responsive preflight can inspect them.
     env: {
       VITE_AUTH_MODE: process.env.VITE_AUTH_MODE ?? "real",
