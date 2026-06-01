@@ -5,6 +5,7 @@ import com.colign.domain.Team;
 import com.colign.domain.User;
 import com.colign.domain.UserRole;
 import com.colign.repository.InvitationRepository;
+import com.colign.repository.OutcomeRepository;
 import com.colign.repository.TeamRepository;
 import com.colign.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,16 +38,19 @@ public class UserResolver {
   private final UserRepository users;
   private final InvitationRepository invitations;
   private final TeamRepository teams;
+  private final OutcomeRepository outcomes;
   private final String defaultRole;
 
   public UserResolver(
       UserRepository users,
       InvitationRepository invitations,
       TeamRepository teams,
+      OutcomeRepository outcomes,
       @Value("${colign.users.default-role:IC}") String defaultRole) {
     this.users = users;
     this.invitations = invitations;
     this.teams = teams;
+    this.outcomes = outcomes;
     this.defaultRole = defaultRole;
   }
 
@@ -138,6 +142,7 @@ public class UserResolver {
         .needsInvite(needsInvite(teamId))
         .teamName(teamName)
         .teamAvatarUrl(teamAvatarUrl)
+        .strategySetupComplete(teamId != null && outcomes.existsByTeamId(teamId))
         .build();
   }
 
