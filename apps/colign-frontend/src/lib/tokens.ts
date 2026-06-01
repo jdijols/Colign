@@ -33,7 +33,10 @@ export function planStateLabel(state: PlanState): string {
     case "DRAFT":
       return "Draft";
     case "LOCKED":
-      return "Locked";
+      // User-facing label for the LOCKED state is "Submitted" — the immutable
+      // baseline the IC has committed to for the week. Backend state name stays
+      // LOCKED; only user-visible copy uses "Submitted" / "Submit plan".
+      return "Submitted";
     case "RECONCILING":
       return "Reconciling";
     case "RECONCILED":

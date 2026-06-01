@@ -1,17 +1,17 @@
 Feature: Weekly commit lifecycle
 
   The brief's marquee functional requirement: an IC drafts a plan,
-  locks it, reconciles every commit, and submits. A manager sees the
+  submits it, reconciles every commit, and finalizes. A manager sees the
   reconciled plan on the team rollup. Structural alignment is the
-  precondition for locking — the empty plan can't advance.
+  precondition for submission — the empty plan can't advance.
 
-  Scenario: Empty-plan lock is blocked; a linked plan completes the cycle
+  Scenario: Empty-plan submit is blocked; a linked plan completes the cycle
     Given I am signed in as IC "ada@st6.dev"
     When I open the weekly plan
-    Then the Lock plan button is disabled until at least one commit exists
+    Then the Submit plan button is disabled until at least one commit exists
     When I add a commit titled "Wire RCDO picker"
-    And I lock the plan
-    Then the plan state shows "Locked"
+    And I submit the plan
+    Then the plan state shows "Submitted"
     When I start reconciliation
     And I mark every commit as Done
     And I submit reconciliation

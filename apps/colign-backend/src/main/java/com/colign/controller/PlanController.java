@@ -50,6 +50,7 @@ public class PlanController {
 
   @PatchMapping("/{id}/lock")
   public PlanDto lock(@PathVariable Long id) {
-    return plans.toDto(plans.lock(id));
+    var me = users.resolveCurrent();
+    return plans.toDto(plans.lock(id, me));
   }
 }

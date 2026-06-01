@@ -44,7 +44,7 @@ export function WeeklyPlanPage() {
   }
 
   const canEdit = data.state === "DRAFT";
-  const canLock = canEdit && data.commits.length > 0;
+  const canSubmit = canEdit && data.commits.length > 0;
 
   function handleErr(e: unknown, fallback: string) {
     const msg =
@@ -53,23 +53,23 @@ export function WeeklyPlanPage() {
     setActionError(msg);
   }
 
-  async function lock() {
+  async function submit() {
     setActionError(null);
     try {
       await lockPlan(data!.id).unwrap();
     } catch (e) {
-      handleErr(e, "Lock failed");
+      handleErr(e, "Submit failed");
     }
   }
 
-  async function lockAndReconcile() {
+  async function submitAndReconcile() {
     setActionError(null);
     try {
-      const locked = await lockPlan(data!.id).unwrap();
-      await startRecon(locked.id).unwrap();
+      const submitted = await lockPlan(data!.id).unwrap();
+      await startRecon(submitted.id).unwrap();
       navigate("reconcile");
     } catch (e) {
-      handleErr(e, "Lock & reconcile failed");
+      handleErr(e, "Submit & reconcile failed");
     }
   }
 
@@ -160,11 +160,11 @@ export function WeeklyPlanPage() {
             {canEdit ? (
               <>
                 When you’re done editing,{" "}
-                <strong className="text-neutral-900 dark:text-neutral-100">lock the plan</strong>{" "}
+                <strong className="text-neutral-900 dark:text-neutral-100">submit the plan</strong>{" "}
                 for the week — or skip ahead and reconcile in one step.
               </>
             ) : data.state === "LOCKED" ? (
-              <>This week is locked. Reconcile when the week is done.</>
+              <>This week’s plan has been submitted. Reconcile when the week is done.</>
             ) : (
               <>
                 This week has been reconciled.{" "}
@@ -176,29 +176,29 @@ export function WeeklyPlanPage() {
             )}
           </p>
           <div className="flex items-center gap-2 flex-wrap">
-            {canLock ? (
+            {canSubmit ? (
               <>
                 <Button
-                  onClick={lock}
+                  onClick={submit}
                   disabled={locking || startingRecon}
-                  data-cy="lock-plan"
+                  data-cy="submit-plan"
                   leftIcon={<HiLockClosed className="h-3.5 w-3.5" />}
                 >
-                  {locking && !startingRecon ? "Locking…" : "Lock plan"}
+                  {locking && !startingRecon ? "Submitting…" : "Submit plan"}
                 </Button>
                 <Button
                   variant="secondary"
-                  onClick={lockAndReconcile}
+                  onClick={submitAndReconcile}
                   disabled={locking || startingRecon}
-                  data-cy="lock-and-reconcile"
+                  data-cy="submit-and-reconcile"
                   rightIcon={<HiArrowRight className="h-3.5 w-3.5" />}
                 >
-                  {startingRecon ? "Starting…" : "Lock & start reconciling"}
+                  {startingRecon ? "Starting…" : "Submit & start reconciling"}
                 </Button>
               </>
             ) : canEdit ? (
               <Button disabled leftIcon={<HiLockClosed className="h-3.5 w-3.5" />}>
-                Lock plan
+                Submit plan
               </Button>
             ) : data.state === "LOCKED" ? (
               <Button
@@ -215,7 +215,7 @@ export function WeeklyPlanPage() {
       </Card>
 
       {actionError && (
-        <div data-cy="lock-error">
+        <div data-cy="submit-error">
           <Alert tone="danger" title="Action failed">
             {actionError}
           </Alert>

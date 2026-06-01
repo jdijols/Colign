@@ -12,6 +12,8 @@ import com.colign.domain.Outcome;
 import com.colign.domain.Plan;
 import com.colign.domain.PlanState;
 import com.colign.domain.RallyCry;
+import com.colign.domain.User;
+import com.colign.domain.UserRole;
 import com.colign.domain.WeeklyCommit;
 import com.colign.dto.PlanDto;
 import com.colign.repository.ChessTagRepository;
@@ -29,6 +31,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 class PlanServiceTest {
@@ -44,6 +48,7 @@ class PlanServiceTest {
 
   private static final long PLAN_ID = 42L;
   private static final long USER_ID = 7L;
+  private static final long OTHER_USER_ID = 9L;
 
   private Plan draftPlan() {
     Plan p =
@@ -56,15 +61,56 @@ class PlanServiceTest {
     return p;
   }
 
+  private User caller(long id, UserRole role) {
+    User u =
+        User.builder()
+            .email("caller-" + id + "@example.com")
+            .displayName("Caller " + id)
+            .role(role)
+            .active(true)
+            .build();
+    u.setId(id);
+    return u;
+  }
+
+  private User owner() {
+    return caller(USER_ID, UserRole.IC);
+  }
+
+  @Test
+  void lock_throws403_whenCallerIsNotOwner() {
+    when(plans.findById(PLAN_ID)).thenReturn(Optional.of(draftPlan()));
+    User stranger = caller(OTHER_USER_ID, UserRole.IC);
+
+    assertThatThrownBy(() -> svc.lock(PLAN_ID, stranger))
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("Cannot submit another user's plan")
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.FORBIDDEN);
+  }
+
+  @Test
+  void lock_allowsAdminOverride_evenWhenNotOwner() {
+    when(plans.findById(PLAN_ID)).thenReturn(Optional.of(draftPlan()));
+    when(commits.countByPlanId(PLAN_ID)).thenReturn(3);
+    when(commits.countByPlanIdAndOutcomeIdIsNull(PLAN_ID)).thenReturn(0L);
+    when(plans.save(any(Plan.class))).thenAnswer(inv -> inv.getArgument(0));
+    User admin = caller(OTHER_USER_ID, UserRole.ADMIN);
+
+    Plan result = svc.lock(PLAN_ID, admin);
+
+    assertThat(result.getState()).isEqualTo(PlanState.LOCKED);
+  }
+
   @Test
   void lock_throws409_whenPlanIsNotDraft() {
     Plan locked = draftPlan();
     locked.setState(PlanState.LOCKED);
     when(plans.findById(PLAN_ID)).thenReturn(Optional.of(locked));
 
-    assertThatThrownBy(() -> svc.lock(PLAN_ID))
+    assertThatThrownBy(() -> svc.lock(PLAN_ID, owner()))
         .isInstanceOf(IllegalTransitionException.class)
-        .hasMessageContaining("lock only valid from DRAFT");
+        .hasMessageContaining("submit only valid from DRAFT");
   }
 
   @Test
@@ -72,9 +118,9 @@ class PlanServiceTest {
     when(plans.findById(PLAN_ID)).thenReturn(Optional.of(draftPlan()));
     when(commits.countByPlanId(PLAN_ID)).thenReturn(0);
 
-    assertThatThrownBy(() -> svc.lock(PLAN_ID))
+    assertThatThrownBy(() -> svc.lock(PLAN_ID, owner()))
         .isInstanceOf(IllegalTransitionException.class)
-        .hasMessageContaining("cannot lock an empty plan");
+        .hasMessageContaining("cannot submit an empty plan");
   }
 
   @Test
@@ -83,7 +129,7 @@ class PlanServiceTest {
     when(commits.countByPlanId(PLAN_ID)).thenReturn(3);
     when(commits.countByPlanIdAndOutcomeIdIsNull(PLAN_ID)).thenReturn(2L);
 
-    assertThatThrownBy(() -> svc.lock(PLAN_ID))
+    assertThatThrownBy(() -> svc.lock(PLAN_ID, owner()))
         .isInstanceOf(IllegalTransitionException.class)
         .hasMessageContaining("2 commit(s) missing outcome link");
   }
@@ -95,7 +141,7 @@ class PlanServiceTest {
     when(commits.countByPlanIdAndOutcomeIdIsNull(PLAN_ID)).thenReturn(0L);
     when(plans.save(any(Plan.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    Plan result = svc.lock(PLAN_ID);
+    Plan result = svc.lock(PLAN_ID, owner());
 
     assertThat(result.getState()).isEqualTo(PlanState.LOCKED);
     assertThat(result.getLockedAt()).isNotNull();
