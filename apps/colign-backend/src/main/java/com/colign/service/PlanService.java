@@ -91,6 +91,11 @@ public class PlanService {
             throw new IllegalTransitionException(PlanState.DRAFT, PlanState.LOCKED,
                     "cannot lock an empty plan");
         }
+        long unlinked = commits.countByPlanIdAndOutcomeIdIsNull(plan.getId());
+        if (unlinked > 0) {
+            throw new IllegalTransitionException(PlanState.DRAFT, PlanState.LOCKED,
+                    "cannot lock plan with " + unlinked + " commit(s) missing outcome link");
+        }
         plan.setState(PlanState.LOCKED);
         plan.setLockedAt(Instant.now());
         return plans.save(plan);

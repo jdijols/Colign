@@ -12,4 +12,6 @@ public interface WeeklyCommitRepository extends JpaRepository<WeeklyCommit, Long
     List<WeeklyCommit> findByPlanIdAndStatusIn(Long planId, List<CommitStatus> statuses);
 
     int countByPlanId(Long planId);
+
+    long countByPlanIdAndOutcomeIdIsNull(Long planId);
 }
