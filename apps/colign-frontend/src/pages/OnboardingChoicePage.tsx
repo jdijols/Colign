@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { HiArrowRight } from "react-icons/hi";
 import { useGetMeQuery } from "@/api/me";
 import { useCreateTeamMutation } from "@/api/team";
@@ -18,6 +18,14 @@ export function OnboardingChoicePage() {
   const [createTeam, { isLoading }] = useCreateTeamMutation();
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Defensive guard: a user who already has a team has nothing to do on the
+  // team-create page. Without this, any stray "back to onboarding" navigation
+  // (e.g., the invite-skip behavior fixed alongside this) drops them on a form
+  // that 409s on submit and looks like a redirect loop.
+  if (me && me.teamId != null) {
+    return <Navigate to="/" replace />;
+  }
 
   const firstName = me?.displayName?.trim().split(/\s+/)[0];
 

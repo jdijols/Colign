@@ -34,7 +34,13 @@ export function InviteTeammatesPage() {
     <button
       type="button"
       data-cy={hasSentAtLeastOne ? "done-invites" : "skip-invites"}
-      onClick={() => navigate("..", { relative: "path" })}
+      // Skip/Done lands the user in the app (WeeklyPlanPage at the index
+      // route), NOT one level up — `..` from `onboarding/invite` is
+      // `onboarding`, which is OnboardingChoicePage, and a user who already
+      // has a team has nothing to do there. Absolute "/" honors the
+      // BrowserRouter basename in both standalone and module-federation
+      // mounted modes.
+      onClick={() => navigate("/", { replace: true })}
       className={
         hasSentAtLeastOne
           ? "inline-flex items-center gap-1 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 py-3 text-sm font-medium text-neutral-900 dark:text-neutral-50 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950"
