@@ -26,3 +26,28 @@ When("I submit the invite", () => {
 Then("I should see an invitation sent confirmation", () => {
   cy.contains(/invitation sent/i).should("be.visible");
 });
+
+Then("I should see the Members section", () => {
+  cy.contains("h2", "Members").should("be.visible");
+});
+
+Then("the Members list contains {string}", (email: string) => {
+  cy.contains(email).should("be.visible");
+});
+
+When("I change the team name to {string}", (name: string) => {
+  cy.get('[data-cy="team-name-input"]').clear().type(name);
+});
+
+When("I save the team settings", () => {
+  cy.get('[data-cy="team-save"]').click();
+});
+
+Then("I should see a saved confirmation", () => {
+  cy.contains(/saved/i).should("be.visible");
+});
+
+Then("reloading the page keeps the team name as {string}", (name: string) => {
+  cy.reload();
+  cy.get('[data-cy="team-name-input"]').should("have.value", name);
+});
