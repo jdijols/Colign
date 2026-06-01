@@ -372,7 +372,7 @@ These two specs prevent future PRs from regressing the onboarding journey at the
 - `apps/colign-frontend/src/components/IcDrillDrawer.tsx` — container query + full-screen mode for coarse+narrow + back affordance + resize behavior
 - `apps/colign-frontend/src/components/AppShell.tsx` — hamburger target ≥ 44×44
 - Each of the 9 user-journey screens — fixes applied per audit findings
-- `apps/colign-backend` `SecurityConfig` (or new `MockAuthGuard`) — startup assertion: **fail-fast if `SPRING_PROFILES_ACTIVE` ∈ {`prod`, `staging`} AND `colign.auth.mode` resolves to `mock`**. Addresses the pre-existing default-to-mock issue surfaced by the security review; small additive change while we're in this area
+- **Deferred from this PR** — backend startup guard (fail-fast if prod profile + mock auth) is recommended but excluded from this scope. Backend code changes are off-limits in this work batch; the guard ships as a separate follow-up. See §9.4
 
 (Removed from prior revision: `apps/pa-host/src/HostHome.tsx` refactor — already compliant with the contract; refactor would not change rendered behavior)
 
@@ -385,7 +385,7 @@ These two specs prevent future PRs from regressing the onboarding journey at the
 - Token contract documented in `tailwind.config.js` with the concrete fluid clamp formulas from §4.2 — values match the table exactly
 - Audit results document committed with before/after screenshots (or linked screenshot bundle; not committed to the public repo without PII/JWT redaction)
 - Real auth mode restored in `.env.local` (frontend + backend) verified by post-audit `grep` against the `.env.local` files
-- Backend startup guard added per §7; verified by running the backend with `SPRING_PROFILES_ACTIVE=prod` + mock auth and confirming startup aborts
+- (Deferred — backend startup guard is a separate follow-up per §9.4)
 - **Real-phone smoke test:** one human attempts the onboarding journey (HostHome → Login → OnboardingChoice → InviteTeammates → WeeklyPlan → first commit added) on an actual touch device and reports completion. Captured as a brief note in the results doc — converts "DoD is mechanical inspection" into "DoD includes a user-task outcome"
 - Browser support matrix from §3 verified — the techniques used work in the named browser-floor versions
 
@@ -413,7 +413,7 @@ The security-lens reviewer surfaced three issues that exist in the codebase TODA
 
 - **P0 — Mock RS256 private key (`scripts/colign-mock-private.pem`) is committed to the public GitHub repository.** Anyone with read access can mint arbitrary JWTs accepted by any backend in mock mode. **Recommendation:** rotate the key pair, gitignore the new key, and rewrite git history to scrub the committed PEM. Separate PR; should land BEFORE any audit screenshot bundle is shared externally
 - **P1 — `/__dev__/mint` Vite middleware shell-injection via `execSync` interpolation** in `apps/colign-frontend/vite.config.ts`. Replace `execSync` with `execFileSync` + argv array (no shell), or import the minter as a Node module. Separate PR
-- **P0 — Backend `application.yml` defaults `colign.auth.mode` to `mock` when env var unset.** Partially addressed by the startup guard in §7 above (fail-fast on `prod` profile + mock mode), but the broader fix (flip the default to `real` and require explicit opt-in for mock) is a larger change worth its own discussion
+- **P0 — Backend `application.yml` defaults `colign.auth.mode` to `mock` when env var unset.** A startup guard (fail-fast on `prod` profile + mock mode) is the right small additive fix, but is deferred from this PR because backend code is off-limits in the current work batch. Ships as a separate PR. Broader fix (flip the default to `real`) is a larger change worth its own discussion
 
 These are flagged here rather than silently scope-creeped into the audit.
 
