@@ -1,8 +1,8 @@
 ---
 date: 2026-06-01
-branch: copy/hero-commitments-alignment (merged via PR #2, branch deleted local + remote)
+branch: copy/hero-commitments-alignment (PR #2) + copy/hero-two-line-grayscale (PR #5) — both merged + deleted
 focus: wordsmith landing hero + ship to prod + reconcile env-var divergence between local and Vercel
-status: shipped to https://colign.org/ at 2026-06-01 04:42:00Z (deploy dpl_34c3LNAxUFTYCxwhbhxm2SQKti4z); follow-up env-var work flagged below
+status: shipped to https://colign.org/ — first deploy via PR #2 (three-line, "What lands this week" muted), then revised same session via PR #5 (two-line, "Long-term alignment" muted as temporal-distance metaphor)
 companion: apps/pa-host/src/HostHome.tsx (the only code file changed), Project-Brief.md (motivated the "commitments" choice), DEPLOY.md (the manual deploy runbook)
 prior handoff: docs/handoffs/2026-06-01-responsive-ui-audit.md
 ---
@@ -14,6 +14,29 @@ hero, plus reconciliation of a Vercel env-var divergence that briefly blanked
 production before I caught it and rolled back. Net result: new copy is live,
 env vars are now persisted on Vercel so the next deploy won't hit the same
 trap, and local main is byte-identical to origin/main.
+
+## Update — second deploy (PR #5) + Vercel env-type fix applied
+
+After this doc was first written, the same session continued.
+
+**Second deploy:** PR #5 trimmed the hero from three lines to two and
+moved the muted color onto "Long-term alignment." instead of "What lands
+this week." The grayscale now maps to the temporal arc — bold = now,
+muted = horizon — instead of just acting as visual quieting. Caption
+unchanged. Currently live; deployment `dpl_g2m93yrnk`. Full rationale
+in [PR #5](https://github.com/jdijols/Colign/pull/5).
+
+**Vercel env-var type fix (also done this session):** The four `VITE_*`
+vars I added earlier defaulted to "Sensitive" — meaning `vercel pull`
+brought them down as empty strings, which Vite preferred over the
+worktree's `.env.local`, silently re-creating the original tree-shake
+trap. I worked around it mid-build during the PR #5 deploy by deleting
+`.vercel/.env.production.local`, then re-added the four vars properly:
+`vercel env rm <name> production --yes` followed by
+`vercel env add <name> production --no-sensitive --value <v>`. They
+hold public client config (Auth0 SPA client ID, audience, tenant domain,
+mode flag) — nothing actually sensitive. Future builds that rely on
+`vercel pull` will now receive real values.
 
 ## What shipped
 
