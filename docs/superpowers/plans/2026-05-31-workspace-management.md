@@ -10,10 +10,64 @@
 
 **Locked decisions (resolved from spec §12 open questions):**
 - Route name: **`/settings`** (more conventional than `/workspace`).
-- DTO shape: **extend `MeDto`** to include `teamName` + `teamAvatarUrl` so `AppShell` needs zero extra queries to render the team identity. New separate `TeamDto` exists for the Settings page mutations.
+- DTO shape: **extend `MeDto`** (keep as `@Getter @Builder class`, add two fields) to include `teamName` + `teamAvatarUrl` so `AppShell` needs zero extra queries to render the team identity. New separate `TeamDto` exists for the Settings page mutations.
 - In-page nav: **pure scroll**, no sticky rail.
 - Re-attach orphaned reports: **manual via re-invitation flow** — no UI to reparent.
 - Long-team-name behavior: **truncate with ellipsis + `title` attribute** at narrow widths.
+- **V5 `team.avatar_url` migration moved from Phase 4 → Phase 2** so `TeamService.updateTeam` can call `t.setAvatarUrl(...)` without a reflection bridge. Avatar **UI** (input + display + invite-email rendering) still lands in Phase 4.
+
+**Review-applied fixes (2026-05-31, post-`/autoplan`):**
+- Cypress config in Task 0.1 PRESERVES the existing config (baseUrl `:4173`, existing `.cy.{ts,tsx}` patterns); only ADDS the Cucumber preprocessor and `.feature` glob — does not overwrite.
+- `cy.loginAsMock` mints a real JWT via the existing `/__dev__/mint` Vite middleware and sets `colign_jwt` / `colign_email` / `colign_role` (the real authSlice storage keys).
+- `MeDto` stays a `@Getter @Builder class` in Phase 4 (the original plan's record rewrite would not compile under Lombok).
+- Strategic CEO/DX challenge — "this plan is workspace-mgmt depth when the brief grades on manager-dashboard depth" — parked in `TODOS.md`, not actioned in this plan.
+- Avatar in invite-email body (originally Task 4.5) deferred — `ResendEmailClient` renders HTML inline, no Thymeleaf template exists; threading needs a focused PR. See `TODOS.md`.
+
+---
+
+## Phase −1 · Dev environment bootstrap
+
+If the engineer (or implementing agent) is fresh on Colign, run these once before Task 0.1. Skip if you're already running the 3-service stack.
+
+```bash
+# All paths from the repo root.
+
+# Backend (port 8080) — H2 in-memory, Auth0 disabled per test profile
+cd apps/colign-backend
+JAVA_HOME=/opt/homebrew/opt/openjdk@21 \
+  PATH=$JAVA_HOME/bin:/opt/homebrew/bin:$PATH \
+  SPRING_PROFILES_ACTIVE=h2 \
+  ./mvnw spring-boot:run
+# (On Linux: install OpenJDK 21 via your distro; drop the JAVA_HOME prefix
+#  if `java -version` already reports 21. The colign-dev-runbook project
+#  memory has the JDK gotchas.)
+
+# In a second terminal — Frontend remote (port 5174)
+cd apps/colign-frontend
+yarn install
+yarn dev:css &      # background — watches src/index.css, writes colign-compiled.css
+yarn dev            # vite, port 5174
+
+# In a third terminal — Host (port 4173)
+cd apps/pa-host
+yarn install
+yarn dev            # serves http://localhost:4173 with MF host
+```
+
+To log in as a seeded user locally:
+
+```bash
+# Mock-auth mode (no Auth0 needed). Set ONCE in apps/colign-frontend/.env.local:
+echo 'VITE_AUTH_MODE=mock' >> apps/colign-frontend/.env.local
+
+# Then open http://localhost:4173 — LoginPage renders mock-mode buttons. Click
+# "Sign in as lead@example.com" (or any seeded user). The vite-dev /__dev__/mint
+# middleware mints a real RS256 JWT against the H2 backend; AppShell loads.
+```
+
+Verify with: open `http://localhost:4173`, sign in as the lead, you should land on My week. From there every "Verify in dev" step in this plan is reachable.
+
+If anything above fails, the `colign-dev-runbook` project memory has the recurring gotchas (stale MF singletons, Tailwind compiled CSS staleness, mock vs real auth, etc.).
 
 ---
 
@@ -32,13 +86,13 @@
 - `src/test/java/com/colign/controller/TeamControllerWiringTest.java` — `@SpringBootTest` slice covering the three new endpoints + auth.
 
 **Modify:**
-- `src/main/java/com/colign/controller/TeamController.java` — add `listMembers`, `update`, `removeMember` endpoints. Existing `create` and `invite` untouched.
-- `src/main/java/com/colign/repository/UserRepository.java` — add `findByTeamId(Long teamId, Pageable pageable)` (likely doesn't exist yet — verify).
+- `src/main/java/com/colign/controller/TeamController.java` — add `listMembers`, `update`, `removeMember`, `get` endpoints. Existing `create` and `invite` untouched.
+- `src/main/java/com/colign/repository/UserRepository.java` — add `findByTeamId(Long, Pageable)`, `countByTeamIdAndIdNot`, `findByManagerId(Long)` overload (verify first; some may exist).
 - `src/main/java/com/colign/repository/TeamRepository.java` — no changes expected; uses existing CRUD.
-- `src/main/java/com/colign/dto/MeDto.java` — add `teamName` + `teamAvatarUrl` fields (Phase 4).
-- `src/main/java/com/colign/service/UserResolver.java` — populate the new `MeDto` fields (Phase 4).
-- `src/main/java/com/colign/domain/Team.java` — add `avatarUrl` field (Phase 4).
-- `src/main/resources/templates/email/invitation.html` (or wherever invite email lives) — render team avatar in header (Phase 4).
+- `src/main/java/com/colign/domain/Team.java` — add `avatarUrl` field (Phase 2 Task 2.0 — moved from Phase 4 to avoid reflection bridge).
+- `src/main/java/com/colign/dto/MeDto.java` — add `teamName` + `teamAvatarUrl` fields (Phase 4); keep as `@Getter @Builder class`, NOT a record (Lombok `@Builder` on a record compact constructor would not compile).
+- `src/main/java/com/colign/service/UserResolver.java` — populate the new `MeDto` fields, inject `TeamRepository` (Phase 4).
+- *(Email template deferred — `ResendEmailClient` renders HTML inline, not via Thymeleaf. See `TODOS.md`.)*
 
 ### Frontend (`apps/colign-frontend/`)
 
@@ -81,19 +135,32 @@
 
 ---
 
-## Phase 0 · Cypress bootstrap (one-time)
+## Phase 0 · Cypress + Cucumber preprocessor (extend existing config)
 
-Skip if Cypress is already running (look for `cypress.config.ts` at the frontend root). Otherwise this is the prerequisite for every Cypress scenario in the plan.
+**IMPORTANT:** The project already has a working `cypress.config.ts` at `apps/colign-frontend/cypress.config.ts` (baseUrl `:4173`, spec pattern `cypress/e2e/**/*.cy.{ts,tsx}`) with two existing specs (`responsive-narrow.cy.ts`, `responsive-wide.cy.ts` from the parallel responsive-audit work). This phase **extends** that config to also pick up `.feature` files via the Cucumber preprocessor — it does NOT overwrite. Existing specs must continue to run.
 
-### Task 0.1: Bootstrap Cypress config + Cucumber preprocessor
+### Task 0.1: Extend Cypress config with Cucumber preprocessor
 
 **Files:**
-- Create: `apps/colign-frontend/cypress.config.ts`
-- Create: `apps/colign-frontend/cypress/support/e2e.ts`
-- Create: `apps/colign-frontend/cypress/support/commands.ts`
-- Create: `apps/colign-frontend/cypress/tsconfig.json`
+- Modify: `apps/colign-frontend/cypress.config.ts` (preserve existing fields; add preprocessor + extend specPattern)
+- Modify: `apps/colign-frontend/cypress/support/e2e.ts` (already exists from the responsive work; verify Testing Library import is present)
+- Create: `apps/colign-frontend/cypress/support/commands.ts` (only if not present; otherwise extend)
+- Create: `apps/colign-frontend/cypress/tsconfig.json` (only if not present)
+- Create: `apps/colign-frontend/.cypress-cucumber-preprocessorrc.json`
 
-- [ ] **Step 1: Write `cypress.config.ts`**
+- [ ] **Step 0: Read the existing config before changing anything**
+
+```bash
+cat apps/colign-frontend/cypress.config.ts
+cat apps/colign-frontend/cypress/support/e2e.ts 2>/dev/null || echo "(not present)"
+cat apps/colign-frontend/cypress/support/commands.ts 2>/dev/null || echo "(not present)"
+```
+
+Note what's already there. If `cypress.config.ts` already imports Cucumber preprocessor, Task 0.1 is mostly a no-op — skip to Step 6.
+
+- [ ] **Step 1: Extend `cypress.config.ts`** (do NOT overwrite — preserve baseUrl `:4173`, the existing `env` block, video settings, etc.)
+
+Final shape should look like this (adapt by merging into the existing config — keep every existing field):
 
 ```ts
 import { defineConfig } from "cypress";
@@ -103,9 +170,21 @@ import { createEsbuildPlugin } from "@badeball/cypress-cucumber-preprocessor/esb
 
 export default defineConfig({
   e2e: {
-    baseUrl: "http://localhost:5174",
-    specPattern: "cypress/e2e/**/*.feature",
+    // EXISTING — keep as-is (port 4173 is the MF host, per CLAUDE.md).
+    baseUrl: "http://localhost:4173",
+    // EXTEND — was a single string, becomes an array so both .cy.{ts,tsx} AND .feature specs run.
+    specPattern: [
+      "cypress/e2e/**/*.cy.{ts,tsx}",
+      "cypress/e2e/**/*.feature",
+    ],
     supportFile: "cypress/support/e2e.ts",
+    video: false,
+    screenshotOnRunFailure: true,
+    env: {
+      VITE_AUTH_MODE: process.env.VITE_AUTH_MODE ?? "real",
+      VITE_API_BASE: process.env.VITE_API_BASE ?? "http://localhost:8080",
+    },
+    // NEW — Cucumber preprocessor + esbuild bundler so .feature files compile to Cypress specs.
     async setupNodeEvents(on, config) {
       await addCucumberPreprocessorPlugin(on, config);
       on(
@@ -118,14 +197,19 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 2: Write `cypress/support/e2e.ts`**
+If the existing `support/e2e.ts` was an empty file or only `import "@testing-library/cypress/add-commands"`, keep that and ADD `import "./commands";` below it. If it already imports `./commands`, leave it alone.
 
+- [ ] **Step 2: Verify `cypress/support/e2e.ts` ends up with both imports**
+
+Final content:
 ```ts
 import "@testing-library/cypress/add-commands";
 import "./commands";
 ```
 
-- [ ] **Step 3: Write `cypress/support/commands.ts`**
+- [ ] **Step 3: Write or extend `cypress/support/commands.ts`** with a CORRECT `cy.loginAsMock` that actually authenticates
+
+The project's mock auth uses three localStorage keys (`colign_jwt`, `colign_email`, `colign_role`) seeded by `src/auth/authSlice.ts`. The JWT must be a real RS256 token; the vite dev server exposes `/__dev__/mint` (see `apps/colign-frontend/vite.config.ts:43`) that mints one against the H2 backend. Setting just `colign.mockEmail` (the original plan's approach) does NOT authenticate.
 
 ```ts
 /// <reference types="cypress" />
@@ -135,24 +219,39 @@ declare global {
   namespace Cypress {
     interface Chainable {
       /**
-       * Log in to the mock-auth profile by stuffing the email into localStorage
-       * where AuthGate expects it (see authSlice mock seed). Use only against
-       * the vite preview / vite dev where VITE_AUTH0_DOMAIN is empty.
+       * Mint a real RS256 JWT via the vite-dev `/__dev__/mint` middleware and
+       * seed the three localStorage keys that `authSlice.ts` reads on boot.
+       * Only works when VITE_AUTH_MODE=mock and the backend is running on :8080.
+       *
+       * Usage: cy.loginAsMock("lead@example.com", "MANAGER");
        */
-      loginAsMock(email: string): Chainable<void>;
+      loginAsMock(email: string, role?: "IC" | "MANAGER" | "ADMIN"): Chainable<void>;
     }
   }
 }
 
-Cypress.Commands.add("loginAsMock", (email: string) => {
-  cy.window().then((win) => {
-    win.localStorage.setItem("colign.mockEmail", email);
+Cypress.Commands.add("loginAsMock", (email: string, role: "IC" | "MANAGER" | "ADMIN" = "IC") => {
+  // The mint middleware proxies to the backend's /__dev__/mint and returns
+  // { token, email, role }. Visit the dev origin first so localStorage is
+  // writable for the right host.
+  cy.visit("/", { failOnStatusCode: false });
+  cy.request({
+    url: `/__dev__/mint?email=${encodeURIComponent(email)}&role=${role}`,
+    failOnStatusCode: true,
+  }).then((resp) => {
+    cy.window().then((win) => {
+      win.localStorage.setItem("colign_jwt", resp.body.token);
+      win.localStorage.setItem("colign_email", resp.body.email ?? email);
+      win.localStorage.setItem("colign_role", resp.body.role ?? role);
+    });
+    cy.reload();
   });
-  cy.reload();
 });
 
 export {};
 ```
+
+If the existing `commands.ts` already has other commands, KEEP them and just append `loginAsMock`. Don't overwrite.
 
 - [ ] **Step 4: Write `cypress/tsconfig.json`**
 
@@ -209,7 +308,14 @@ Run (in another terminal first): `cd apps/colign-frontend && yarn dev`
 Then: `cd apps/colign-frontend && yarn cy:run`
 Expected: smoke scenario passes.
 
-- [ ] **Step 7: Delete the smoke spec, commit the config**
+- [ ] **Step 7: Also run the existing responsive specs** to make sure the extended config didn't break them
+
+```bash
+cd apps/colign-frontend && yarn cy:run --spec "cypress/e2e/responsive-narrow.cy.ts,cypress/e2e/responsive-wide.cy.ts"
+```
+Expected: both existing specs PASS (they predate this work; if they fail, the new specPattern array or env block change broke something — revert the cypress.config.ts edit and apply more carefully).
+
+- [ ] **Step 8: Delete the smoke spec, commit the config**
 
 ```bash
 rm apps/colign-frontend/cypress/e2e/smoke.feature
@@ -218,10 +324,13 @@ git add apps/colign-frontend/cypress.config.ts \
         apps/colign-frontend/cypress/support/ \
         apps/colign-frontend/cypress/tsconfig.json \
         apps/colign-frontend/.cypress-cucumber-preprocessorrc.json
-git commit -m "test(cypress): bootstrap Cucumber + Testing Library preprocessor
+git commit -m "test(cypress): extend config with Cucumber preprocessor + cy.loginAsMock
 
-Adds cypress.config.ts, support files, Cucumber preprocessor wiring,
-and the cy.loginAsMock helper. First real feature lands in PR 1."
+Preserves existing baseUrl :4173 and .cy.{ts,tsx} spec pattern; adds .feature
+pattern and the Cucumber esbuild preprocessor so future BDD scenarios run
+alongside the responsive-audit regression suite. cy.loginAsMock now mints a
+real RS256 JWT via the existing /__dev__/mint vite middleware and seeds the
+three localStorage keys authSlice reads on boot."
 ```
 
 ---
@@ -1227,11 +1336,60 @@ After merge, deploy to Vercel/Fly per `DEPLOY.md`. Verify in prod via the steps 
 
 ---
 
-## Phase 2 · PR 2: Members list (read-only) + Rename team
+## Phase 2 · PR 2: Members list + Rename team + V5 migration (avatar column only, no UI)
 
-**PR title:** `feat(settings): list workspace members + rename team`
-**Risk:** Low. Two additive endpoints + permission gating. Existing endpoints untouched. The team `version` column already exists on `AbstractAuditingEntity` so optimistic-concurrency 409s are free.
-**Verification:** Open `/settings` → see all team members in *Members* → rename your team in *Team* → refresh, confirm the new name sticks.
+**PR title:** `feat(settings): list workspace members + rename team + V5 team.avatar_url column`
+**Risk:** Low. Two additive endpoints + an additive NULL column + permission gating. Existing endpoints untouched. The team `version` column already exists on `AbstractAuditingEntity` so optimistic-concurrency 409s are free.
+**Verification:** Open `/settings` → see all team members in *Members* → rename your team in *Team* → refresh, confirm the new name sticks. The avatar column exists but is not yet UI-exposed (Phase 4 wires the input + header pill).
+
+### Task 2.0: V5 migration + `Team.avatarUrl` field
+
+Originally scheduled for Phase 4. Moved here so `TeamService.updateTeam` (Task 2.3) can call `t.setAvatarUrl(...)` against a real field — no reflection bridge. The avatar **UI** (input, preview, header pill) still ships in Phase 4; this task just provisions the column and getter/setter.
+
+**Files:**
+- Create: `apps/colign-backend/src/main/resources/db/migration/V5__team_avatar.sql`
+- Modify: `apps/colign-backend/src/main/java/com/colign/domain/Team.java`
+
+- [ ] **Step 1: Write migration**
+
+```sql
+-- V5__team_avatar.sql
+-- Adds team.avatar_url for the workspace-management feature.
+-- Backwards-compatible: existing rows get NULL. FE falls back to a generated
+-- initial when null. No backfill needed.
+SET search_path TO wc;
+
+ALTER TABLE team ADD COLUMN avatar_url VARCHAR(500);
+```
+
+- [ ] **Step 2: Add `avatarUrl` field to `Team.java`**
+
+Open `apps/colign-backend/src/main/java/com/colign/domain/Team.java`. The class already has `@Getter @Setter @Builder`. Add one field next to `description`:
+
+```java
+@Column(name = "avatar_url", length = 500)
+private String avatarUrl;
+```
+
+(Lombok generates `getAvatarUrl()` + `setAvatarUrl(String)` automatically.)
+
+- [ ] **Step 3: Run backend tests to verify Flyway applies cleanly against H2**
+
+```bash
+cd apps/colign-backend && JAVA_HOME=/opt/homebrew/opt/openjdk@21 PATH=$JAVA_HOME/bin:/opt/homebrew/bin:$PATH ./mvnw clean test
+```
+Expected: all 23+ existing tests still PASS. `clean` clears stale `target/classes` Flyway state.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add apps/colign-backend/src/main/resources/db/migration/V5__team_avatar.sql \
+        apps/colign-backend/src/main/java/com/colign/domain/Team.java
+git commit -m "feat(db): V5 add team.avatar_url + Team domain field
+
+Provisions the column ahead of the avatar UI in Phase 4 so TeamService
+can use the direct getter/setter without a reflection bridge."
+```
 
 ### Task 2.1: Add `findByTeamIdAndIdNot` repo query
 
@@ -1653,25 +1811,15 @@ public class TeamService {
     return toDto(saved);
   }
 
-  /** DTO mapping. Avatar accessor exists only after PR 4 migration; null until then. */
+  /** DTO mapping. Avatar field provisioned by V5 in Task 2.0 — direct getter. */
   public TeamDto toDto(Team t) {
     return new TeamDto(
         t.getId(), t.getName(), t.getDescription(),
-        safeAvatarUrl(t), t.getLeadUserId());
-  }
-
-  private String safeAvatarUrl(Team t) {
-    // Until V5 ships, Team has no avatarUrl getter. Wrap in try/catch so this
-    // service is mergeable in Phase 2 before the migration lands.
-    try {
-      var m = Team.class.getMethod("getAvatarUrl");
-      return (String) m.invoke(t);
-    } catch (Exception e) {
-      return null;
-    }
+        t.getAvatarUrl(), t.getLeadUserId());
   }
 
   private void requireSameTeam(Long teamId, User caller) {
+    if (caller.getRole() == com.colign.domain.UserRole.ADMIN) return; // ADMINs cross-team
     if (caller.getTeamId() == null || !caller.getTeamId().equals(teamId)) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not a member of this team");
     }
@@ -1679,7 +1827,7 @@ public class TeamService {
 }
 ```
 
-(The reflection in `safeAvatarUrl` is a temporary bridge so Phase 2 can ship before Phase 4 adds the field. Phase 4 replaces this with a direct getter.)
+(`requireSameTeam` permits ADMINs to read any team — they may not have a `teamId` themselves and the spec §7 permissions table grants them View Members.)
 
 - [ ] **Step 4: Run test to verify pass**
 
@@ -2001,11 +2149,21 @@ export const {
 
 - [ ] **Step 3: Update existing callers of `useGetTeamQuery` (manager dashboard)**
 
-The previous `useGetTeamQuery` returned the manager roll-up. It's now renamed to `useGetManagerTeamQuery`. Update:
+The previous `useGetTeamQuery` returned the manager roll-up. It's renamed to `useGetManagerTeamQuery`. Then the NEW `useGetTeamQuery` (workspace profile) takes the old name.
 
-Run: `cd apps/colign-frontend && grep -rln "useGetTeamQuery\|useGetTeam(" src/`
+Run this grep first and confirm exactly which files import the old hook:
 
-Replace every occurrence in `src/pages/ManagerDashboardPage.tsx` (and anywhere else that uses it for the manager roll-up) with `useGetManagerTeamQuery`. The new `useGetTeamQuery` is for the team profile (Settings page).
+```bash
+cd apps/colign-frontend && grep -rln 'useGetTeamQuery\|"@/api/team"' src/
+```
+
+Expected callers (as of 2026-05-31 — verify with the grep above):
+- `src/pages/ManagerDashboardPage.tsx` — roll-up consumer; rename to `useGetManagerTeamQuery`.
+- `src/components/TeamRollupTable.tsx` — also a roll-up consumer; rename to `useGetManagerTeamQuery`. **This caller is easy to miss; the original plan omitted it.**
+
+If grep surfaces additional files, audit each one — if it consumes `SpringPage<TeamMemberDto>` it's the manager roll-up (rename); if it consumes `TeamDto` (single team profile) it's the new hook (no change needed, since the new `useGetTeamQuery` *is* the team profile).
+
+After renaming, run `yarn tsc -b` (or `yarn build`) to catch any missed import. TypeScript strict mode will fail compilation if a caller still references the old `useGetTeamQuery` against the new return shape.
 
 - [ ] **Step 4: Run all FE tests**
 
@@ -2519,10 +2677,11 @@ git commit -m "test(cypress): cover member-list + rename"
 
 ```bash
 git push
-gh pr create --title "feat(settings): list workspace members + rename team" --body "$(cat <<'EOF'
+gh pr create --title "feat(settings): list workspace members + rename team + V5 team.avatar_url" --body "$(cat <<'EOF'
 ## Summary
-- Backend: `GET /api/v1/teams/{id}/members`, `GET /api/v1/teams/{id}`, `PATCH /api/v1/teams/{id}`. Permission-gated via new `TeamPermissions.canManage` (mirrors `canManageTeam` on the FE).
-- Frontend: `<MembersSection>` lists the roster; `<TeamSettingsSection>` renames the team. `useGetTeamQuery` + `useGetTeamMembersQuery` + `useUpdateTeamMutation` added to `teamApi`. The pre-existing `useGetTeamQuery` is renamed to `useGetManagerTeamQuery` for clarity.
+- DB: V5 Flyway adds `team.avatar_url` (NULL default). Avatar **UI** still ships in PR 4; this column lands here so `TeamService.updateTeam` uses a direct getter/setter, no reflection bridge.
+- Backend: `GET /api/v1/teams/{id}/members`, `GET /api/v1/teams/{id}`, `PATCH /api/v1/teams/{id}`. Permission-gated via new `TeamPermissions.canManage` (mirrors `canManageTeam` on the FE). `requireSameTeam` permits ADMIN cross-team reads.
+- Frontend: `<MembersSection>` lists the roster; `<TeamSettingsSection>` renames the team. `useGetTeamQuery` + `useGetTeamMembersQuery` + `useUpdateTeamMutation` added to `teamApi`. The pre-existing `useGetTeamQuery` is renamed to `useGetManagerTeamQuery` (renames both consumers: `ManagerDashboardPage.tsx`, `TeamRollupTable.tsx`).
 - Cypress: scenarios for member list + rename + reload-persists.
 
 ## Verify in dev
@@ -3212,91 +3371,57 @@ After merge + deploy, verify in prod before Phase 4.
 
 ---
 
-## Phase 4 · PR 4: Team avatar + header identity display
+## Phase 4 · PR 4: Team avatar UI + header identity display
 
-**PR title:** `feat(settings): team avatar URL + AppShell identity pill`
-**Risk:** Low. Additive column on `team` (NULL default), additive field on `MeDto`, additive component in `AppShell`.
-**Verification:** Settings → Team → paste an image URL → Save. Avatar renders in the header pill + on Settings + (optionally) invite emails.
+**PR title:** `feat(settings): team avatar URL input + AppShell identity pill`
+**Risk:** Low. Additive field on `MeDto`, additive component in `AppShell`, additive UI in Settings. V5 migration + `Team.avatarUrl` field ALREADY shipped in Phase 2 (Task 2.0).
+**Verification:** Settings → Team → paste an image URL → Save. Avatar renders in the header pill + on Settings.
 
-### Task 4.1: V5 Flyway migration
+### Task 4.1: (removed — V5 migration done in Phase 2 Task 2.0)
 
-**Files:**
-- Create: `apps/colign-backend/src/main/resources/db/migration/V5__team_avatar.sql`
+`team.avatar_url` and the `Team.avatarUrl` field were provisioned in Phase 2 to avoid the reflection-bridge anti-pattern in `TeamService`. Skip this task and proceed to Task 4.2.
 
-- [ ] **Step 1: Write migration**
-
-```sql
--- V5__team_avatar.sql
--- Adds team.avatar_url for the workspace-management feature.
--- Backwards-compatible: existing rows get NULL; FE falls back to a generated
--- initial. No backfill.
-SET search_path TO wc;
-
-ALTER TABLE team ADD COLUMN avatar_url VARCHAR(500);
-```
-
-- [ ] **Step 2: Run backend tests to verify Flyway applies cleanly**
-
-Run: `cd apps/colign-backend && JAVA_HOME=/opt/homebrew/opt/openjdk@21 PATH=$JAVA_HOME/bin:/opt/homebrew/bin:$PATH ./mvnw clean test`
-Expected: PASS — `clean` clears any stale target/classes Flyway state from previous V5 attempts.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add apps/colign-backend/src/main/resources/db/migration/V5__team_avatar.sql
-git commit -m "feat(db): V5 add team.avatar_url"
-```
-
-### Task 4.2: Add `avatarUrl` to `Team` domain + `MeDto` extension
+### Task 4.2: Extend `MeDto` with team name + avatar
 
 **Files:**
-- Modify: `apps/colign-backend/src/main/java/com/colign/domain/Team.java`
 - Modify: `apps/colign-backend/src/main/java/com/colign/dto/MeDto.java`
 - Modify: `apps/colign-backend/src/main/java/com/colign/service/UserResolver.java`
-- Modify: `apps/colign-backend/src/main/java/com/colign/service/TeamService.java`
 
-- [ ] **Step 1: Add `avatarUrl` field to `Team`**
+(`Team.avatarUrl` field and `TeamService.toDto` direct-getter were already done in Phase 2 Task 2.0 + 2.3.)
 
-In `Team.java`, add the column annotation + field (matching the existing Lombok pattern; assume `@Getter @Setter @Builder` style):
+- [ ] **Step 1: Verify what `MeDto` looks like**
 
-```java
-@Column(name = "avatar_url", length = 500)
-private String avatarUrl;
+```bash
+cat apps/colign-backend/src/main/java/com/colign/dto/MeDto.java
 ```
+Expected (as of 2026-05-31): a `@Getter @Builder` **class** (not a record) with primitive + reference fields, no compact constructor. The fix below assumes that shape. If it has become a record in the meantime, adjust by adding the two record components and let Lombok's `@Builder` on the record header generate the builder.
 
-- [ ] **Step 2: Remove reflection bridge from `TeamService.toDto`**
+- [ ] **Step 2: Add two fields to the existing class**
 
-Replace `safeAvatarUrl(t)` with the direct getter:
-```java
-public TeamDto toDto(Team t) {
-  return new TeamDto(t.getId(), t.getName(), t.getDescription(), t.getAvatarUrl(), t.getLeadUserId());
-}
-```
-Delete the `safeAvatarUrl` helper.
+Open `MeDto.java`. Append two fields next to `needsInvite`. Keep the existing `@Getter @Builder class MeDto { ... }` shell intact; do NOT rewrite as a record. Lombok generates `getTeamName()` / `getTeamAvatarUrl()` automatically; the builder picks up the new fields automatically.
 
-- [ ] **Step 3: Extend `MeDto` with team name + avatar**
+Final field block (only the additions are new):
 
 ```java
-// MeDto.java — add two fields to the @Builder record. Existing FE callers
-// already tolerate optional fields (TS marks them `string | null`).
-public record MeDto(
-    Long id,
-    String email,
-    String displayName,
-    String role,
-    Long teamId,
-    Long managerId,
-    boolean needsInvite,
-    String teamName,
-    String teamAvatarUrl
-) {
-  @lombok.Builder public MeDto {}
+@Getter
+@Builder
+public class MeDto {
+    private Long id;
+    private String email;
+    private String displayName;
+    private String role;
+    private Long teamId;
+    private Long managerId;
+    private boolean needsInvite;
+    // --- new in Phase 4 ---
+    /** Team name, denormalized onto /me so AppShell can render the workspace pill without an extra query. Null when the user has no team. */
+    private String teamName;
+    /** Team avatar URL (HTTP/HTTPS). Null when unset; FE falls back to a generated initial. */
+    private String teamAvatarUrl;
 }
 ```
 
-(If the existing `MeDto` uses `@Builder` on a class rather than a record, adapt the change — add the two fields + their builder methods.)
-
-- [ ] **Step 4: Populate the new fields in `UserResolver.toMeDto`**
+- [ ] **Step 3: Populate the new fields in `UserResolver.toMeDto`**
 
 ```java
 public com.colign.dto.MeDto toMeDto(User user) {
@@ -3329,19 +3454,21 @@ private final TeamRepository teams;
 // constructor parameter + assignment
 ```
 
-- [ ] **Step 5: Run all backend tests**
+- [ ] **Step 4: Run all backend tests**
 
-Run: `./mvnw test`
-Expected: PASS. Tests that asserted exact `MeDto` shape may need to add the two new optional fields.
+Run: `cd apps/colign-backend && JAVA_HOME=/opt/homebrew/opt/openjdk@21 PATH=$JAVA_HOME/bin:/opt/homebrew/bin:$PATH ./mvnw test`
+Expected: PASS. Tests that asserted exact `MeDto` shape (search: `grep -rn "MeDto" apps/colign-backend/src/test`) may need to add the two new optional fields.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add apps/colign-backend/src/main/java/com/colign/domain/Team.java \
-        apps/colign-backend/src/main/java/com/colign/dto/MeDto.java \
-        apps/colign-backend/src/main/java/com/colign/service/UserResolver.java \
-        apps/colign-backend/src/main/java/com/colign/service/TeamService.java
-git commit -m "feat(team): expose avatar_url; embed teamName + teamAvatarUrl in /me"
+git add apps/colign-backend/src/main/java/com/colign/dto/MeDto.java \
+        apps/colign-backend/src/main/java/com/colign/service/UserResolver.java
+git commit -m "feat(team): embed teamName + teamAvatarUrl in /me
+
+Denormalized onto MeDto so AppShell can render the workspace identity
+pill without a separate query. UserResolver gains a TeamRepository
+dependency for the lookup."
 ```
 
 ### Task 4.3: Extend FE `MeDto` interface + `TeamPill` component
@@ -3536,35 +3663,9 @@ git add apps/colign-frontend/src/components/AppShell.tsx \
 git commit -m "feat(workspace): TeamPill in header + avatar URL input in Settings"
 ```
 
-### Task 4.5: Update invite email template to render team avatar
+### Task 4.5: (skipped — invite-email avatar deferred to TODOS.md)
 
-**Files:**
-- Modify: `apps/colign-backend/src/main/resources/templates/email/invitation.html` (or actual path; find via `grep -rln "invitation" apps/colign-backend/src/main/resources/templates`)
-
-- [ ] **Step 1: Find the template**
-
-Run: `grep -rln "inviter\|teamName" apps/colign-backend/src/main/resources/`
-
-Locate the invitation email template. If it's a Thymeleaf file with a header section, add:
-
-```html
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
-  <img th:if="${teamAvatarUrl != null}"
-       th:src="${teamAvatarUrl}" alt="" width="32" height="32"
-       style="border-radius:6px;object-fit:cover" />
-  <span style="font-size:14px;color:#111827;font-weight:600" th:text="${teamName}">Team</span>
-</div>
-```
-
-Pass `teamAvatarUrl` through the model from `InvitationService` (look for where the template is rendered). If the avatar isn't loaded, skip this step and ship without — the email already works.
-
-- [ ] **Step 2: Commit (only if a template was found and changed)**
-
-```bash
-git add apps/colign-backend/src/main/resources/templates/email/invitation.html \
-        apps/colign-backend/src/main/java/com/colign/service/InvitationService.java
-git commit -m "feat(invite-email): render team avatar in invitation header"
-```
+Originally this task would update a Thymeleaf invitation-email template. There is no Thymeleaf template — `ResendEmailClient.renderHtml(InvitationEmail)` builds the email body as an inline Java string, and `InvitationEmail` has no avatar field. Threading `teamAvatarUrl` through the EmailClient API is a focused change that deserves its own PR; see `TODOS.md` ("Invite-email avatar rendering"). Skip this task — Phase 4 still ships the in-app avatar; only the email-side render is deferred.
 
 ### Task 4.6: Cypress — set avatar + verify renders
 
@@ -3611,12 +3712,12 @@ git commit -m "test(cypress): cover team avatar set + header render"
 
 ```bash
 git push
-gh pr create --title "feat(settings): team avatar URL + AppShell identity pill" --body "$(cat <<'EOF'
+gh pr create --title "feat(settings): team avatar UI + AppShell identity pill" --body "$(cat <<'EOF'
 ## Summary
-- Backend: V5 Flyway adds `team.avatar_url`. PATCH endpoint already accepted `avatarUrl` (Phase 2 plumbed it). `/me` now embeds `teamName` + `teamAvatarUrl` so the AppShell renders the workspace identity without an extra query.
+- Backend: `/me` now embeds `teamName` + `teamAvatarUrl` (`MeDto` stays a `@Getter @Builder class`; two fields added). `UserResolver` gains a `TeamRepository` dependency. V5 migration + `Team.avatarUrl` field already shipped in PR 2.
 - Frontend: avatar URL input + preview in `<TeamSettingsSection>`. `<TeamPill>` mounted next to the Colign brand in `AppShell` shows the team name (always) + avatar (when set), truncated at 200px.
-- Email: invitation header gets the team avatar (only if the template was found; safe no-op otherwise).
-- Cypress scenario covers the round-trip.
+- Cypress scenario covers the round-trip: paste URL → Save → header pill updates.
+- Invite-email avatar rendering deferred (see TODOS.md — `ResendEmailClient` is inline-string, not Thymeleaf; deserves its own focused PR).
 
 ## Verify in dev
 1. Sign in as lead. `/settings` → Team → paste any image URL → see preview.
