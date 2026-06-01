@@ -14,6 +14,8 @@ export interface MeDto {
    * or anyone else joins.
    */
   needsInvite: boolean;
+  teamName: string | null;
+  teamAvatarUrl: string | null;
 }
 
 /**

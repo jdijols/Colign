@@ -27,3 +27,10 @@ Feature: Workspace settings
     And I click Remove on the member with email "ic@example.com"
     And I confirm the removal
     Then the Members list no longer contains "ic@example.com"
+
+  Scenario: Lead sets team avatar
+    When I open the workspace settings from the user menu
+    And I set the team avatar URL to "https://placehold.co/64x64.png"
+    And I save the team settings
+    Then I should see a saved confirmation
+    And the AppShell header shows the team name

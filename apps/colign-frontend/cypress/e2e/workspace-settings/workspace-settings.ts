@@ -65,3 +65,11 @@ When("I confirm the removal", () => {
 Then("the Members list no longer contains {string}", (email: string) => {
   cy.contains(email).should("not.exist");
 });
+
+When("I set the team avatar URL to {string}", (url: string) => {
+  cy.get('[data-cy="team-avatar-input"]').clear().type(url);
+});
+
+Then("the AppShell header shows the team name", () => {
+  cy.get("header").contains(/acme|renamed/i).should("be.visible");
+});
