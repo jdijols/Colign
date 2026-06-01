@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -145,6 +146,15 @@ public class TeamController {
             @Valid @RequestBody UpdateTeamRequest req) {
         User me = userResolver.resolveCurrent();
         return teamService.updateTeam(teamId, me, req);
+    }
+
+    @DeleteMapping("/{teamId}/members/{userId}")
+    public ResponseEntity<Void> removeMember(
+            @PathVariable Long teamId,
+            @PathVariable Long userId) {
+        User me = userResolver.resolveCurrent();
+        teamService.removeMember(teamId, userId, me);
+        return ResponseEntity.noContent().build();
     }
 
     /** Read the team profile. Any team member may call; ADMIN bypasses team membership. */
