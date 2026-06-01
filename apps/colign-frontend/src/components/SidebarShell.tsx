@@ -19,6 +19,12 @@ interface Props {
   me: SidebarMe;
   onSignOut: () => void;
   children: ReactNode;
+  /**
+   * Whether the Team rail entry shows. Computed by AppShell via canManageTeam
+   * (MANAGER/ADMIN or the team lead). Forwarded to NavRail; when undefined
+   * NavRail falls back to its role-only check.
+   */
+  showTeam?: boolean;
 }
 
 const COLLAPSED_STORAGE_KEY = "colign_sidebar_collapsed";
@@ -46,7 +52,7 @@ const COLLAPSED_STORAGE_KEY = "colign_sidebar_collapsed";
  *   overlay with a backdrop. Tap-backdrop / Esc / select-route dismisses.
  *   Body scroll is locked while the drawer is open.
  */
-export function SidebarShell({ me, onSignOut, children }: Props) {
+export function SidebarShell({ me, onSignOut, children, showTeam }: Props) {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(COLLAPSED_STORAGE_KEY) === "1";
@@ -122,7 +128,7 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <NavRail role={me.role} collapsed={collapsed} />
+        <NavRail role={me.role} collapsed={collapsed} showTeam={showTeam} />
       </div>
 
       <UserChip
@@ -144,7 +150,7 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
         <SidebarToggle collapsed={false} onToggle={() => setDrawerOpen(false)} />
       </div>
       <div className="flex-1 overflow-y-auto">
-        <NavRail role={me.role} onNavigate={() => setDrawerOpen(false)} />
+        <NavRail role={me.role} onNavigate={() => setDrawerOpen(false)} showTeam={showTeam} />
       </div>
       <UserChip
         email={me.email ?? ""}

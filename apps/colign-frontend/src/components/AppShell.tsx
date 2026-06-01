@@ -4,6 +4,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { signOut } from "@/auth/authSlice";
 import { isReal } from "@/auth/auth0Config";
 import { useGetMeQuery } from "@/api/me";
+import { useGetTeamQuery } from "@/api/team";
+import { canManageTeam } from "@/lib/permissions";
 import { SidebarShell } from "@/components/SidebarShell";
 
 /**
@@ -23,8 +25,13 @@ export function AppShell() {
   const navigate = useNavigate();
   const { logout: auth0Logout } = useAuth0();
   const { data: me } = useGetMeQuery();
+  // Team profile carries leadUserId, which canManageTeam needs to grant the
+  // solo team lead (a derived IC) the Team rail entry before anyone reports to
+  // them. Cached — /settings fetches the same query. Skipped until we have a team.
+  const { data: team } = useGetTeamQuery({ teamId: me?.teamId ?? 0 }, { skip: me?.teamId == null });
 
   const role = (me?.role ?? "IC") as "IC" | "MANAGER" | "ADMIN";
+  const showTeam = canManageTeam(me ?? null, team ?? null);
 
   const handleSignOut = () => {
     dispatch(signOut());
@@ -44,6 +51,7 @@ export function AppShell() {
         email: me?.email ?? "",
         role,
       }}
+      showTeam={showTeam}
       onSignOut={handleSignOut}
     >
       <Outlet />

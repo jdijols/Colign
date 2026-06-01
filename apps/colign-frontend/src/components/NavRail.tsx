@@ -6,6 +6,14 @@ interface Props {
   role: "IC" | "MANAGER" | "ADMIN";
   collapsed?: boolean;
   onNavigate?: () => void;
+  /**
+   * Whether to show the Team rail entry. When omitted, falls back to a
+   * role-only check (MANAGER/ADMIN) so callers that don't pass it — and the
+   * existing unit tests — keep their behavior. AppShell passes the
+   * canManageTeam result so a solo team lead (a derived IC with no reports
+   * yet) also sees the Team rollup.
+   */
+  showTeam?: boolean;
 }
 
 /**
@@ -79,8 +87,8 @@ function NavRailItem({ to, icon, label, end, dataCy, collapsed, onNavigate }: It
  * Sidebar route links. Plan / Reconcile / Team (Team hidden for IC).
  * Settings lives in the user-chip popover, not here.
  */
-export function NavRail({ role, collapsed = false, onNavigate }: Props) {
-  const showTeam = role === "MANAGER" || role === "ADMIN";
+export function NavRail({ role, collapsed = false, onNavigate, showTeam }: Props) {
+  const showTeamEntry = showTeam ?? (role === "MANAGER" || role === "ADMIN");
   return (
     <nav
       className={cn("flex flex-col gap-0.5 py-2", collapsed ? "items-center" : "items-stretch")}
@@ -103,7 +111,7 @@ export function NavRail({ role, collapsed = false, onNavigate }: Props) {
         icon={<HiOutlineCheckCircle className="h-5 w-5" aria-hidden />}
         label="Reconcile"
       />
-      {showTeam ? (
+      {showTeamEntry ? (
         <NavRailItem
           to="manager"
           dataCy="sidebar-team"

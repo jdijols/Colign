@@ -217,8 +217,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
               ) : (data?.content ?? []).length === 0 ? (
                 <TR hover={false}>
                   <TD colSpan={8} className="py-8 text-center text-sm text-neutral-600">
-                    No direct reports linked to your account. (Seeded as manager@st6.dev → Ada / Ben
-                    / Chris in the H2 demo profile.)
+                    No direct reports to show.
                   </TD>
                 </TR>
               ) : (
@@ -324,7 +323,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
           </div>
         ) : (data?.content ?? []).length === 0 ? (
           <div className="py-8 text-center text-sm text-neutral-600">
-            No direct reports linked to your account.
+            No direct reports to show.
           </div>
         ) : (
           data?.content.map((m) => (
