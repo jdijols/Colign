@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { federation } from "@module-federation/vite";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import pkg from "./package.json" with { type: "json" };
 
 export default defineConfig(({ mode }) => {
@@ -48,8 +48,12 @@ export default defineConfig(({ mode }) => {
               const ttl = url.searchParams.get("ttl") ?? "14400";
               const audience = url.searchParams.get("audience") ?? "https://api.colign.org";
               const scriptPath = path.resolve(__dirname, "../../scripts/mock-jwt.mjs");
-              const token = execSync(
-                `node "${scriptPath}" --email "${email}" --role "${role}" --ttl ${ttl} --audience "${audience}"`,
+              // execFileSync passes args as argv (no shell) — closes the
+              // shell-injection surface that execSync had via string
+              // interpolation of email/role/audience query params.
+              const token = execFileSync(
+                "node",
+                [scriptPath, "--email", email, "--role", role, "--ttl", String(ttl), "--audience", audience],
                 { encoding: "utf8" }
               ).trim();
               res.statusCode = 200;
