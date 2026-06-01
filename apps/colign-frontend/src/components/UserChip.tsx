@@ -252,6 +252,14 @@ function CollapsedAccountPopover({
         <span>Sign out</span>
       </button>
     </div>,
-    document.body,
+    // Portal target is the remote's own root container, NOT document.body.
+    // Tailwind in this remote is scoped with `important: "#colign-root"`
+    // (tailwind.config.js); portaling outside that ancestor drops every
+    // utility class on the floor — the popover renders unstyled. #colign-root
+    // is a sibling of the sidebar's <aside>, so it still escapes the
+    // overflow-hidden clip while keeping CSS in scope. Falls back to body for
+    // unusual DOM states (tests, partial hydration) where the wrapper is
+    // missing — better to render unstyled than render nothing.
+    document.getElementById("colign-root") ?? document.body,
   );
 }
