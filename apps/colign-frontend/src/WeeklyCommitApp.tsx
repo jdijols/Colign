@@ -28,6 +28,9 @@ import { StrategyOutcomePage } from "@/pages/StrategyOutcomePage";
 import { InviteTeammatesPage } from "@/pages/InviteTeammatesPage";
 import { InviteAcceptPage } from "@/pages/InviteAcceptPage";
 import { WeeklyPlanPage } from "@/pages/WeeklyPlanPage";
+import { DashboardPage } from "@/pages/DashboardPage";
+import { GoalsPage } from "@/pages/GoalsPage";
+import { CommitsPage } from "@/pages/CommitsPage";
 import { ReconcilePage } from "@/pages/ReconcilePage";
 import { ManagerDashboardPage } from "@/pages/ManagerDashboardPage";
 import { WorkspaceSettingsPage } from "@/pages/WorkspaceSettingsPage";
@@ -95,6 +98,9 @@ export default function WeeklyCommitApp() {
             }
           >
             <Route index element={<WeeklyPlanPage />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="goals" element={<GoalsPage />} />
+            <Route path="commits" element={<CommitsPage />} />
             <Route path="reconcile" element={<ReconcilePage />} />
             <Route path="manager" element={<ManagerDashboardPage />} />
             <Route path="settings" element={<WorkspaceSettingsPage />} />

@@ -1,5 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { HiOutlineCalendar, HiOutlineCheckCircle, HiOutlineUserGroup } from "react-icons/hi";
+import {
+  HiOutlineCalendar,
+  HiOutlineCheckCircle,
+  HiOutlineClipboardList,
+  HiOutlineFlag,
+  HiOutlineUserGroup,
+  HiOutlineViewGrid,
+} from "react-icons/hi";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -84,8 +91,10 @@ function NavRailItem({ to, icon, label, end, dataCy, collapsed, onNavigate }: It
 }
 
 /**
- * Sidebar route links. Plan / Reconcile / Team (Team hidden for IC).
- * Settings lives in the user-chip popover, not here.
+ * Sidebar route links: Dashboard / Goals / Commits / Plan / Reconcile / Team.
+ * Dashboard / Goals / Commits are visible to everyone; Team is gated to
+ * MANAGER / ADMIN / team-lead via the showTeam prop. Settings lives in the
+ * user-chip popover, not here.
  */
 export function NavRail({ role, collapsed = false, onNavigate, showTeam }: Props) {
   const showTeamEntry = showTeam ?? (role === "MANAGER" || role === "ADMIN");
@@ -94,6 +103,30 @@ export function NavRail({ role, collapsed = false, onNavigate, showTeam }: Props
       className={cn("flex flex-col gap-0.5 py-2", collapsed ? "items-center" : "items-stretch")}
       aria-label="Primary"
     >
+      <NavRailItem
+        to="dashboard"
+        dataCy="sidebar-dashboard"
+        collapsed={collapsed}
+        onNavigate={onNavigate}
+        icon={<HiOutlineViewGrid className="h-5 w-5" aria-hidden />}
+        label="Dashboard"
+      />
+      <NavRailItem
+        to="goals"
+        dataCy="sidebar-goals"
+        collapsed={collapsed}
+        onNavigate={onNavigate}
+        icon={<HiOutlineFlag className="h-5 w-5" aria-hidden />}
+        label="Goals"
+      />
+      <NavRailItem
+        to="commits"
+        dataCy="sidebar-commits"
+        collapsed={collapsed}
+        onNavigate={onNavigate}
+        icon={<HiOutlineClipboardList className="h-5 w-5" aria-hidden />}
+        label="Commits"
+      />
       <NavRailItem
         to="."
         end

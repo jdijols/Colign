@@ -22,16 +22,23 @@ describe("NavRail", () => {
     expect(screen.getByRole("link", { name: /team/i })).toBeInTheDocument();
   });
 
-  it("renders Plan / Reconcile / Team in fixed order for MANAGER", () => {
+  it("renders all tabs in fixed order for MANAGER (Team last)", () => {
     renderWithRouter(<NavRail role="MANAGER" />);
     const links = screen.getAllByRole("link").map((el) => el.textContent?.trim());
-    expect(links).toEqual(["Plan", "Reconcile", "Team"]);
+    expect(links).toEqual(["Dashboard", "Goals", "Commits", "Plan", "Reconcile", "Team"]);
   });
 
-  it("renders Plan / Reconcile only for IC (no Team)", () => {
+  it("renders the ungated tabs for IC, no Team", () => {
     renderWithRouter(<NavRail role="IC" />);
     const links = screen.getAllByRole("link").map((el) => el.textContent?.trim());
-    expect(links).toEqual(["Plan", "Reconcile"]);
+    expect(links).toEqual(["Dashboard", "Goals", "Commits", "Plan", "Reconcile"]);
+  });
+
+  it("shows Dashboard / Goals / Commits for every role (always ungated)", () => {
+    renderWithRouter(<NavRail role="IC" />);
+    expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /goals/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /commits/i })).toBeInTheDocument();
   });
 
   // showTeam prop: AppShell passes canManageTeam(me, team) so a solo team lead
@@ -51,10 +58,10 @@ describe("NavRail", () => {
     expect(screen.queryByRole("link", { name: /team/i })).not.toBeInTheDocument();
   });
 
-  it("renders Plan / Reconcile / Team for an IC lead when showTeam is true", () => {
+  it("renders all tabs incl. Team for an IC lead when showTeam is true", () => {
     renderWithRouter(<NavRail role="IC" showTeam />);
     const links = screen.getAllByRole("link").map((el) => el.textContent?.trim());
-    expect(links).toEqual(["Plan", "Reconcile", "Team"]);
+    expect(links).toEqual(["Dashboard", "Goals", "Commits", "Plan", "Reconcile", "Team"]);
   });
 
   it("does NOT render a Settings link in the rail — that lives in the user-chip popover", () => {
@@ -64,6 +71,9 @@ describe("NavRail", () => {
 
   it("exposes data-cy selectors on every route link", () => {
     renderWithRouter(<NavRail role="MANAGER" />);
+    expect(document.querySelector('[data-cy="sidebar-dashboard"]')).toBeTruthy();
+    expect(document.querySelector('[data-cy="sidebar-goals"]')).toBeTruthy();
+    expect(document.querySelector('[data-cy="sidebar-commits"]')).toBeTruthy();
     expect(document.querySelector('[data-cy="sidebar-plan"]')).toBeTruthy();
     expect(document.querySelector('[data-cy="sidebar-reconcile"]')).toBeTruthy();
     expect(document.querySelector('[data-cy="sidebar-team"]')).toBeTruthy();

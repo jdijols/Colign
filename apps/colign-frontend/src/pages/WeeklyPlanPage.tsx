@@ -13,14 +13,13 @@ import { CommitForm } from "@/components/CommitForm";
 import { CommitRow } from "@/components/CommitRow";
 import { PlanStatePill } from "@/components/PlanStatePill";
 import { AlignmentBar } from "@/components/AlignmentBar";
-import { StrategyAnchor } from "@/components/StrategyAnchor";
 
 export function WeeklyPlanPage() {
   const { data, isLoading, error } = useGetCurrentPlanQuery();
   const [lockPlan, { isLoading: locking }] = useLockPlanMutation();
   const [startRecon, { isLoading: startingRecon }] = useStartReconciliationMutation();
   const [deleteCommit] = useDeleteCommitMutation();
-  // Cached by RTK; StrategyAnchor reads the same key, so only one HTTP call.
+  // Drives the featured-Outcome empty-state copy below. Cached by RTK.
   const { data: outcomesPage } = useListOutcomesQuery({ size: 200 });
   const [adding, setAdding] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -96,8 +95,6 @@ export function WeeklyPlanPage() {
 
   return (
     <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6">
-      <StrategyAnchor />
-
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-wider text-neutral-600">My weekly plan</p>
