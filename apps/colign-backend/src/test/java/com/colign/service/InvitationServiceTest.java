@@ -60,6 +60,7 @@ class InvitationServiceTest {
   @Mock private TeamRepository teams;
   @Mock private UserRepository users;
   @Mock private EmailClient emailClient;
+  @Mock private com.colign.repository.OutcomeRepository outcomes;
 
   private InvitationService service;
   private UserResolver resolver;
@@ -71,7 +72,7 @@ class InvitationServiceTest {
   @BeforeEach
   void setUp() {
     service = new InvitationService(invitations, teams, users, emailClient, 14, APP_BASE);
-    resolver = new UserResolver(users, invitations, teams, "IC");
+    resolver = new UserResolver(users, invitations, teams, outcomes, "IC");
 
     team = Team.builder().name("Platform Engineering").leadUserId(INVITER_ID).build();
     team.setId(TEAM_ID);

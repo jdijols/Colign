@@ -39,4 +39,12 @@ public class MeDto {
 
   /** Team avatar URL (HTTP/HTTPS). Null when unset; FE falls back to a generated initial. */
   private String teamAvatarUrl;
+
+  /**
+   * True once the caller's team has a complete strategy chain (≥1 Outcome, which implies its parent
+   * Objective and Rally Cry). Drives the onboarding gate: a team with an incomplete chain routes
+   * authors into the strategy wizard and ICs into the "ask your admin" empty state, and the backend
+   * rejects weekly-commit creation with 422 until this flips true. False when the user has no team.
+   */
+  private boolean strategySetupComplete;
 }
