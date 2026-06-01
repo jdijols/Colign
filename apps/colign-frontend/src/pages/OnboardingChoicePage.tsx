@@ -29,10 +29,10 @@ export function OnboardingChoicePage() {
     try {
       await createTeam({ name: trimmed }).unwrap();
       // getMe cache already holds the new teamId (see createTeam.onQueryStarted).
-      // Per the minimize-actions principle, the very next step IS inviting
-      // teammates — surface that screen instead of dropping the user into an
-      // empty My Week with no obvious next action.
-      navigate("invite", { relative: "path" });
+      // The creator must establish the team's strategy chain before weekly
+      // planning, so the next step is the strategy wizard (Rally Cry → Defining
+      // Objective → Outcome); inviting teammates follows as Step 4.
+      navigate("strategy/rally-cry", { relative: "path" });
     } catch (err) {
       const status = (err as { status?: number })?.status;
       setError(
