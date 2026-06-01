@@ -92,7 +92,7 @@ export function InviteTeammatesPage() {
           Invite your team
         </h1>
         <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 text-center leading-relaxed">
-          Send invites by email. You can do this later from settings too.
+          Invite your first teammate to get started — you can add more anytime.
         </p>
 
         <form onSubmit={submit} className="mt-8" aria-label="Invite a teammate">
@@ -162,10 +162,10 @@ export function InviteTeammatesPage() {
             </button>
 
             {hasSentAtLeastOne ? (
-              // After the first invite, "Skip" becomes "Done" — the user has
-              // already done the thing, so the exit affordance shifts from
-              // bypass to completion. Slightly heavier styling than the link
-              // form to read as a real action.
+              // Once the first invite is out, the team is past the invite gate
+              // (the server flips needsInvite false), so "Done" takes them into
+              // the app. Before that there's no skip — onboarding routes back
+              // here until at least one invite has been sent.
               <button
                 type="button"
                 data-cy="done-invites"
@@ -175,14 +175,12 @@ export function InviteTeammatesPage() {
                 Done <HiArrowRight className="h-3.5 w-3.5" aria-hidden />
               </button>
             ) : (
-              <button
-                type="button"
-                data-cy="skip-invites"
-                onClick={() => navigate("..", { relative: "path" })}
-                className="inline-flex items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 transition-colors px-2 py-3"
+              <span
+                data-cy="invite-required-hint"
+                className="text-sm text-neutral-500 dark:text-neutral-500 px-2 py-3"
               >
-                Skip for now <HiArrowRight className="h-3.5 w-3.5" aria-hidden />
-              </button>
+                Invite at least one teammate to continue
+              </span>
             )}
           </div>
         </form>

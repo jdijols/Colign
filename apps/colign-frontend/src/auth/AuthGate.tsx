@@ -31,7 +31,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return <AuthLoading />;
     }
     if (!isAuthenticated) {
-      return <Navigate to="login" replace state={{ from: location }} />;
+      // Real mode has no in-app login screen: the logged-out front door is the
+      // host landing at "/" (HostHome), whose CTA runs the Auth0 redirect.
+      return <Navigate to="/" replace state={{ from: location }} />;
     }
     return <>{children}</>;
   }

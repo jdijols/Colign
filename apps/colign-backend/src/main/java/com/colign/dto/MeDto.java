@@ -22,4 +22,12 @@ public class MeDto {
     private String role;
     private Long teamId;
     private Long managerId;
+    /**
+     * True when the caller is on a team that still needs invites sent before
+     * the app is useful: they're the only member AND no invitations have gone
+     * out yet. Drives the onboarding gate's create→invite→app routing — a
+     * freshly-created team lands on the invite step until they invite someone;
+     * an invited member (team already has &gt;1 person) skips straight to the app.
+     */
+    private boolean needsInvite;
 }

@@ -15,4 +15,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /** Count of direct reports — drives MANAGER role derivation. */
     long countByManagerId(Long managerId);
+
+    /** Members on a team — drives the create→invite→app onboarding gate. */
+    long countByTeamId(Long teamId);
 }

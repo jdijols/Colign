@@ -7,6 +7,13 @@ export interface MeDto {
   role: "IC" | "MANAGER" | "ADMIN";
   teamId: number | null;
   managerId: number | null;
+  /**
+   * True when the caller is on a team that still needs its first invite (they're
+   * the only member and no invitations have been sent). Drives the onboarding
+   * gate's create→invite→app routing. Flips false the moment they invite someone
+   * or anyone else joins.
+   */
+  needsInvite: boolean;
 }
 
 /**

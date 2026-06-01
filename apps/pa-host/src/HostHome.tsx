@@ -31,13 +31,13 @@ export function HostHome() {
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      navigate("/weekly-commit", { replace: true });
+      navigate("/", { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
 
   const handleGetStarted = () => {
     void loginWithRedirect({
-      appState: { returnTo: "/weekly-commit" },
+      appState: { returnTo: "/" },
       authorizationParams: { screen_hint: "login" },
     });
   };

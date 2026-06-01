@@ -58,7 +58,13 @@ export const invitesApi = colignApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { teamId }) => [{ type: "Invites" as const, id: teamId }],
+      // Invalidate Me too: sending the first invite flips the server's
+      // needsInvite flag, which the onboarding gate reads to let the lead
+      // out of the invite step and into the app.
+      invalidatesTags: (_r, _e, { teamId }) => [
+        { type: "Invites" as const, id: teamId },
+        "Me",
+      ],
     }),
 
     /**

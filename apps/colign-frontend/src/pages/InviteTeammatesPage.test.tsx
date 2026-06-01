@@ -46,6 +46,7 @@ const ME_WITH_TEAM = {
     role: "IC" as const,
     teamId: 42,
     managerId: null,
+    needsInvite: true,
 };
 
 describe("InviteTeammatesPage", () => {
@@ -74,9 +75,12 @@ describe("InviteTeammatesPage", () => {
         expect(submit).toBeEnabled();
     });
 
-    it("shows Skip for now when no invitations have been sent", () => {
+    it("shows the invite-required hint (no skip) when no invitations have been sent", () => {
         renderWithRouter(<InviteTeammatesPage />);
-        expect(screen.getByRole("button", { name: /skip for now/i })).toBeInTheDocument();
+        expect(
+            screen.getByText(/invite at least one teammate to continue/i),
+        ).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /skip for now/i })).not.toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /^done/i })).not.toBeInTheDocument();
     });
 

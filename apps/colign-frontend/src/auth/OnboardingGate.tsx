@@ -23,10 +23,18 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
     );
   }
 
-  // If /me fails we let the children render rather than trapping the user in a
-  // redirect loop — the underlying API errors will surface in-app.
-  if (!isError && me && me.teamId == null) {
-    return <Navigate to="onboarding" replace state={{ from: location }} />;
+  // Staged onboarding: a user with no team creates one; a freshly-created team
+  // (only member, no invites sent) is routed to the invite step; everyone else
+  // proceeds into the app. An invited member skips straight through (their team
+  // already has >1 person, so needsInvite is false). If /me fails we let the
+  // children render rather than trapping the user in a redirect loop.
+  if (!isError && me) {
+    if (me.teamId == null) {
+      return <Navigate to="onboarding" replace state={{ from: location }} />;
+    }
+    if (me.needsInvite) {
+      return <Navigate to="onboarding/invite" replace state={{ from: location }} />;
+    }
   }
 
   return <>{children}</>;

@@ -3,6 +3,7 @@ package com.colign.service;
 import com.colign.config.security.CurrentUser;
 import com.colign.domain.User;
 import com.colign.domain.UserRole;
+import com.colign.repository.InvitationRepository;
 import com.colign.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -35,11 +36,14 @@ public class UserResolver {
     private static final String NS = "https://colign.org/";
 
     private final UserRepository users;
+    private final InvitationRepository invitations;
     private final String defaultRole;
 
     public UserResolver(UserRepository users,
+                        InvitationRepository invitations,
                         @Value("${colign.users.default-role:IC}") String defaultRole) {
         this.users = users;
+        this.invitations = invitations;
         this.defaultRole = defaultRole;
     }
 
@@ -113,14 +117,29 @@ public class UserResolver {
      * Role is the DERIVED role, never the stored field.
      */
     public com.colign.dto.MeDto toMeDto(User user) {
+        Long teamId = user.getTeamId();
         return com.colign.dto.MeDto.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .displayName(user.getDisplayName())
                 .role(derivedRole(user).name())
-                .teamId(user.getTeamId())
+                .teamId(teamId)
                 .managerId(user.getManagerId())
+                .needsInvite(needsInvite(teamId))
                 .build();
+    }
+
+    /**
+     * Whether a freshly-created team still needs its first invite. True only
+     * when the user is on a team that has exactly one member (them) AND no
+     * invitations have been issued yet. As soon as they send one invite, or
+     * anyone else joins, this flips false and the onboarding gate lets them
+     * into the app. An invited member never sees true — their team already
+     * has &gt;1 person by the time they resolve.
+     */
+    private boolean needsInvite(Long teamId) {
+        if (teamId == null) return false;
+        return users.countByTeamId(teamId) <= 1 && invitations.countByTeamId(teamId) == 0;
     }
 
     /**

@@ -20,4 +20,8 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
 
     /** All invitations a team has issued, newest first — drives the members screen. */
     List<Invitation> findByTeamIdOrderByCreatedDateDesc(Long teamId);
+
+    /** How many invitations a team has issued — drives the onboarding gate
+     *  (a lead who hasn't invited anyone yet is routed to the invite step). */
+    long countByTeamId(Long teamId);
 }
