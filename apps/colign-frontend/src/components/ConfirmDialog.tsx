@@ -65,6 +65,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             data-cy="confirm-dialog-confirm"
+            data-testid="confirm-dialog-confirm"
             className={
               "rounded-lg px-4 py-2 text-sm font-medium text-white " +
               (destructive
