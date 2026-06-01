@@ -9,6 +9,7 @@ const hoisted = vi.hoisted(() => ({
   getTeam: vi.fn(),
   getTeamMembers: vi.fn(),
   updateFn: vi.fn(),
+  removeFn: vi.fn(),
 }));
 
 vi.mock("@/api/me", () => ({
@@ -22,6 +23,7 @@ vi.mock("@/api/team", () => ({
   useGetTeamQuery: (...args: unknown[]) => hoisted.getTeam(...args),
   useGetTeamMembersQuery: (...args: unknown[]) => hoisted.getTeamMembers(...args),
   useUpdateTeamMutation: () => [hoisted.updateFn, { isLoading: false }],
+  useRemoveTeamMemberMutation: () => [hoisted.removeFn, { isLoading: false }],
 }));
 
 import { WorkspaceSettingsPage } from "./WorkspaceSettingsPage";
@@ -43,6 +45,7 @@ describe("WorkspaceSettingsPage", () => {
       totalElements: 1, totalPages: 1, number: 0, size: 50, first: true, last: true,
     }));
     hoisted.updateFn.mockReturnValue({ unwrap: () => Promise.resolve(TEAM) });
+    hoisted.removeFn.mockReturnValue({ unwrap: () => Promise.resolve() });
   });
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 

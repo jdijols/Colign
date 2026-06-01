@@ -2,6 +2,7 @@ package com.colign.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
@@ -106,6 +107,41 @@ class TeamControllerWiringTest {
                     assertThat(r.getResponse().getStatus()).isEqualTo(200);
                     assertThat(r.getResponse().getContentAsString()).contains("\"name\":\"TCW Team\"");
                 });
+    }
+
+    @Test
+    void deleteMember_orphan_reports_and_returns204() throws Exception {
+        // Create a manager and a report; remove the manager; assert report's
+        // managerId is nulled and the manager's teamId is nulled.
+        User report = users.findByEmail("report-tcw@example.com").orElseGet(() ->
+                users.save(User.builder()
+                        .email("report-tcw@example.com").displayName("Report")
+                        .role(UserRole.IC).auth0Sub("auth0|report-tcw").active(true)
+                        .build()));
+        User manager = users.findByEmail("mgr-tcw@example.com").orElseGet(() ->
+                users.save(User.builder()
+                        .email("mgr-tcw@example.com").displayName("Mgr")
+                        .role(UserRole.IC).auth0Sub("auth0|mgr-tcw").active(true)
+                        .build()));
+        manager.setTeamId(team.getId());
+        manager = users.save(manager);
+        report.setTeamId(team.getId());
+        report.setManagerId(manager.getId());
+        users.save(report);
+
+        mvc.perform(delete("/api/v1/teams/" + team.getId() + "/members/" + manager.getId())
+                        .with(jwtFor(lead)))
+                .andExpect(r -> assertThat(r.getResponse().getStatus()).isEqualTo(204));
+
+        assertThat(users.findById(manager.getId()).orElseThrow().getTeamId()).isNull();
+        assertThat(users.findById(report.getId()).orElseThrow().getManagerId()).isNull();
+    }
+
+    @Test
+    void deleteMember_400_whenRemovingLead() throws Exception {
+        mvc.perform(delete("/api/v1/teams/" + team.getId() + "/members/" + lead.getId())
+                        .with(jwtFor(lead)))
+                .andExpect(r -> assertThat(r.getResponse().getStatus()).isEqualTo(400));
     }
 
     private static RequestPostProcessor jwtFor(User user) {

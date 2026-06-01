@@ -109,4 +109,77 @@ class TeamServiceTest {
         .isInstanceOf(ResponseStatusException.class)
         .hasMessageContaining("404");
   }
+
+  @Test
+  void removeMember_succeeds_andOrphanReports() {
+    when(teams.findById(TEAM_ID)).thenReturn(Optional.of(team()));
+    User manager = member(2L); manager.setRole(UserRole.IC);
+    when(users.findById(2L)).thenReturn(Optional.of(manager));
+    User report1 = member(3L); report1.setManagerId(2L);
+    User report2 = member(4L); report2.setManagerId(2L);
+    when(users.findByManagerId(2L)).thenReturn(List.of(report1, report2));
+    when(users.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    svc.removeMember(TEAM_ID, 2L, lead());
+
+    assertThat(report1.getManagerId()).isNull();
+    assertThat(report2.getManagerId()).isNull();
+    assertThat(manager.getTeamId()).isNull();
+    assertThat(manager.getManagerId()).isNull();
+  }
+
+  @Test
+  void removeMember_blocksRemovingTheLead() {
+    when(teams.findById(TEAM_ID)).thenReturn(Optional.of(team()));
+    when(users.findById(LEAD_ID)).thenReturn(Optional.of(lead()));
+    User admin = User.builder().role(UserRole.ADMIN).build();
+    admin.setId(99L); admin.setTeamId(TEAM_ID);
+    assertThatThrownBy(() -> svc.removeMember(TEAM_ID, LEAD_ID, admin))
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("400");
+  }
+
+  @Test
+  void removeMember_blocksLeadFromLeavingThemselves() {
+    when(teams.findById(TEAM_ID)).thenReturn(Optional.of(team()));
+    when(users.findById(LEAD_ID)).thenReturn(Optional.of(lead()));
+    assertThatThrownBy(() -> svc.removeMember(TEAM_ID, LEAD_ID, lead()))
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("400");
+  }
+
+  @Test
+  void removeMember_allowsSelfRemovalForNonLead() {
+    when(teams.findById(TEAM_ID)).thenReturn(Optional.of(team()));
+    User ic = member(2L);
+    when(users.findById(2L)).thenReturn(Optional.of(ic));
+    when(users.findByManagerId(2L)).thenReturn(List.of());
+    when(users.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    svc.removeMember(TEAM_ID, 2L, ic);
+    assertThat(ic.getTeamId()).isNull();
+  }
+
+  @Test
+  void removeMember_throws403_whenCallerCannotManageAndIsNotSelf() {
+    when(teams.findById(TEAM_ID)).thenReturn(Optional.of(team()));
+    User ic = member(2L);
+    User other = member(3L);
+    when(users.findById(3L)).thenReturn(Optional.of(other));
+    assertThatThrownBy(() -> svc.removeMember(TEAM_ID, 3L, ic))
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("403");
+  }
+
+  @Test
+  void removeMember_throws404_whenUserNotOnTeam() {
+    when(teams.findById(TEAM_ID)).thenReturn(Optional.of(team()));
+    User outsider = User.builder().role(UserRole.IC).build();
+    outsider.setId(99L);
+    outsider.setTeamId(999L);
+    when(users.findById(99L)).thenReturn(Optional.of(outsider));
+    assertThatThrownBy(() -> svc.removeMember(TEAM_ID, 99L, lead()))
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("404");
+  }
 }

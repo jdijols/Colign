@@ -21,3 +21,9 @@ Feature: Workspace settings
     And I save the team settings
     Then I should see a saved confirmation
     And reloading the page keeps the team name as "Renamed Acme"
+
+  Scenario: Lead removes a teammate
+    When I open the workspace settings from the user menu
+    And I click Remove on the member with email "ic@example.com"
+    And I confirm the removal
+    Then the Members list no longer contains "ic@example.com"

@@ -76,6 +76,48 @@ public class TeamService {
         t.getAvatarUrl(), t.getLeadUserId());
   }
 
+  /**
+   * Remove a member from the team, cascading orphan reports (manager_id → null).
+   * Blocks removal of the team lead (transfer-lead flow not yet built).
+   * Caller must be the target user (self-leave) or satisfy
+   * {@link TeamPermissions#canManage}; otherwise 403.
+   */
+  @Transactional
+  public void removeMember(Long teamId, Long userIdToRemove, User caller) {
+    Team t = teams.findById(teamId).orElseThrow(
+        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "team not found"));
+    User target = users.findById(userIdToRemove).orElseThrow(
+        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
+    if (target.getTeamId() == null || !target.getTeamId().equals(teamId)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "user is not on this team");
+    }
+
+    boolean isSelf = target.getId().equals(caller.getId());
+    Long leadId = t.getLeadUserId();
+    boolean isLead = leadId != null && leadId.equals(target.getId());
+
+    if (isLead) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST,
+          "Cannot remove the team lead. Transfer the lead first (not yet supported).");
+    }
+    if (!isSelf && !TeamPermissions.canManage(caller, t)) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "only managers may remove other members");
+    }
+
+    // Orphan any reports — set manager_id null. Their derived role recomputes
+    // on next /me; they remain on the team's data (but with no manager link).
+    users.findByManagerId(target.getId()).forEach(report -> {
+      report.setManagerId(null);
+      users.save(report);
+    });
+
+    target.setTeamId(null);
+    target.setManagerId(null);
+    users.save(target);
+  }
+
   private void requireSameTeam(Long teamId, User caller) {
     if (caller.getRole() == UserRole.ADMIN) return; // ADMINs cross-team
     if (caller.getTeamId() == null || !caller.getTeamId().equals(teamId)) {
