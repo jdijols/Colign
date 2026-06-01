@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SpotBugs exclude filter for colign-backend.
+
+  Use this file to silence false positives, NOT real issues. Each
+  exclusion should explain why the finding is wrong or accepted.
+  See https://spotbugs.readthedocs.io/en/stable/filter.html for syntax.
+-->
+<FindBugsFilter
+    xmlns="https://github.com/spotbugs/filter/3.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
+
+  <!--
+    Lombok-generated @Builder/@Getter/@Setter classes routinely trip
+    EI_EXPOSE_REP / EI_EXPOSE_REP2 (mutable internal state via accessor).
+    For JPA entity classes this is by design — Hibernate needs mutable
+    fields and the getters/setters are required.
+  -->
+  <Match>
+    <Or>
+      <Bug pattern="EI_EXPOSE_REP"/>
+      <Bug pattern="EI_EXPOSE_REP2"/>
+    </Or>
+    <Package name="com.colign.domain"/>
+  </Match>
+
+  <!--
+    CSRF protection is deliberately disabled in SecurityConfig because the
+    API is stateless (SessionCreationPolicy.STATELESS) and authenticates
+    via Auth0 JWT in the Authorization header. CSRF attacks rely on
+    ambient session cookies; there are none here. Documented in
+    SecurityConfig.filterChain — see the .csrf(disable) call.
+  -->
+  <Match>
+    <Bug pattern="SPRING_CSRF_PROTECTION_DISABLED"/>
+    <Class name="com.colign.config.security.SecurityConfig"/>
+  </Match>
+
+</FindBugsFilter>

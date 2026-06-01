@@ -201,6 +201,71 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!--
+              Spotless: format-on-verify with Google Java Format (2-space).
+              Run `./mvnw spotless:apply` to auto-fix locally; the verify
+              binding then ensures no drift slips into the gated build.
+            -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <java>
+                        <includes>
+                            <include>src/main/java/**/*.java</include>
+                            <include>src/test/java/**/*.java</include>
+                        </includes>
+                        <googleJavaFormat>
+                            <version>1.22.0</version>
+                            <style>GOOGLE</style>
+                        </googleJavaFormat>
+                        <removeUnusedImports/>
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotless-check</id>
+                        <phase>verify</phase>
+                        <goals><goal>check</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+              SpotBugs + FindSecBugs. Starts at threshold=High so the first
+              gated build doesn't drown in low-signal findings; raise to
+              Medium after a targeted triage pass (tracked in TODOS.md).
+              False positives go in config/spotbugs-exclude.xml.
+            -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs.version}</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>High</threshold>
+                    <failOnError>true</failOnError>
+                    <excludeFilterFile>config/spotbugs-exclude.xml</excludeFilterFile>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.h3xstream.findsecbugs</groupId>
+                            <artifactId>findsecbugs-plugin</artifactId>
+                            <version>${findsecbugs.version}</version>
+                        </plugin>
+                    </plugins>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotbugs-check</id>
+                        <phase>verify</phase>
+                        <goals><goal>check</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
