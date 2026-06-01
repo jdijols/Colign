@@ -1,3 +1,4 @@
+// apps/colign-frontend/src/api/team.ts
 import { colignApi } from "./baseApi";
 import { meApi, type MeDto } from "./me";
 import type { SpringPage, TeamMemberDto } from "./types";
@@ -7,10 +8,24 @@ export interface CreateTeamRequest {
   description?: string;
 }
 
+export interface UpdateTeamRequest {
+  name?: string;
+  description?: string;
+  avatarUrl?: string;
+}
+
+export interface TeamDto {
+  id: number;
+  name: string;
+  description: string | null;
+  avatarUrl: string | null;
+  leadUserId: number | null;
+}
+
 export const teamApi = colignApi.injectEndpoints({
   endpoints: (build) => ({
-    /** Manager roll-up: the caller's direct reports + each report's latest plan. */
-    getTeam: build.query<
+    /** Manager roll-up: caller's direct reports + each report's latest plan. */
+    getManagerTeam: build.query<
       SpringPage<TeamMemberDto>,
       { page?: number; size?: number; sort?: string }
     >({
@@ -23,9 +38,46 @@ export const teamApi = colignApi.injectEndpoints({
                 type: "Plan" as const,
                 id: m.currentPlan?.id ?? `user-${m.userId}`,
               })),
-              { type: "TeamMembers" as const, id: "LIST" },
+              { type: "TeamPage" as const, id: "LIST" },
             ]
-          : [{ type: "TeamMembers" as const, id: "LIST" }],
+          : [{ type: "TeamPage" as const, id: "LIST" }],
+    }),
+
+    /** All members of the workspace (any role; not just reports). */
+    getTeamMembers: build.query<
+      SpringPage<TeamMemberDto>,
+      { teamId: number; page?: number; size?: number }
+    >({
+      query: ({ teamId, page = 0, size = 50 }) =>
+        `teams/${teamId}/members?page=${page}&size=${size}&sort=displayName,asc`,
+      providesTags: (result, _err, { teamId }) =>
+        result
+          ? [
+              ...result.content.map((m) => ({
+                type: "TeamMembers" as const,
+                id: `${teamId}:${m.userId}`,
+              })),
+              { type: "TeamMembers" as const, id: `${teamId}:LIST` },
+            ]
+          : [{ type: "TeamMembers" as const, id: `${teamId}:LIST` }],
+    }),
+
+    /** Read the team profile (used by the Team section in /settings). */
+    getTeam: build.query<TeamDto, { teamId: number }>({
+      query: ({ teamId }) => `teams/${teamId}`,
+      providesTags: (_r, _e, { teamId }) => [{ type: "Team" as const, id: teamId }],
+    }),
+
+    updateTeam: build.mutation<TeamDto, { teamId: number; body: UpdateTeamRequest }>({
+      query: ({ teamId, body }) => ({
+        url: `teams/${teamId}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (_r, _e, { teamId }) => [
+        { type: "Team" as const, id: teamId },
+        "Me",
+      ],
     }),
 
     /**
@@ -45,4 +97,10 @@ export const teamApi = colignApi.injectEndpoints({
   }),
 });
 
-export const { useGetTeamQuery, useCreateTeamMutation } = teamApi;
+export const {
+  useGetManagerTeamQuery,
+  useGetTeamMembersQuery,
+  useGetTeamQuery,
+  useUpdateTeamMutation,
+  useCreateTeamMutation,
+} = teamApi;

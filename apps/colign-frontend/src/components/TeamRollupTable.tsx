@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { HiOutlineEye, HiArrowSmUp, HiArrowSmDown } from "react-icons/hi";
-import { useGetTeamQuery } from "@/api/team";
+import { useGetManagerTeamQuery } from "@/api/team";
 import type { TeamMemberDto } from "@/api/types";
 import { PlanStatePill } from "@/components/PlanStatePill";
 import {
@@ -32,7 +32,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
   const [dir, setDir] = useState<SortDir>("asc");
   const perPage = 25;
 
-  const { data, isFetching } = useGetTeamQuery(
+  const { data, isFetching } = useGetManagerTeamQuery(
     { page, size: perPage, sort: `${sort},${dir}` },
     { refetchOnMountOrArgChange: false }
   );

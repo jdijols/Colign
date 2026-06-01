@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useGetTeamQuery } from "@/api/team";
+import { useGetManagerTeamQuery } from "@/api/team";
 import type { TeamMemberDto } from "@/api/types";
 import { Card } from "@/components/ui";
 import { TeamRollupTable } from "@/components/TeamRollupTable";
@@ -20,7 +20,7 @@ const TONE_TEXT: Record<KpiTone, string> = {
 
 export function ManagerDashboardPage() {
   const [selected, setSelected] = useState<TeamMemberDto | null>(null);
-  const { data } = useGetTeamQuery({ page: 0, size: 25, sort: "displayName,asc" });
+  const { data } = useGetManagerTeamQuery({ page: 0, size: 25, sort: "displayName,asc" });
 
   const stats = useMemo(() => {
     const rows = data?.content ?? [];
