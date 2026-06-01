@@ -23,18 +23,15 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
     );
   }
 
-  // Staged onboarding: a user with no team creates one; a freshly-created team
-  // (only member, no invites sent) is routed to the invite step; everyone else
-  // proceeds into the app. An invited member skips straight through (their team
-  // already has >1 person, so needsInvite is false). If /me fails we let the
-  // children render rather than trapping the user in a redirect loop.
-  if (!isError && me) {
-    if (me.teamId == null) {
-      return <Navigate to="onboarding" replace state={{ from: location }} />;
-    }
-    if (me.needsInvite) {
-      return <Navigate to="onboarding/invite" replace state={{ from: location }} />;
-    }
+  // Teamless users create a team first. The invite step is *encouraged* but
+  // not forced: it's shown once right after team creation (see
+  // OnboardingChoicePage's post-create navigation) and is skippable, so a solo
+  // user can go straight to planning their own week. We deliberately do NOT
+  // gate the app on needsInvite — that would trap a skipper in a redirect loop.
+  // (needsInvite still rides along on /me for a future in-app "invite your
+  // team" nudge.) If /me fails we let children render rather than loop.
+  if (!isError && me && me.teamId == null) {
+    return <Navigate to="onboarding" replace state={{ from: location }} />;
   }
 
   return <>{children}</>;

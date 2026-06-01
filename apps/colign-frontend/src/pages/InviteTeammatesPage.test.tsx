@@ -75,13 +75,22 @@ describe("InviteTeammatesPage", () => {
         expect(submit).toBeEnabled();
     });
 
-    it("shows the invite-required hint (no skip) when no invitations have been sent", () => {
+    it("offers Skip for now (optional invite) when no invitations have been sent", () => {
         renderWithRouter(<InviteTeammatesPage />);
-        expect(
-            screen.getByText(/invite at least one teammate to continue/i),
-        ).toBeInTheDocument();
-        expect(screen.queryByRole("button", { name: /skip for now/i })).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /skip for now/i })).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /^done/i })).not.toBeInTheDocument();
+    });
+
+    it("keeps Send invite disabled until a valid email, independent of Skip", async () => {
+        renderWithRouter(<InviteTeammatesPage />);
+        // Skip is always available; Send is gated on a valid email.
+        expect(screen.getByRole("button", { name: /skip for now/i })).toBeEnabled();
+        expect(screen.getByRole("button", { name: /send invite/i })).toBeDisabled();
+        await userEvent.type(
+            screen.getByPlaceholderText(/teammate@company\.com/i),
+            "teammate@example.com",
+        );
+        expect(screen.getByRole("button", { name: /send invite/i })).toBeEnabled();
     });
 
     it("replaces Skip with Done after the first invitation lands in the list", () => {

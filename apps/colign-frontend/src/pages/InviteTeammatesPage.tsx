@@ -92,7 +92,7 @@ export function InviteTeammatesPage() {
           Invite your team
         </h1>
         <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400 text-center leading-relaxed">
-          Invite your first teammate to get started — you can add more anytime.
+          Invite teammates to align your week together — or skip and start solo.
         </p>
 
         <form onSubmit={submit} className="mt-8" aria-label="Invite a teammate">
@@ -161,27 +161,24 @@ export function InviteTeammatesPage() {
               {sending ? "Sending…" : "Send invite"}
             </button>
 
-            {hasSentAtLeastOne ? (
-              // Once the first invite is out, the team is past the invite gate
-              // (the server flips needsInvite false), so "Done" takes them into
-              // the app. Before that there's no skip — onboarding routes back
-              // here until at least one invite has been sent.
-              <button
-                type="button"
-                data-cy="done-invites"
-                onClick={() => navigate("..", { relative: "path" })}
-                className="inline-flex items-center gap-1 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 py-3 text-sm font-medium text-neutral-900 dark:text-neutral-50 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950"
-              >
-                Done <HiArrowRight className="h-3.5 w-3.5" aria-hidden />
-              </button>
-            ) : (
-              <span
-                data-cy="invite-required-hint"
-                className="text-sm text-neutral-500 dark:text-neutral-500 px-2 py-3"
-              >
-                Invite at least one teammate to continue
-              </span>
-            )}
+            {/* The invite step is optional. "Send invite" stays disabled until
+                a valid email is entered; the secondary action always lets the
+                user into the app — "Skip for now" before any invite, "Done"
+                once at least one is out. A solo user can start planning their
+                own week without inviting anyone. */}
+            <button
+              type="button"
+              data-cy={hasSentAtLeastOne ? "done-invites" : "skip-invites"}
+              onClick={() => navigate("..", { relative: "path" })}
+              className={
+                hasSentAtLeastOne
+                  ? "inline-flex items-center gap-1 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 py-3 text-sm font-medium text-neutral-900 dark:text-neutral-50 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950"
+                  : "inline-flex items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 transition-colors px-2 py-3"
+              }
+            >
+              {hasSentAtLeastOne ? "Done" : "Skip for now"}
+              <HiArrowRight className="h-3.5 w-3.5" aria-hidden />
+            </button>
           </div>
         </form>
 
