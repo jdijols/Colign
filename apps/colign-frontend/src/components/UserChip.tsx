@@ -1,3 +1,5 @@
+import { useLayoutEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { HiOutlineCog, HiOutlineLogout } from "react-icons/hi";
 import { usePopover } from "@/lib/usePopover";
@@ -70,47 +72,15 @@ export function UserChip({
         </button>
 
         {open ? (
-          <div
-            ref={panelRef}
-            role="menu"
-            aria-label="Account"
-            className="absolute bottom-full mb-1 left-2 w-56 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-lg p-1 z-40"
-          >
-            <div className="px-2.5 pb-2 pt-1.5 border-b border-neutral-200 dark:border-neutral-800 mb-1">
-              <div
-                className="text-sm font-medium text-neutral-900 dark:text-neutral-50 truncate"
-                title={email}
-              >
-                {name}
-              </div>
-              <div className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mt-0.5">
-                {ROLE_LABEL[role]}
-              </div>
-            </div>
-            <Link
-              to="settings"
-              role="menuitem"
-              data-cy="sidebar-settings"
-              onClick={() => setOpen(false)}
-              className={MENU_ITEM_CLASS}
-            >
-              <HiOutlineCog className="h-5 w-5 shrink-0" aria-hidden />
-              <span>Settings</span>
-            </Link>
-            <button
-              type="button"
-              role="menuitem"
-              data-cy="sidebar-sign-out"
-              onClick={() => {
-                setOpen(false);
-                onSignOut();
-              }}
-              className={MENU_ITEM_CLASS}
-            >
-              <HiOutlineLogout className="h-5 w-5 shrink-0" aria-hidden />
-              <span>Sign out</span>
-            </button>
-          </div>
+          <CollapsedAccountPopover
+            panelRef={panelRef}
+            triggerRef={triggerRef}
+            name={name}
+            email={email}
+            roleLabel={ROLE_LABEL[role]}
+            onClose={() => setOpen(false)}
+            onSignOut={onSignOut}
+          />
         ) : null}
       </div>
     );
@@ -181,5 +151,107 @@ export function UserChip({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Compact-mode (collapsed sidebar) account popover.
+ *
+ * Portaled to `document.body` because the parent `<aside>` carries
+ * `overflow-hidden` for sidebar containment; a regular `absolute`-positioned
+ * panel gets clipped at the rail's right edge regardless of z-index. Anchored
+ * via `position: fixed` to the right of the avatar so the popover opens into
+ * the main content area (where there's space) rather than upward inside the
+ * rail. Bottom-aligned with the avatar so it visually grows out of the chip.
+ */
+function CollapsedAccountPopover({
+  panelRef,
+  triggerRef,
+  name,
+  email,
+  roleLabel,
+  onClose,
+  onSignOut,
+}: {
+  panelRef: React.RefObject<HTMLDivElement>;
+  triggerRef: React.RefObject<HTMLButtonElement>;
+  name: string;
+  email: string;
+  roleLabel: string;
+  onClose: () => void;
+  onSignOut: () => void;
+}) {
+  const [coords, setCoords] = useState<{ left: number; bottom: number } | null>(null);
+
+  // Compute trigger position before paint so the panel never flashes in the
+  // wrong spot. useLayoutEffect runs synchronously after DOM mutations but
+  // before the browser paints, which is what we want for popover anchoring.
+  useLayoutEffect(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    setCoords({
+      // 8px gap from the avatar's right edge, into the main content area.
+      left: rect.right + 8,
+      // Bottom-aligned to the chip's bottom for a "grow out of the avatar" feel.
+      bottom: window.innerHeight - rect.bottom,
+    });
+  }, [triggerRef]);
+
+  if (coords == null) return null;
+
+  return createPortal(
+    <div
+      ref={panelRef}
+      role="menu"
+      aria-label="Account"
+      style={{
+        position: "fixed",
+        left: coords.left,
+        bottom: coords.bottom,
+        // z-50 is reserved for modal overlays in this codebase; the sidebar
+        // popover lives between toasts (z-40) and modals (z-50), so 45 keeps
+        // it above the sidebar's stacking context without competing with a
+        // future modal.
+        zIndex: 45,
+      }}
+      className="w-56 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-lg p-1"
+    >
+      <div className="px-2.5 pb-2 pt-1.5 border-b border-neutral-200 dark:border-neutral-800 mb-1">
+        <div
+          className="text-sm font-medium text-neutral-900 dark:text-neutral-50 truncate"
+          title={email}
+        >
+          {name}
+        </div>
+        <div className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mt-0.5">
+          {roleLabel}
+        </div>
+      </div>
+      <Link
+        to="settings"
+        role="menuitem"
+        data-cy="sidebar-settings"
+        onClick={onClose}
+        className={MENU_ITEM_CLASS}
+      >
+        <HiOutlineCog className="h-5 w-5 shrink-0" aria-hidden />
+        <span>Settings</span>
+      </Link>
+      <button
+        type="button"
+        role="menuitem"
+        data-cy="sidebar-sign-out"
+        onClick={() => {
+          onClose();
+          onSignOut();
+        }}
+        className={MENU_ITEM_CLASS}
+      >
+        <HiOutlineLogout className="h-5 w-5 shrink-0" aria-hidden />
+        <span>Sign out</span>
+      </button>
+    </div>,
+    document.body,
   );
 }
