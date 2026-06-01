@@ -7,6 +7,8 @@ import com.colign.domain.Plan;
 import com.colign.domain.PlanState;
 import com.colign.domain.RallyCry;
 import com.colign.domain.Reconciliation;
+import com.colign.domain.User;
+import com.colign.domain.UserRole;
 import com.colign.domain.WeeklyCommit;
 import com.colign.dto.PlanDto;
 import com.colign.dto.ReconciliationDto;
@@ -25,8 +27,10 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Plan lifecycle orchestrator. Owns: - Get-or-create the current-week plan for an IC - Enforce
@@ -89,24 +93,34 @@ public class PlanService {
     return plans.findById(planId).orElseThrow(() -> NotFoundException.of("Plan", planId));
   }
 
+  /**
+   * Submit a plan — transitions DRAFT → LOCKED. User-facing copy calls this
+   * "Submit plan"; the backend state name stays LOCKED. The caller must own
+   * the plan or be an explicit ADMIN; any other authenticated user attempting
+   * to submit another IC's plan receives a 403.
+   */
   @Transactional
-  public Plan lock(Long planId) {
+  public Plan lock(Long planId, User caller) {
     Plan plan = getById(planId);
+    if (!plan.getUserId().equals(caller.getId()) && caller.getRole() != UserRole.ADMIN) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Cannot submit another user's plan");
+    }
     if (plan.getState() != PlanState.DRAFT) {
       throw new IllegalTransitionException(
-          plan.getState(), PlanState.LOCKED, "lock only valid from DRAFT");
+          plan.getState(), PlanState.LOCKED, "submit only valid from DRAFT");
     }
     int n = commits.countByPlanId(plan.getId());
     if (n == 0) {
       throw new IllegalTransitionException(
-          PlanState.DRAFT, PlanState.LOCKED, "cannot lock an empty plan");
+          PlanState.DRAFT, PlanState.LOCKED, "cannot submit an empty plan");
     }
     long unlinked = commits.countByPlanIdAndOutcomeIdIsNull(plan.getId());
     if (unlinked > 0) {
       throw new IllegalTransitionException(
           PlanState.DRAFT,
           PlanState.LOCKED,
-          "cannot lock plan with " + unlinked + " commit(s) missing outcome link");
+          "cannot submit plan with " + unlinked + " commit(s) missing outcome link");
     }
     plan.setState(PlanState.LOCKED);
     plan.setLockedAt(Instant.now());

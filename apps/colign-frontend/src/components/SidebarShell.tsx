@@ -83,7 +83,12 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
       className={cn(
         "hidden md:flex flex-col h-screen sticky top-0 overflow-hidden",
         "border-r border-neutral-200 dark:border-neutral-800",
-        "transition-[width] duration-200 ease-out",
+        // No width transition: animating it makes the labels appear to slide
+        // in from behind the right rail edge while overflow-hidden clips them.
+        // Tiles already sit at the same X position in both states, so an
+        // instant toggle reads as "labels show / hide" rather than "tiles
+        // slide back into the scene." Matches the user's "fixed, never moving"
+        // requirement.
         collapsed ? "w-14" : "w-60",
       )}
       aria-label="Primary navigation"
@@ -91,13 +96,20 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
       data-collapsed={collapsed ? "true" : "false"}
     >
       {/* Top row:
-          Expanded — workspace pill left, separate close-sidebar toggle pinned right.
-          Collapsed — workspace avatar IS the open-sidebar affordance (hover-morph),
-            no separate toggle button below it. */}
+          Expanded — workspace pill on the left, close-sidebar toggle pinned right.
+          Collapsed — workspace tile centered in the rail to align with the nav
+            tiles below it (which the NavRail's items-center centers) and the
+            user-avatar tile (centered via justify-center). Without this center,
+            the top tile sits at the rail's left edge while everything else
+            centers, producing the horizontal step the user spotted. */}
       <div
         className={cn(
-          "flex items-center border-b border-neutral-200 dark:border-neutral-800",
-          collapsed ? "py-1" : "gap-1 px-2 py-2",
+          "flex items-center border-b border-neutral-200 dark:border-neutral-800 py-1.5",
+          // No horizontal padding in expanded — WorkspacePill's own mx-1 + pl-1.5
+          // lands the avatar at exactly 10px from the rail edge, which is where
+          // NavRail items and UserChip put theirs. `pr-1` gives the toggle a
+          // 4px inset from the right edge.
+          collapsed ? "justify-center" : "gap-1 pr-1",
         )}
       >
         <WorkspacePill

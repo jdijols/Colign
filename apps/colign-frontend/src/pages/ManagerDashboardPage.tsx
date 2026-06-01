@@ -26,18 +26,15 @@ export function ManagerDashboardPage() {
     const rows = data?.content ?? [];
     const planned = rows.filter((r) => r.currentPlan).length;
     const lockedOrBeyond = rows.filter(
-      (r) => r.currentPlan && r.currentPlan.state !== "DRAFT"
+      (r) => r.currentPlan && r.currentPlan.state !== "DRAFT",
     ).length;
     const avgAlignment =
       planned === 0
         ? 0
         : Math.round(
-            (rows.reduce(
-              (acc, r) => acc + (r.currentPlan?.alignment.alignmentPct ?? 0),
-              0
-            ) /
+            (rows.reduce((acc, r) => acc + (r.currentPlan?.alignment.alignmentPct ?? 0), 0) /
               planned) *
-              10
+              10,
           ) / 10;
     return { total: rows.length, planned, lockedOrBeyond, avgAlignment };
   }, [data]);
@@ -61,7 +58,7 @@ export function ManagerDashboardPage() {
         <KpiCard label="Direct reports" value={stats.total} />
         <KpiCard label="Plans started" value={`${stats.planned}/${stats.total}`} />
         <KpiCard
-          label="Locked / reconciling"
+          label="Submitted / reconciling"
           value={`${stats.lockedOrBeyond}/${stats.planned}`}
         />
         <KpiCard
@@ -92,10 +89,7 @@ function KpiCard({
       <div className="px-4 py-3">
         <p className="text-[10px] uppercase tracking-wider text-neutral-600">{label}</p>
         <p
-          className={cn(
-            "mt-1 text-2xl font-semibold tabular-nums tracking-tight",
-            TONE_TEXT[tone]
-          )}
+          className={cn("mt-1 text-2xl font-semibold tabular-nums tracking-tight", TONE_TEXT[tone])}
         >
           {value}
         </p>

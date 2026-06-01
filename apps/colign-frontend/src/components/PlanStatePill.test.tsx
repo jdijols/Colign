@@ -6,7 +6,7 @@ import type { PlanState } from "@/api/types";
 
 const STATES: { state: PlanState; label: string }[] = [
   { state: "DRAFT", label: /draft/i.source },
-  { state: "LOCKED", label: /locked/i.source },
+  { state: "LOCKED", label: /submitted/i.source },
   { state: "RECONCILING", label: /reconciling/i.source },
   { state: "RECONCILED", label: /reconciled/i.source },
   { state: "CARRIED_FORWARD", label: /carried forward/i.source },
