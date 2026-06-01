@@ -7,7 +7,8 @@ import { NavRail } from "@/components/NavRail";
 import { UserChip } from "@/components/UserChip";
 
 export interface SidebarMe {
-  teamName?: string;
+  /** Team name. Null until the user is on a team (OnboardingGate prevents that path from reaching here in practice). */
+  teamName?: string | null;
   teamAvatarUrl?: string | null;
   displayName?: string;
   email?: string;
