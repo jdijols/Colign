@@ -215,9 +215,11 @@ export function WeeklyPlanPage() {
       </Card>
 
       {actionError && (
-        <Alert tone="danger" title="Action failed">
-          {actionError}
-        </Alert>
+        <div data-cy="lock-error">
+          <Alert tone="danger" title="Action failed">
+            {actionError}
+          </Alert>
+        </div>
       )}
 
       {data.commits.length === 0 && !adding && (

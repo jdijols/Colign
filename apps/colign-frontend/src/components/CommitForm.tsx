@@ -4,16 +4,7 @@ import { useAddCommitMutation } from "@/api/commits";
 import { useListOutcomesQuery } from "@/api/outcomes";
 import { useListChessTagsQuery } from "@/api/chessTags";
 import type { OutcomeRefDto } from "@/api/types";
-import {
-  Alert,
-  Button,
-  Card,
-  Field,
-  Input,
-  Select,
-  Spinner,
-  Textarea,
-} from "@/components/ui";
+import { Alert, Button, Card, Field, Input, Select, Spinner, Textarea } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { radioGroupKeyDown, radioTabIndex } from "@/lib/radioGroup";
 
@@ -33,7 +24,8 @@ const CHESS_TONES: Record<string, string> = {
 };
 
 const CHESS_ACTIVE: Record<string, string> = {
-  OFFENSE: "bg-emerald-600 text-white border-emerald-600 dark:bg-emerald-500 dark:border-emerald-500",
+  OFFENSE:
+    "bg-emerald-600 text-white border-emerald-600 dark:bg-emerald-500 dark:border-emerald-500",
   DEFENSE: "bg-amber-500 text-neutral-900 border-amber-600",
   MAINTENANCE:
     "bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white",
@@ -52,10 +44,7 @@ export function CommitForm({ planId, onDone, onCancel }: Props) {
   const { data: chessTags, isLoading: loadingTags } = useListChessTagsQuery();
 
   const grouped = useMemo(() => {
-    const map = new Map<
-      string,
-      { rallyCry: string; objectives: Map<string, OutcomeRefDto[]> }
-    >();
+    const map = new Map<string, { rallyCry: string; objectives: Map<string, OutcomeRefDto[]> }>();
     (outcomesPage?.content ?? []).forEach((o) => {
       const rcKey = o.rallyCryTitle ?? "(no rally cry)";
       if (!map.has(rcKey)) {
@@ -139,10 +128,9 @@ export function CommitForm({ planId, onDone, onCancel }: Props) {
           >
             <Select
               id="commit-outcome"
+              data-cy="commit-outcome-select"
               value={outcomeId}
-              onChange={(e) =>
-                setOutcomeId(e.target.value === "" ? "" : Number(e.target.value))
-              }
+              onChange={(e) => setOutcomeId(e.target.value === "" ? "" : Number(e.target.value))}
               required
               disabled={loadingOutcomes}
             >
@@ -156,7 +144,7 @@ export function CommitForm({ planId, onDone, onCancel }: Props) {
                       <option key={o.id} value={o.id}>
                         [{o.priorityTier}] {o.title} — {doTitle}
                       </option>
-                    ))
+                    )),
                   )}
                 </optgroup>
               ))}
@@ -186,7 +174,7 @@ export function CommitForm({ planId, onDone, onCancel }: Props) {
                       onKeyDown={onKeyDown}
                       className={cn(
                         "inline-flex items-center rounded-md border text-xs font-medium px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-1",
-                        active ? activeClass : base
+                        active ? activeClass : base,
                       )}
                     >
                       {t.label}
