@@ -52,6 +52,7 @@ const CHESS_TAGS = [
   { id: 1, code: "OFFENSE", label: "Offense", priorityRank: 1 },
   { id: 2, code: "DEFENSE", label: "Defense", priorityRank: 2 },
   { id: 3, code: "MAINTENANCE", label: "Maintenance", priorityRank: 3 },
+  { id: 4, code: "POSITIONING", label: "Positioning", priorityRank: 4 },
 ];
 
 describe("CommitForm", () => {

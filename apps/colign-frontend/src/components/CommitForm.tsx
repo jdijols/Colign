@@ -21,6 +21,8 @@ const CHESS_TONES: Record<string, string> = {
     "border-amber-400 text-amber-800 bg-amber-50 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-300 dark:bg-amber-950/40 dark:hover:bg-amber-950/70",
   MAINTENANCE:
     "border-neutral-200 text-neutral-700 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:bg-neutral-900 dark:hover:bg-neutral-800",
+  POSITIONING:
+    "border-indigo-300 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:border-indigo-800 dark:text-indigo-300 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/70",
 };
 
 const CHESS_ACTIVE: Record<string, string> = {
@@ -29,6 +31,8 @@ const CHESS_ACTIVE: Record<string, string> = {
   DEFENSE: "bg-amber-500 text-neutral-900 border-amber-600",
   MAINTENANCE:
     "bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white",
+  POSITIONING:
+    "bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500",
 };
 
 export function CommitForm({ planId, onDone, onCancel }: Props) {

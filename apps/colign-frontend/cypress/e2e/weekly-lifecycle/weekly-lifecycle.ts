@@ -14,10 +14,10 @@ When("I open the weekly plan", () => {
 });
 
 Then(
-  "the Lock plan button is disabled until at least one commit exists",
+  "the Submit plan button is disabled until at least one commit exists",
   () => {
-    // The plan starts with zero commits → canLock=false → disabled Lock button.
-    cy.contains("button", /^Lock plan$/).should("be.disabled");
+    // The plan starts with zero commits → canSubmit=false → disabled Submit button.
+    cy.contains("button", /^Submit plan$/).should("be.disabled");
   },
 );
 
@@ -34,8 +34,8 @@ When("I add a commit titled {string}", (title: string) => {
   cy.get('[data-cy="commit-list"]').contains(title).should("be.visible");
 });
 
-When("I lock the plan", () => {
-  cy.get('[data-cy="lock-plan"]').click();
+When("I submit the plan", () => {
+  cy.get('[data-cy="submit-plan"]').click();
 });
 
 Then("the plan state shows {string}", (label: string) => {
@@ -43,9 +43,10 @@ Then("the plan state shows {string}", (label: string) => {
 });
 
 When("I start reconciliation", () => {
-  // After lock, the WeeklyPlanPage shows "Start reconciliation" or "Lock & start
-  // reconciling". Use the explicit goto-reconcile button if present, otherwise
-  // navigate to the reconcile page directly and use start-reconciliation there.
+  // After submission, the WeeklyPlanPage shows "Start reconciliation" or
+  // "Submit & start reconciling". Use the explicit goto-reconcile button if
+  // present, otherwise navigate to the reconcile page directly and use
+  // start-reconciliation there.
   cy.get("body").then(($body) => {
     if ($body.find('[data-cy="goto-reconcile"]').length) {
       cy.get('[data-cy="goto-reconcile"]').click();
