@@ -1,40 +1,41 @@
 ---
 date: 2026-05-31
+updated: 2026-06-01
 branch: main (synced with origin/main, gauntlet/main)
-focus: P0 security surface-area analysis + 5-stash triage; runbook was committed then dropped by user (intentional)
-status: research complete; no code shipped; findings preserved here so PR B can be picked up cold next session
-companion: docs/handoffs/2026-06-01-responsive-ui-audit.md (source of the P0 flags)
+focus: P0 security surface-area analysis + 5-stash triage; produced PR #6 (startup guard) + PR #7 (keypair rotation)
+status: PRs #6 and #7 open and mergeable; PR A2 (history scrub) deferred until both land; stashes dropped
+companion: docs/handoffs/2026-05-31-p0-security-runbook.md (the executable runbook this analysis underpinned), docs/handoffs/2026-06-01-responsive-ui-audit.md (source of the P0 flags)
 prior handoff: docs/handoffs/2026-06-01-responsive-ui-audit.md
 ---
 
 # Handoff — P0 security analysis + stash triage
 
 This session was scoped to "zero-collision work" while another chat ran
-parallel UX + DB changes. Did three things, all read-only or doc-only:
-stash triage, P0 security surface-area mapping, and a runbook draft. The
-runbook landed as commit `0937d8a` then the user dropped it (the file
-no longer exists in `main`; `TODOS.md` reverted). Findings preserved
-below verbatim so a future agent doesn't have to redo the investigation.
+parallel UX + DB changes. The intent was read-only or doc-only, but it
+ultimately produced two shippable PRs:
 
-The two P0 security flags themselves still exist as flagged in
-[docs/handoffs/2026-06-01-responsive-ui-audit.md:46](../../docs/handoffs/2026-06-01-responsive-ui-audit.md).
-Nothing in production changed.
+- **PR [#6](https://github.com/jdijols/Colign/pull/6)** — `feat(auth): refuse to start with mock JWT mode under prod-like profile` (closes P0-B).
+- **PR [#7](https://github.com/jdijols/Colign/pull/7)** — `chore(security): rotate mock JWT keypair + gitignore private key` (closes P0-A1).
 
-## What this session changed (effectively: nothing)
+The third action — the git-history scrub (**PR A2**) — is intentionally
+deferred. It requires a force-push to `main` that would detach PRs #6
+and #7 (and any other unmerged work). Schedule it as a coordinated
+window once both PRs land. Detailed step-by-step in
+[2026-05-31-p0-security-runbook.md](2026-05-31-p0-security-runbook.md).
 
-- Wrote and committed a runbook + a TODOS.md "Security — P0" entry as
-  commit `0937d8a` on `feat/settings-shell-invite`.
-- User then merged feat → main via PR #3 (`92828b0`), which dropped that
-  commit. Working tree on main is clean as of this handoff. Treat
-  `0937d8a` as intentionally discarded.
-- The parallel chat shipped UX work in PRs #1, #2, #3 during this
-  session (responsive-audit, hero copy, settings shell).
+## What this session changed
+
+- Wrote and committed [docs/handoffs/2026-05-31-p0-security-runbook.md](2026-05-31-p0-security-runbook.md) on `main` (via commit `5f7ab77`). The runbook covers both PR A1 (rotation) and PR A2 (history scrub) end-to-end. PR B's patch lives in [#6](https://github.com/jdijols/Colign/pull/6) — runbook references it.
+- Opened **PR #6** on branch `feat/auth-startup-guard`: `SecurityConfig.java` guard + 10-case `SecurityConfigStartupGuardTest`. `./mvnw test` → 33/33 pass. Manual prod-profile smoke deferred to a real prod-like env (DataSource init runs before `SecurityConfig` `@Bean` methods, so the guard's stack trace is masked locally unless Postgres is up).
+- Opened **PR #7** on branch `chore/rotate-mock-jwt-keypair`: new RSA 2048 keypair, public key committed, private key gitignored, `scripts/README.md` policy updated. Pair-correctness verified via `openssl rsa -pubout` diff; end-to-end mint-and-verify cycle proven.
+- Dropped all 5 stashes flagged in the triage table below.
+- Parallel chat shipped PRs #1–#5 during this session: responsive-audit, hero copy, settings shell, landing copy handoff, two-line grayscale hero.
 
 ## Stash triage findings
 
-All five stashes from `git stash list` were inspected read-only. Every
-one is a recovery breadcrumb whose content is already in committed
-work. Safe to drop with `for i in 4 3 2 1 0; do git stash drop "stash@{$i}"; done`. None executed this session.
+All five stashes from `git stash list` were inspected read-only and
+subsequently dropped. Every one was a recovery breadcrumb whose content
+already lived in committed work — preserved here as a record:
 
 | Stash | Branch | What it had | Where it lives now |
 |--|--|--|--|
@@ -140,40 +141,38 @@ private static boolean isProdLikeProfile(org.springframework.core.env.Environmen
 
 **Collision risk:** at session time, no commits to `SecurityConfig.java` in 3 days. The parallel chat was on workspace mgmt + frontend; backend DB changes the user mentioned are on different files. Verify recency before opening PR B: `git log --since="3 days ago" -- apps/colign-backend/src/main/java/com/colign/config/security/`.
 
-## Recommended next steps
+## Remaining steps
 
-In order of safety + value:
+1. **Merge PRs #6 and #7.** Both mergeable. Order doesn't matter — they touch disjoint files (#6 = `SecurityConfig.java` + test; #7 = `colign-mock-public.pem` + `.gitignore` + `scripts/README.md`). Fly + Vercel auto-deploy on each merge. After #7 deploys, the old leaked private key is invalidated against the live stack — that's the actual security win.
+2. **After both #6 and #7 merge: execute PR A2** (git-history scrub). Use the runbook section "PR A → Step 5" verbatim. The blast radius is now bounded — no other unmerged work remains beyond #6 and #7 themselves. Pre-flight: confirm no new branches have appeared since this handoff was written.
+3. **Post-merge dev-workflow update for everyone:** after pulling, run the `openssl genrsa` block from `scripts/README.md` to generate a fresh local private key. Any token minted with the pre-rotation private key is rejected against the deployed backend.
+4. **Optional follow-up PR:** the `wc.auth.*` strings that the wc→colign rename missed — `SecurityConfig.java` lines 40, 44, 117, 146. Cosmetic; no behavioral impact.
 
-1. **Drop the 5 stashes.** Single command: `for i in 4 3 2 1 0; do git stash drop "stash@{$i}"; done`. Confirmed safe by the triage table above.
-2. **Ship PR B (startup guard).** Small, isolated, one Java file + one test file. Mergeable today off current main. Patch + test plan are above; execute as-is or use the runbook commit `0937d8a` from reflog (`git show 0937d8a:docs/handoffs/2026-05-31-p0-security-runbook.md`) if you want the full version.
-3. **Defer PR A (pem rotation + history scrub).** Schedule for a 30-min window when no unmerged branches exist. Recover the runbook from `0937d8a` via reflog before doing this — the step-by-step is detailed there.
-4. **Decide what to do with the dropped runbook commit `0937d8a`.** Still in reflog (`git reflog` should show it). Three options: leave it dropped (current state), cherry-pick the runbook file only back onto main, or rewrite the runbook fresh.
-
-## State at handoff
+## State at handoff (end of 2026-06-01 session)
 
 - Branch: `main`. Tree clean. Up to date with `origin/main` and `gauntlet/main`.
-- HEAD: `92828b0 feat(settings): in-app workspace-settings route with invite entry (#3)`.
-- Three PRs merged this session by the parallel chat: #1 (responsive-audit), #2 (hero copy), #3 (settings shell).
-- TODOS.md: 47 lines, unchanged from start of session (user reverted my edit).
-- Runbook file `docs/handoffs/2026-05-31-p0-security-runbook.md`: does not exist on main; lives only in the dropped commit `0937d8a` (still in reflog).
-- 5 stashes still in `git stash list`. Not dropped.
-- No production changes.
+- HEAD: `394e1be docs(handoff): preserve P0 security surface-area analysis from parallel chat`.
+- Local branches kept (PRs open): `feat/auth-startup-guard` (PR #6), `chore/rotate-mock-jwt-keypair` (PR #7).
+- Stashes: empty.
+- TODOS.md: 47 lines, untouched (user reverted the security entry; covered by the runbook on disk instead).
+- No production changes yet — both PRs await review + merge.
 
 ## Suggested skills for the next agent
 
-- **`/context-restore`** — loads the most recent saved checkpoint (`20260531-232820-responsive-ui-audit-shipped-to-prod.md`). Confirms the parallel-chat picture and the security flags' provenance.
-- **`/careful`** — turn on before any work touching `git filter-repo`, `git reset --hard`, or force-push (i.e. PR A).
-- **`/codex review`** or **`/code-review`** — second opinion on the PR B Java patch before opening the PR; the prod-profile detection is the kind of thing where a wrong predicate (missing `prod-eu` etc.) silently fails open.
-- **`/cso`** — if the user wants a STRIDE/OWASP pass over the broader auth surface before shipping PR A.
-- **`/ship`** — once PR B is built, to push + open the PR with the right base branch and a clean message.
+- **`/context-restore`** — loads the most recent saved checkpoint. Confirms the security-flags provenance and the PR ordering.
+- **`/code-review`** or **`/codex review`** — second opinion on PRs #6 and #7 before merging. PR #6's prod-profile detection is the kind of predicate where a missing variant (`prod-eu`, `prd`) silently fails open; worth a fresh pair of eyes.
+- **`/careful`** — turn on before executing **PR A2** (history scrub). Touches `git filter-repo` + force-push to both remotes.
+- **`/cso`** — STRIDE/OWASP pass over the broader auth surface if the user wants a wider sweep beyond the two P0 items.
 
-Do NOT pre-emptively use `/autoplan` or `/spec` on these — they're small mechanical fixes, not new features.
+Do NOT pre-emptively use `/autoplan` or `/spec` on these — the runbook is the spec, PR #6 and PR #7 are the deliverables, the only remaining work is review + merge + A2.
 
 ## References
 
-- [docs/handoffs/2026-06-01-responsive-ui-audit.md](../../docs/handoffs/2026-06-01-responsive-ui-audit.md) — source of the P0 flags.
-- [docs/superpowers/specs/2026-05-31-responsive-ui-audit-design.md:414](../../docs/superpowers/specs/2026-05-31-responsive-ui-audit-design.md) — spec line surfacing P0-A.
-- [docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md:150](../../docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md) — results doc P0-A entry.
-- [apps/colign-backend/src/main/java/com/colign/config/security/SecurityConfig.java:99](../../apps/colign-backend/src/main/java/com/colign/config/security/SecurityConfig.java) — patch site for PR B.
-- [apps/colign-backend/src/main/resources/application.yml:34](../../apps/colign-backend/src/main/resources/application.yml) — the unsafe default that PR B closes.
-- Dropped commit `0937d8a` — still in reflog, contains the full runbook.
+- [docs/handoffs/2026-05-31-p0-security-runbook.md](2026-05-31-p0-security-runbook.md) — executable runbook for PR A1 + A2 + PR B.
+- [docs/handoffs/2026-06-01-responsive-ui-audit.md](2026-06-01-responsive-ui-audit.md) — source of the P0 flags.
+- [docs/superpowers/specs/2026-05-31-responsive-ui-audit-design.md:414](../superpowers/specs/2026-05-31-responsive-ui-audit-design.md) — spec line surfacing P0-A.
+- [docs/superpowers/specs/2026-05-31-responsive-ui-audit-results.md:150](../superpowers/specs/2026-05-31-responsive-ui-audit-results.md) — results doc P0-A entry.
+- [apps/colign-backend/src/main/java/com/colign/config/security/SecurityConfig.java:99](../../apps/colign-backend/src/main/java/com/colign/config/security/SecurityConfig.java) — patch site for PR B (delivered as PR #6).
+- [apps/colign-backend/src/main/resources/application.yml:34](../../apps/colign-backend/src/main/resources/application.yml) — the unsafe default that PR #6 closes.
+- PR [#6](https://github.com/jdijols/Colign/pull/6) — startup guard.
+- PR [#7](https://github.com/jdijols/Colign/pull/7) — keypair rotation.
