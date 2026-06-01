@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { HiOutlineMenu } from "react-icons/hi";
 import { WorkspacePill } from "@/components/WorkspacePill";
 import { NavRail } from "@/components/NavRail";
 import { UserChip } from "@/components/UserChip";
@@ -23,25 +24,26 @@ interface Props {
 const COLLAPSED_STORAGE_KEY = "colign_sidebar_collapsed";
 
 /**
- * Authenticated app shell with a left-rail sidebar.
+ * Authenticated app shell with a left-rail sidebar — modelled on ChatGPT's
+ * pattern, adapted for Colign.
  *
  * Desktop (≥768px):
- *   - Expanded (default): sidebar visible at 240px; toggle at top-left inside
- *     the rail's top padding shows the sidebar-close icon.
- *   - Collapsed: sidebar width animates to 0; the floating toggle remains at
- *     top-left, showing the Colign logomark by default and morphing to a
- *     sidebar-open icon on hover with an "Open sidebar" tooltip.
- *   - Collapse state persists in localStorage so the user's preference sticks
- *     across reloads.
+ *   Expanded (default, ~256px):
+ *     [workspace avatar + team name] [toggle]
+ *     [icon] Plan / Reconcile / Team
+ *     [user avatar + name + role badge]   ← click → Settings / Sign out popover
+ *
+ *   Collapsed (thin rail ~56px, state persisted in localStorage):
+ *     [workspace avatar]
+ *     [toggle]
+ *     [Plan icon / Reconcile icon / Team icon]
+ *     [user avatar]   ← click → same popover, anchored wider than the chip
  *
  * Mobile (<768px):
- *   - The toggle lives in the same top-left position. Tapping it opens the
- *     sidebar as a drawer overlay with a backdrop; tapping the backdrop, Esc,
- *     or selecting any nav link dismisses it. Body scroll is locked while
- *     the drawer is open so iOS doesn't scroll content out from under.
- *
- * The toggle is a single fixed element — it never moves. Users always know
- * exactly where to find the sidebar control.
+ *   The sidebar is hidden by default. A top strip shows a hamburger and the
+ *   workspace name; tapping the hamburger slides the sidebar in as a drawer
+ *   overlay with a backdrop. Tap-backdrop / Esc / select-route dismisses.
+ *   Body scroll is locked while the drawer is open.
  */
 export function SidebarShell({ me, onSignOut, children }: Props) {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -50,13 +52,11 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
   });
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Persist desktop collapse preference.
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(COLLAPSED_STORAGE_KEY, collapsed ? "1" : "0");
   }, [collapsed]);
 
-  // Drawer side-effects: body scroll lock + Esc to close.
   useEffect(() => {
     if (!drawerOpen) return;
     const previousOverflow = document.body.style.overflow;
@@ -71,28 +71,62 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
     };
   }, [drawerOpen]);
 
-  // The toggle does different things based on viewport: collapse on desktop,
-  // drawer on mobile. Resolved at click time so a resize doesn't need a
-  // re-render to behave correctly.
-  function handleToggle() {
-    const isDesktop =
-      typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
-    if (isDesktop) {
-      setCollapsed((c) => !c);
-    } else {
-      setDrawerOpen((o) => !o);
-    }
+  function toggleDesktopCollapse() {
+    setCollapsed((c) => !c);
   }
 
-  // For the toggle's visual state: "hidden" means the user can't currently
-  // see the sidebar contents (desktop-collapsed OR mobile-drawer-closed).
-  // We render the toggle twice — once per viewport — so each can read its
-  // own correct state without JS viewport detection at render time.
+  // The desktop rail keeps its identity + icons visible at both widths. The
+  // toggle's `collapsed` reflects desktop state only.
+  const desktopRail = (
+    <aside
+      className={cn(
+        "hidden md:flex flex-col h-screen sticky top-0 overflow-hidden",
+        "border-r border-neutral-200 dark:border-neutral-800",
+        "transition-[width] duration-200 ease-out",
+        collapsed ? "w-14" : "w-60",
+      )}
+      aria-label="Primary navigation"
+      data-cy="sidebar"
+      data-collapsed={collapsed ? "true" : "false"}
+    >
+      {/* Top row: workspace identity + toggle.
+          Expanded — workspace pill left, toggle pinned right.
+          Collapsed — both stack centered in the narrow rail. */}
+      <div
+        className={cn(
+          "flex border-b border-neutral-200 dark:border-neutral-800",
+          collapsed ? "flex-col items-center gap-1 py-2" : "items-center gap-1 px-2 py-2",
+        )}
+      >
+        <WorkspacePill
+          name={me.teamName ?? ""}
+          avatarUrl={me.teamAvatarUrl ?? null}
+          compact={collapsed}
+        />
+        <SidebarToggle collapsed={collapsed} onToggle={toggleDesktopCollapse} />
+      </div>
 
-  const sidebarBody = (
+      <div className="flex-1 overflow-y-auto">
+        <NavRail role={me.role} collapsed={collapsed} />
+      </div>
+
+      <UserChip
+        email={me.email ?? ""}
+        role={me.role}
+        avatarUrl={null}
+        displayName={me.displayName ?? me.email ?? ""}
+        onSignOut={onSignOut}
+        compact={collapsed}
+      />
+    </aside>
+  );
+
+  // Mobile drawer body — always rendered expanded-style (no compact mode).
+  const mobileDrawerBody = (
     <>
-      <div className="pt-12">
+      <div className="flex items-center gap-1 px-2 py-2 border-b border-neutral-200 dark:border-neutral-800">
         <WorkspacePill name={me.teamName ?? ""} avatarUrl={me.teamAvatarUrl ?? null} />
+        <SidebarToggle collapsed={false} onToggle={() => setDrawerOpen(false)} />
       </div>
       <div className="flex-1 overflow-y-auto">
         <NavRail role={me.role} onNavigate={() => setDrawerOpen(false)} />
@@ -109,50 +143,41 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
 
   return (
     <div className="min-h-screen flex bg-white dark:bg-neutral-950">
-      {/* Desktop toggle — pinned top-left, state reflects `collapsed` */}
-      <SidebarToggle
-        hidden={collapsed}
-        onToggle={handleToggle}
-        className="hidden md:inline-flex fixed top-3 left-3 z-50"
-      />
-      {/* Mobile toggle — pinned top-left, state reflects drawer-closed */}
-      <SidebarToggle
-        hidden={!drawerOpen}
-        onToggle={handleToggle}
-        className="md:hidden fixed top-3 left-3 z-50"
-      />
+      {/* Mobile-only top strip */}
+      <header className="md:hidden sticky top-0 z-30 h-12 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex items-center gap-2 px-3">
+        <button
+          type="button"
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Open navigation"
+          aria-expanded={drawerOpen}
+          data-cy="sidebar-hamburger"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
+        >
+          <HiOutlineMenu className="h-4 w-4" aria-hidden />
+        </button>
+        {me.teamName ? (
+          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-50 truncate">
+            {me.teamName}
+          </span>
+        ) : null}
+      </header>
 
-      {/* Desktop sidebar — width animates between 0 and 240px */}
-      <aside
-        className={cn(
-          "hidden md:flex flex-col h-screen sticky top-0 overflow-hidden",
-          "border-r border-neutral-200 dark:border-neutral-800",
-          "transition-[width] duration-200 ease-out",
-          collapsed ? "w-0 border-r-0" : "w-60",
-        )}
-        aria-label="Primary navigation"
-        aria-hidden={collapsed}
-        data-cy="sidebar"
-      >
-        {/* Inner wrapper holds the fixed-width content so the outer animates cleanly */}
-        <div className="w-60 flex flex-col h-full">{sidebarBody}</div>
-      </aside>
+      {desktopRail}
 
-      {/* Mobile drawer — rendered only when open, overlays content */}
       {drawerOpen ? (
         <>
           <div
             role="presentation"
             data-cy="sidebar-overlay"
             onClick={() => setDrawerOpen(false)}
-            className="md:hidden fixed inset-0 z-30 bg-black/40 backdrop-blur-sm"
+            className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
           />
           <aside
-            className="md:hidden fixed inset-y-0 left-0 z-40 w-64 border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex flex-col"
+            className="md:hidden fixed inset-y-0 left-0 z-50 w-64 border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex flex-col"
             aria-label="Primary navigation"
             data-cy="sidebar-drawer"
           >
-            <div className="w-full flex flex-col h-full">{sidebarBody}</div>
+            {mobileDrawerBody}
           </aside>
         </>
       ) : null}

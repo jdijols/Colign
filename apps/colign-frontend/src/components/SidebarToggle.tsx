@@ -1,16 +1,14 @@
-import { ColignMark } from "@/components/Brand";
 import { cn } from "@/lib/cn";
 
 interface Props {
-  /** Whether the sidebar is currently hidden (collapsed on desktop, drawer-closed on mobile). */
-  hidden: boolean;
+  collapsed: boolean;
   onToggle: () => void;
   className?: string;
 }
 
 /**
- * Sidebar-shaped icon: a rounded rectangle with a vertical divider, matching
- * the chrome we want users to recognise as "the sidebar."
+ * Sidebar-shaped icon (rounded rectangle with a vertical divider near the
+ * left), mirroring the chrome users recognise as "the sidebar."
  */
 function SidebarIcon({ className }: { className?: string }) {
   return (
@@ -31,47 +29,32 @@ function SidebarIcon({ className }: { className?: string }) {
 }
 
 /**
- * Sidebar toggle in the ChatGPT pattern.
- *
- * - When the sidebar is hidden: the toggle shows the Colign logomark by
- *   default; on hover/focus it morphs into a sidebar icon and reveals a
- *   "Open sidebar" tooltip.
- * - When the sidebar is visible: the toggle always shows the sidebar icon
- *   with a "Close sidebar" tooltip on hover/focus.
- *
- * The toggle is always at the same screen position (top-3 left-3) so users
- * never have to hunt for it across state transitions.
+ * Open/close-sidebar toggle. Same visual at both states — only the tooltip
+ * (and aria-label) flip. Matches ChatGPT's pattern: a quiet sidebar icon
+ * that surfaces its purpose via a hover/focus tooltip.
  */
-export function SidebarToggle({ hidden, onToggle, className }: Props) {
-  const label = hidden ? "Open sidebar" : "Close sidebar";
+export function SidebarToggle({ collapsed, onToggle, className }: Props) {
+  const label = collapsed ? "Open sidebar" : "Close sidebar";
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-label={label}
-      aria-expanded={!hidden}
+      aria-expanded={!collapsed}
       data-cy="sidebar-toggle"
       className={cn(
-        "group relative inline-flex h-9 w-9 items-center justify-center rounded-md",
-        "text-neutral-700 dark:text-neutral-300",
-        "hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors",
+        "group relative inline-flex h-8 w-8 items-center justify-center rounded-md",
+        "text-neutral-500 dark:text-neutral-400",
+        "hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-50",
+        "transition-colors",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
         className,
       )}
     >
-      {hidden ? (
-        <>
-          <ColignMark className="h-4 w-4 group-hover:hidden group-focus-visible:hidden" />
-          <SidebarIcon className="h-4 w-4 hidden group-hover:block group-focus-visible:block" />
-        </>
-      ) : (
-        <SidebarIcon className="h-4 w-4" />
-      )}
-
-      {/* Hover/focus tooltip — positioned to the right of the toggle */}
+      <SidebarIcon className="h-4 w-4" />
       <span
         role="tooltip"
-        className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-md bg-neutral-900 dark:bg-neutral-100 px-2 py-1 text-xs font-medium text-white dark:text-neutral-900 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity"
+        className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-md bg-neutral-900 dark:bg-neutral-100 px-2 py-1 text-xs font-medium text-white dark:text-neutral-900 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity z-10"
       >
         {label}
       </span>
