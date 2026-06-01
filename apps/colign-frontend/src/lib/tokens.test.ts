@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+// @ts-expect-error tailwind.config.js is a CommonJS-ish source file with no
+// .d.ts; we read theme.extend tokens defensively via Record<string, string>.
 import tailwindConfig from "../../tailwind.config.js";
 
 describe("Tailwind fluid token contract (spec §4.2)", () => {
