@@ -4,34 +4,34 @@ import {
   assertTouchTargets,
 } from "../support/responsive-assertions";
 
+/**
+ * Narrow viewport regression. In mock mode, RootGate routes / to the
+ * WeeklyCommitApp remote (HostHome only renders under real Auth0). Ada
+ * is pre-seeded with a team in the H2 demo profile, so the journey is:
+ *   /login → click Ada → /weekly-plan (the IC's main screen).
+ */
 describe("Responsive @ 320×568 (narrow stress test)", () => {
-  // Per-test preflight: Cypress treats a throw in `before()` as a hook failure
-  // but other describe blocks in the same run still execute. beforeEach gives
-  // us per-it env validation.
   beforeEach(() => {
     preflight();
     cy.viewport(320, 568);
   });
 
-  it("HostHome → Login → OnboardingChoice → InviteTeammates → WeeklyPlan", () => {
+  it("Landing at /", () => {
     cy.visit("/");
     assertNoHorizontalScroll();
     assertTouchTargets();
+  });
 
-    cy.get('[data-cy="landing-get-started"]').click();
-    cy.findByRole("button", { name: /sign in/i }).click();
+  it("Login page", () => {
+    cy.visit("/login");
     assertNoHorizontalScroll();
     assertTouchTargets();
+  });
 
-    cy.findByRole("button", { name: /create a team/i }).click();
-    assertNoHorizontalScroll();
-    assertTouchTargets();
-
-    cy.findByRole("link", { name: /skip/i }).click();
-    assertNoHorizontalScroll();
-    assertTouchTargets();
-
-    cy.findByRole("heading", { name: /this week/i, level: 1 }).should("be.visible");
+  it("Login → WeeklyPlanPage (seeded Ada with team)", () => {
+    cy.visit("/login");
+    cy.contains("button", /Ada — IC/i).click();
+    cy.get('[data-cy="plan-heading"]', { timeout: 10000 }).should("be.visible");
     assertNoHorizontalScroll();
     assertTouchTargets();
   });

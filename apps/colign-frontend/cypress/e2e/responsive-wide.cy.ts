@@ -10,25 +10,22 @@ describe("Responsive @ 1440×900 (desktop target)", () => {
     cy.viewport(1440, 900);
   });
 
-  it("HostHome → Login → OnboardingChoice → InviteTeammates → WeeklyPlan", () => {
+  it("Landing at /", () => {
     cy.visit("/");
     assertNoHorizontalScroll();
     assertTouchTargets();
+  });
 
-    cy.get('[data-cy="landing-get-started"]').click();
-    cy.findByRole("button", { name: /sign in/i }).click();
+  it("Login page", () => {
+    cy.visit("/login");
     assertNoHorizontalScroll();
     assertTouchTargets();
+  });
 
-    cy.findByRole("button", { name: /create a team/i }).click();
-    assertNoHorizontalScroll();
-    assertTouchTargets();
-
-    cy.findByRole("link", { name: /skip/i }).click();
-    assertNoHorizontalScroll();
-    assertTouchTargets();
-
-    cy.findByRole("heading", { name: /this week/i, level: 1 }).should("be.visible");
+  it("Login → WeeklyPlanPage (seeded Ada with team)", () => {
+    cy.visit("/login");
+    cy.contains("button", /Ada — IC/i).click();
+    cy.get('[data-cy="plan-heading"]', { timeout: 10000 }).should("be.visible");
     assertNoHorizontalScroll();
     assertTouchTargets();
   });

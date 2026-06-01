@@ -67,3 +67,4 @@ apps/*/src/*-compiled.css
 .gstack/
 .superpowers/
 .audit-snapshot/
+apps/colign-frontend/cypress/screenshots/
