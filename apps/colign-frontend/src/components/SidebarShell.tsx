@@ -127,7 +127,7 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
   // Mobile drawer body — always rendered expanded-style (no compact mode).
   const mobileDrawerBody = (
     <>
-      <div className="flex items-center gap-1 px-2 py-2 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="flex items-center py-1 pr-1 border-b border-neutral-200 dark:border-neutral-800">
         <WorkspacePill name={me.teamName ?? ""} avatarUrl={me.teamAvatarUrl ?? null} />
         <SidebarToggle collapsed={false} onToggle={() => setDrawerOpen(false)} />
       </div>
@@ -156,7 +156,7 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
           data-cy="sidebar-hamburger"
           className="inline-flex h-9 w-9 items-center justify-center rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
         >
-          <HiOutlineMenu className="h-4 w-4" aria-hidden />
+          <HiOutlineMenu className="h-5 w-5" aria-hidden />
         </button>
         {me.teamName ? (
           <span className="text-sm font-medium text-neutral-900 dark:text-neutral-50 truncate">

@@ -44,7 +44,7 @@ export function SidebarToggle({ collapsed, onToggle, className }: Props) {
       aria-expanded={!collapsed}
       data-cy="sidebar-toggle"
       className={cn(
-        "group relative inline-flex h-8 w-8 items-center justify-center rounded-md",
+        "group relative inline-flex h-9 w-9 items-center justify-center rounded-md shrink-0",
         "text-neutral-500 dark:text-neutral-400",
         "hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-50",
         "transition-colors",
@@ -52,7 +52,7 @@ export function SidebarToggle({ collapsed, onToggle, className }: Props) {
         className,
       )}
     >
-      <SidebarIcon className="h-4 w-4" />
+      <SidebarIcon className="h-5 w-5" />
       <span
         role="tooltip"
         className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-md bg-neutral-900 dark:bg-neutral-100 px-2 py-1 text-xs font-medium text-white dark:text-neutral-900 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity z-10"

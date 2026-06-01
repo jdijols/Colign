@@ -4,15 +4,24 @@ import { cn } from "@/lib/cn";
 
 interface Props {
   role: "IC" | "MANAGER" | "ADMIN";
-  /** When true, render icon-only buttons centered in a thin rail. */
+  /** When true, render icon-only items (no label). Icon X-position is unchanged. */
   collapsed?: boolean;
   onNavigate?: () => void;
 }
 
-// Layout: icon (and label when expanded) sit in a relative container so the
-// active-accent bar can pin to the absolute left edge.
+/**
+ * Sidebar row geometry (shared by NavRail, WorkspacePill, and UserChip):
+ *
+ *   |←4→|←8→|·····28px slot·····|←gap-2.5→|·label·| → 11 (44px) tall
+ *
+ * The icon slot is always 28px (w-7 h-7) and always sits at `mx-1 + px-2 = 12px`
+ * from the rail edge. Icons (h-5 w-5 / 20px) sit centered inside it; avatars
+ * (h-7 w-7 / 28px) fill it exactly. Result: nav icons and avatars share the
+ * same X-position across rows AND across collapsed↔expanded — only the label
+ * appears or disappears.
+ */
 const ITEM_BASE =
-  "group/item relative flex items-center transition-colors rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 dark:focus-visible:ring-white";
+  "group/item relative flex items-center h-11 mx-1 px-2 gap-2.5 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 dark:focus-visible:ring-white";
 
 const ITEM_INACTIVE =
   "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 hover:text-neutral-900 dark:hover:text-neutral-50";
@@ -20,15 +29,12 @@ const ITEM_INACTIVE =
 const ITEM_ACTIVE =
   "bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50 font-medium";
 
-const EXPANDED_LAYOUT = "gap-2.5 mx-2 px-2.5 py-1.5 text-sm";
-const COLLAPSED_LAYOUT = "mx-2 px-2 py-1.5 justify-center";
-
 /** Linear-style left-edge accent for the active route. */
 function ActiveAccent() {
   return (
     <span
       aria-hidden
-      className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r-full bg-neutral-900 dark:bg-white"
+      className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full bg-neutral-900 dark:bg-white"
     />
   );
 }
@@ -51,19 +57,13 @@ function NavRailItem({ to, icon, label, end, dataCy, collapsed, onNavigate }: It
       data-cy={dataCy}
       onClick={onNavigate}
       title={collapsed ? label : undefined}
-      className={({ isActive }) =>
-        cn(
-          ITEM_BASE,
-          collapsed ? COLLAPSED_LAYOUT : EXPANDED_LAYOUT,
-          isActive ? ITEM_ACTIVE : ITEM_INACTIVE,
-        )
-      }
+      className={({ isActive }) => cn(ITEM_BASE, isActive ? ITEM_ACTIVE : ITEM_INACTIVE)}
     >
       {({ isActive }) => (
         <>
           {isActive ? <ActiveAccent /> : null}
-          {icon}
-          {collapsed ? null : <span>{label}</span>}
+          <span className="w-7 h-7 shrink-0 flex items-center justify-center">{icon}</span>
+          {collapsed ? null : <span className="truncate text-sm">{label}</span>}
         </>
       )}
     </NavLink>
@@ -72,12 +72,7 @@ function NavRailItem({ to, icon, label, end, dataCy, collapsed, onNavigate }: It
 
 /**
  * Sidebar route links. Plan / Reconcile / Team (Team hidden for IC).
- * Settings does NOT live here — it lives in the user-chip popover at the
- * bottom of the sidebar (the convention shared by ChatGPT, Notion, Linear).
- *
- * Two render modes:
- *   - default: icon + label, left-aligned
- *   - collapsed: icon only, centered (for the thin rail)
+ * Settings lives in the user-chip popover, not here.
  */
 export function NavRail({ role, collapsed = false, onNavigate }: Props) {
   const showTeam = role === "MANAGER" || role === "ADMIN";
@@ -89,7 +84,7 @@ export function NavRail({ role, collapsed = false, onNavigate }: Props) {
         dataCy="sidebar-plan"
         collapsed={collapsed}
         onNavigate={onNavigate}
-        icon={<HiOutlineCalendar className="h-4 w-4 shrink-0" aria-hidden />}
+        icon={<HiOutlineCalendar className="h-5 w-5" aria-hidden />}
         label="Plan"
       />
       <NavRailItem
@@ -97,7 +92,7 @@ export function NavRail({ role, collapsed = false, onNavigate }: Props) {
         dataCy="sidebar-reconcile"
         collapsed={collapsed}
         onNavigate={onNavigate}
-        icon={<HiOutlineCheckCircle className="h-4 w-4 shrink-0" aria-hidden />}
+        icon={<HiOutlineCheckCircle className="h-5 w-5" aria-hidden />}
         label="Reconcile"
       />
       {showTeam ? (
@@ -106,7 +101,7 @@ export function NavRail({ role, collapsed = false, onNavigate }: Props) {
           dataCy="sidebar-team"
           collapsed={collapsed}
           onNavigate={onNavigate}
-          icon={<HiOutlineUserGroup className="h-4 w-4 shrink-0" aria-hidden />}
+          icon={<HiOutlineUserGroup className="h-5 w-5" aria-hidden />}
           label="Team"
         />
       ) : null}
