@@ -97,6 +97,7 @@ export function chessTagTone(code: string | null | undefined): StatusTone {
   if (code === "OFFENSE") return "success";
   if (code === "DEFENSE") return "warning";
   if (code === "MAINTENANCE") return "neutral";
+  if (code === "POSITIONING") return "info";
   return "neutral";
 }
 
