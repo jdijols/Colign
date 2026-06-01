@@ -122,7 +122,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
               </TH>
               <TH>Week of</TH>
               <TH>Status</TH>
-              <TH>Alignment</TH>
+              <TH>High-priority alignment</TH>
               <TH>Commits</TH>
               <TH className="text-right">
                 <span className="sr-only">Open</span>
@@ -195,7 +195,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                               aria-valuenow={plan.alignment.alignmentPct}
                               aria-valuemin={0}
                               aria-valuemax={100}
-                              aria-label={`${m.displayName} alignment ${plan.alignment.alignmentPct}%`}
+                              aria-label={`${m.displayName} high-priority alignment ${plan.alignment.alignmentPct}%`}
                             />
                           </div>
                           <span className={cn("text-xs font-medium tabular-nums", tier.label)}>
@@ -322,7 +322,7 @@ function TeamRollupCard({
                 aria-valuenow={plan.alignment.alignmentPct}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label={`${member.displayName} alignment ${plan.alignment.alignmentPct}%`}
+                aria-label={`${member.displayName} high-priority alignment ${plan.alignment.alignmentPct}%`}
               />
             </div>
             <span className={cn("text-xs font-medium tabular-nums", tier.label)}>

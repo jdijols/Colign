@@ -53,7 +53,7 @@ export function ManagerDashboardPage() {
           My team — this week
         </h1>
         <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-          Plans across your direct reports, with strategic alignment % per IC.
+          Plans across your direct reports, with high-priority alignment % per IC.
         </p>
       </header>
 
@@ -64,7 +64,11 @@ export function ManagerDashboardPage() {
           label="Locked / reconciling"
           value={`${stats.lockedOrBeyond}/${stats.planned}`}
         />
-        <KpiCard label="Avg alignment" value={`${stats.avgAlignment}%`} tone={alignmentTone} />
+        <KpiCard
+          label="Avg high-priority alignment"
+          value={`${stats.avgAlignment}%`}
+          tone={alignmentTone}
+        />
       </div>
 
       <TeamRollupTable onSelectMember={setSelected} />

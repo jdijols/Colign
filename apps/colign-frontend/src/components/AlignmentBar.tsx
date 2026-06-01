@@ -8,15 +8,19 @@ interface AlignmentBarProps {
 }
 
 /**
- * Strategic alignment visualization — bar + numeric % + linked-count.
+ * High-priority alignment visualization — bar + numeric % + linked-count.
+ *
+ * The metric is the share of weekly commits linked to a P0/P1 Outcome.
+ * (Every commit is already linked to *some* outcome via NOT NULL FK, so
+ * "linked at all" is uninformative — this surfaces the priority of that link.)
  *
  * Two complementary a11y channels for the live percentage:
  *  - The visible bar uses {@code role="progressbar"} + {@code aria-valuenow},
  *    which most modern screen readers announce on update.
  *  - A visually-hidden {@code aria-live="polite"} status sibling carries a
- *    full sentence ("Alignment 75%, 6 of 8 commits on P0/P1 outcomes") so
- *    SRs that ignore progressbar updates (or that read it terse) still
- *    surface a meaningful change announcement after the user adds /
+ *    full sentence ("High-priority alignment 75%, 6 of 8 commits on P0/P1
+ *    outcomes") so SRs that ignore progressbar updates (or read it terse)
+ *    still surface a meaningful change announcement after the user adds /
  *    removes / re-prioritises a commit.
  *
  * {@code aria-atomic="true"} on the live region ensures the whole new
@@ -30,7 +34,7 @@ export function AlignmentBar({ alignment, size = "sm" }: AlignmentBarProps) {
   const barW = size === "md" ? "w-40" : "w-32";
 
   return (
-    <div className="flex items-center gap-3" aria-label="Strategic alignment">
+    <div className="flex items-center gap-3" aria-label="High-priority alignment">
       <div
         className={cn(
           "rounded-full overflow-hidden bg-neutral-200 dark:bg-neutral-800",
@@ -45,7 +49,7 @@ export function AlignmentBar({ alignment, size = "sm" }: AlignmentBarProps) {
           aria-valuenow={alignmentPct}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label={`Alignment ${alignmentPct}%`}
+          aria-label={`High-priority alignment ${alignmentPct}%`}
         />
       </div>
       <span
@@ -62,8 +66,8 @@ export function AlignmentBar({ alignment, size = "sm" }: AlignmentBarProps) {
       </span>
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {totalCommits === 0
-          ? "Alignment unavailable: no commits yet."
-          : `Alignment ${alignmentPct} percent. ${linkedToHighPriority} of ${totalCommits} commits on P0 or P1 outcomes.`}
+          ? "High-priority alignment unavailable: no commits yet."
+          : `High-priority alignment ${alignmentPct} percent. ${linkedToHighPriority} of ${totalCommits} commits on P0 or P1 outcomes.`}
       </span>
     </div>
   );

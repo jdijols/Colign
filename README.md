@@ -5,7 +5,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-neutral.svg)](#license) ![Spring Boot 3.3](https://img.shields.io/badge/Spring_Boot-3.3-neutral) ![Vite 5 Module Federation](https://img.shields.io/badge/Vite_5-Module_Federation-neutral) ![Auth0 OIDC](https://img.shields.io/badge/Auth-Auth0_OIDC-neutral) ![PostgreSQL 16](https://img.shields.io/badge/Postgres-16-neutral)
 
-**colign** is an open source weekly-planning tool that makes structural alignment a precondition, not an afterthought. Every weekly commit a person makes has to link to a leaf Outcome in the team's strategy tree (Rally Cry → Defining Objective → Outcome). Managers see an alignment % per direct report. Drift becomes visible the moment it happens, not three quarters later.
+**colign** is an open source weekly-planning tool that makes structural alignment a precondition, not an afterthought. Every weekly commit a person makes has to link to a leaf Outcome in the team's strategy tree (Rally Cry → Defining Objective → Outcome). Managers see a **high-priority alignment %** per direct report — the share of that week's commits linked to a P0/P1 Outcome. Drift becomes visible the moment it happens, not three quarters later.
 
 This repository was originally built as the **Weekly Commit Module** submission for the ST6 Partners gauntlet brief — see [Project-Brief.md](Project-Brief.md). The brief asked for "a production-ready micro-frontend module that replaces 15-Five." Rather than ship it as a one-off submission, we kept going and opened it up at [colign.org](https://colign.org) as a standalone project anyone can run.
 
@@ -13,7 +13,7 @@ This repository was originally built as the **Weekly Commit Module** submission 
 
 ## What this is
 
-Today, weekly planning in many orgs happens in 15-Five and is disconnected from strategic execution. Employees fill out plans with no enforced link to company objectives; managers review them without knowing whether the work actually supports the right priorities. colign fixes that by making every individual weekly commitment carry a structural foreign key to a granular Outcome leaf in the RCDO hierarchy — and by giving managers a roll-up view with an alignment % per IC and per team.
+Today, weekly planning in many orgs happens in 15-Five and is disconnected from strategic execution. Employees fill out plans with no enforced link to company objectives; managers review them without knowing whether the work actually supports the right priorities. colign fixes that by making every individual weekly commitment carry a structural foreign key to a granular Outcome leaf in the RCDO hierarchy — and by giving managers a roll-up view with a **high-priority alignment %** (share of commits linked to a P0/P1 Outcome) per IC and per team.
 
 The brand identity (mark, wordmark, color system, typography, voice) lives in [docs/BRAND.md](docs/BRAND.md). It's deliberately monochrome — the discipline is the point.
 
