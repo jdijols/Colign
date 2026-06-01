@@ -7,10 +7,11 @@ const HOME_URL = import.meta.env.PROD ? "https://colign.org" : "/";
 
 /**
  * Landing page at /. The typography itself enacts the colign brand:
- * three lines descending from the abstract (Strategy) through the structural
- * (a defining objective) to the concrete (what lands this week). The visual
- * gesture mirrors the ColignMark — three bars at decreasing weight — and
- * teaches the product's core concept before the user reads a single word.
+ * three lines stating the colign thesis — short-term commitments compound
+ * into long-term alignment, made concrete in what lands this week. The
+ * descending visual weight (full → full → muted) mirrors the ColignMark's
+ * three bars and bakes the brand etymology (commit-ment + align-ment) into
+ * the manifesto before the user reads a single word.
  *
  * The reader's eye flows:
  *   brand anchor → manifesto → concrete value prop → CTA → footer.
@@ -103,7 +104,7 @@ export function HostHome() {
         <div style={{ flex: 1, minHeight: "clamp(48px, 10vh, 140px)" }} />
 
         {/* The three lines, semantically ONE statement under a single <h1>.
-            SR reads: "Strategy. A defining objective. What lands this week."
+            SR reads: "Short-term commitments. Long-term alignment. What lands this week."
             Visual spans render as block lines with descending color. */}
         <h1
           style={{
@@ -114,8 +115,8 @@ export function HostHome() {
             gap: "0.04em",
           }}
         >
-          <span style={headlineLineStyle("var(--fg)")}>Strategy.</span>
-          <span style={headlineLineStyle("var(--fg)")}>A defining objective.</span>
+          <span style={headlineLineStyle("var(--fg)")}>Short-term commitments.</span>
+          <span style={headlineLineStyle("var(--fg)")}>Long-term alignment.</span>
           <span style={headlineLineStyle("var(--muted)")}>
             What lands this week.
           </span>
@@ -136,7 +137,7 @@ export function HostHome() {
             textWrap: "balance",
           }}
         >
-          Weekly planning where every commit links to a strategic outcome.
+          Plans that ladder up to strategy, one week at a time.
         </p>
 
         {/* Tighter gap — CTA pairs with the line it answers */}
