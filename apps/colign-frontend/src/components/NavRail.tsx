@@ -4,24 +4,22 @@ import { cn } from "@/lib/cn";
 
 interface Props {
   role: "IC" | "MANAGER" | "ADMIN";
-  /** When true, render icon-only items (no label). Icon X-position is unchanged. */
   collapsed?: boolean;
   onNavigate?: () => void;
 }
 
 /**
- * Sidebar row geometry (shared by NavRail, WorkspacePill, and UserChip):
- *
- *   |←4→|←8→|·····28px slot·····|←gap-2.5→|·label·| → 11 (44px) tall
- *
- * The icon slot is always 28px (w-7 h-7) and always sits at `mx-1 + px-2 = 12px`
- * from the rail edge. Icons (h-5 w-5 / 20px) sit centered inside it; avatars
- * (h-7 w-7 / 28px) fill it exactly. Result: nav icons and avatars share the
- * same X-position across rows AND across collapsed↔expanded — only the label
- * appears or disappears.
+ * Shared tile geometry — every visible block in the sidebar (workspace avatar,
+ * nav icon, hover state, user avatar) is the SAME 36×36 (h-9 w-9) rectangle.
+ * This eliminates size shift between rest and hover and across collapsed↔
+ * expanded toggles. Icons (20px) sit centered inside the tile; avatars
+ * (filling 36×36) sit at exactly the same X-position.
  */
-const ITEM_BASE =
-  "group/item relative flex items-center h-11 mx-1 px-2 gap-2.5 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 dark:focus-visible:ring-white";
+const ITEM_BASE_COLLAPSED =
+  "relative flex items-center justify-center h-9 w-9 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 dark:focus-visible:ring-white";
+
+const ITEM_BASE_EXPANDED =
+  "relative flex items-center h-9 mx-1 pl-1.5 pr-2 gap-2 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 dark:focus-visible:ring-white";
 
 const ITEM_INACTIVE =
   "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 hover:text-neutral-900 dark:hover:text-neutral-50";
@@ -34,7 +32,7 @@ function ActiveAccent() {
   return (
     <span
       aria-hidden
-      className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full bg-neutral-900 dark:bg-white"
+      className="absolute -left-0.5 top-1.5 bottom-1.5 w-0.5 rounded-r-full bg-neutral-900 dark:bg-white"
     />
   );
 }
@@ -57,13 +55,20 @@ function NavRailItem({ to, icon, label, end, dataCy, collapsed, onNavigate }: It
       data-cy={dataCy}
       onClick={onNavigate}
       title={collapsed ? label : undefined}
-      className={({ isActive }) => cn(ITEM_BASE, isActive ? ITEM_ACTIVE : ITEM_INACTIVE)}
+      className={({ isActive }) =>
+        cn(
+          collapsed ? ITEM_BASE_COLLAPSED : ITEM_BASE_EXPANDED,
+          isActive ? ITEM_ACTIVE : ITEM_INACTIVE,
+        )
+      }
     >
       {({ isActive }) => (
         <>
           {isActive ? <ActiveAccent /> : null}
-          <span className="w-7 h-7 shrink-0 flex items-center justify-center">{icon}</span>
-          {collapsed ? null : <span className="truncate text-sm">{label}</span>}
+          {/* Icon slot — h-9 w-9 in collapsed, h-9 w-9 in expanded as well so
+              the icon's X position is identical across states. */}
+          <span className="w-9 h-9 shrink-0 flex items-center justify-center">{icon}</span>
+          {collapsed ? null : <span className="text-sm truncate">{label}</span>}
         </>
       )}
     </NavLink>
@@ -77,7 +82,10 @@ function NavRailItem({ to, icon, label, end, dataCy, collapsed, onNavigate }: It
 export function NavRail({ role, collapsed = false, onNavigate }: Props) {
   const showTeam = role === "MANAGER" || role === "ADMIN";
   return (
-    <nav className="flex flex-col gap-0.5 py-2" aria-label="Primary">
+    <nav
+      className={cn("flex flex-col gap-0.5 py-2", collapsed ? "items-center" : "items-stretch")}
+      aria-label="Primary"
+    >
       <NavRailItem
         to="."
         end
