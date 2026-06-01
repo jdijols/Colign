@@ -30,4 +30,15 @@ public class MeDto {
      * an invited member (team already has &gt;1 person) skips straight to the app.
      */
     private boolean needsInvite;
+    // --- new in Phase 4 ---
+    /**
+     * Team name, denormalized onto /me so AppShell can render the workspace pill
+     * without an extra query. Null when the user has no team.
+     */
+    private String teamName;
+    /**
+     * Team avatar URL (HTTP/HTTPS). Null when unset; FE falls back to a generated
+     * initial.
+     */
+    private String teamAvatarUrl;
 }

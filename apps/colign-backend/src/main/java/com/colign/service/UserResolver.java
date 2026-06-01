@@ -1,9 +1,11 @@
 package com.colign.service;
 
 import com.colign.config.security.CurrentUser;
+import com.colign.domain.Team;
 import com.colign.domain.User;
 import com.colign.domain.UserRole;
 import com.colign.repository.InvitationRepository;
+import com.colign.repository.TeamRepository;
 import com.colign.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -37,13 +39,16 @@ public class UserResolver {
 
     private final UserRepository users;
     private final InvitationRepository invitations;
+    private final TeamRepository teams;
     private final String defaultRole;
 
     public UserResolver(UserRepository users,
                         InvitationRepository invitations,
+                        TeamRepository teams,
                         @Value("${colign.users.default-role:IC}") String defaultRole) {
         this.users = users;
         this.invitations = invitations;
+        this.teams = teams;
         this.defaultRole = defaultRole;
     }
 
@@ -118,6 +123,14 @@ public class UserResolver {
      */
     public com.colign.dto.MeDto toMeDto(User user) {
         Long teamId = user.getTeamId();
+        String teamName = null, teamAvatarUrl = null;
+        if (teamId != null) {
+            Team t = teams.findById(teamId).orElse(null);
+            if (t != null) {
+                teamName = t.getName();
+                teamAvatarUrl = t.getAvatarUrl();
+            }
+        }
         return com.colign.dto.MeDto.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -126,6 +139,8 @@ public class UserResolver {
                 .teamId(teamId)
                 .managerId(user.getManagerId())
                 .needsInvite(needsInvite(teamId))
+                .teamName(teamName)
+                .teamAvatarUrl(teamAvatarUrl)
                 .build();
     }
 

@@ -72,7 +72,7 @@ class InvitationServiceTest {
     @BeforeEach
     void setUp() {
         service = new InvitationService(invitations, teams, users, emailClient, 14, APP_BASE);
-        resolver = new UserResolver(users, invitations, "IC");
+        resolver = new UserResolver(users, invitations, teams, "IC");
 
         team = Team.builder().name("Platform Engineering").leadUserId(INVITER_ID).build();
         team.setId(TEAM_ID);
