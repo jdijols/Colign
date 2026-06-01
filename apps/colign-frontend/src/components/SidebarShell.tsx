@@ -83,7 +83,12 @@ export function SidebarShell({ me, onSignOut, children }: Props) {
       className={cn(
         "hidden md:flex flex-col h-screen sticky top-0 overflow-hidden",
         "border-r border-neutral-200 dark:border-neutral-800",
-        "transition-[width] duration-200 ease-out",
+        // No width transition: animating it makes the labels appear to slide
+        // in from behind the right rail edge while overflow-hidden clips them.
+        // Tiles already sit at the same X position in both states, so an
+        // instant toggle reads as "labels show / hide" rather than "tiles
+        // slide back into the scene." Matches the user's "fixed, never moving"
+        // requirement.
         collapsed ? "w-14" : "w-60",
       )}
       aria-label="Primary navigation"
