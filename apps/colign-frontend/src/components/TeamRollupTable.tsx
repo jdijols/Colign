@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { HiOutlineEye, HiArrowSmUp, HiArrowSmDown } from "react-icons/hi";
 import { useGetManagerTeamQuery } from "@/api/team";
-import type { TeamMemberDto } from "@/api/types";
+import type { TeamMemberDto, WeeklyCommitDto } from "@/api/types";
 import { PlanStatePill } from "@/components/PlanStatePill";
 import {
   Badge,
@@ -19,6 +19,85 @@ import {
 import { alignmentTier } from "@/lib/tokens";
 import { cn } from "@/lib/cn";
 
+/**
+ * Posture distribution per IC: Offense / Defense / Maintenance commit counts.
+ * Surfaces team-wide drift (e.g. "90% maintenance, 0% offense") without a
+ * server-side aggregation pass — the commits already ride along with each
+ * TeamMemberDto.currentPlan.
+ */
+function postureCounts(commits: WeeklyCommitDto[] | undefined) {
+  let offense = 0;
+  let defense = 0;
+  let maintenance = 0;
+  (commits ?? []).forEach((c) => {
+    if (c.chessTagCode === "OFFENSE") offense += 1;
+    else if (c.chessTagCode === "DEFENSE") defense += 1;
+    else if (c.chessTagCode === "MAINTENANCE") maintenance += 1;
+  });
+  return { offense, defense, maintenance };
+}
+
+/**
+ * Sum of (actual − planned) effort hours across the commits that were
+ * reconciled. Returns null when no commit has a reconciliation row, so the
+ * column can render "—" instead of a misleading 0.
+ */
+function deltaHours(commits: WeeklyCommitDto[] | undefined): number | null {
+  let any = false;
+  let total = 0;
+  (commits ?? []).forEach((c) => {
+    const actual = c.reconciliation?.actualEffortHours;
+    if (actual == null) return;
+    any = true;
+    const planned = c.plannedEffortHours ?? 0;
+    total += actual - planned;
+  });
+  return any ? Math.round(total * 10) / 10 : null;
+}
+
+function DeltaCell({ delta }: { delta: number | null }) {
+  if (delta == null) return <span className="text-neutral-400">—</span>;
+  const sign = delta > 0 ? "+" : "";
+  const tone =
+    delta > 0
+      ? "text-rose-700 dark:text-rose-300"
+      : delta < 0
+        ? "text-emerald-700 dark:text-emerald-300"
+        : "text-neutral-500 dark:text-neutral-400";
+  return (
+    <span className={cn("tabular-nums font-medium", tone)}>
+      {sign}
+      {delta.toFixed(1)}h
+    </span>
+  );
+}
+
+function PostureChips({
+  counts,
+  size = "xs",
+}: {
+  counts: { offense: number; defense: number; maintenance: number };
+  size?: "xs" | "sm";
+}) {
+  const { offense, defense, maintenance } = counts;
+  if (offense + defense + maintenance === 0) {
+    return <span className="text-neutral-400 text-xs">—</span>;
+  }
+  return (
+    <div className="flex items-center gap-1" aria-label="Posture distribution">
+      <Badge tone="success" size={size}>
+        O {offense}
+      </Badge>
+      <Badge tone="warning" size={size}>
+        D {defense}
+      </Badge>
+      <Badge tone="neutral" size={size}>
+        M {maintenance}
+      </Badge>
+    </div>
+  );
+}
+
 type SortKey = "displayName" | "weekStartDate";
 type SortDir = "asc" | "desc";
 
@@ -34,7 +113,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
 
   const { data, isFetching } = useGetManagerTeamQuery(
     { page, size: perPage, sort: `${sort},${dir}` },
-    { refetchOnMountOrArgChange: false }
+    { refetchOnMountOrArgChange: false },
   );
 
   const toggleSort = (k: SortKey) => {
@@ -58,10 +137,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
   const to = data ? Math.min((page + 1) * perPage, data.totalElements) : 0;
 
   return (
-    <div
-      className="space-y-3 team-rollup-container"
-      style={{ containerType: "inline-size" }}
-    >
+    <div className="space-y-3 team-rollup-container" style={{ containerType: "inline-size" }}>
       {/* Sort chip row — visible only in card mode (container < 640px) via responsive.css */}
       <div className="team-rollup-card-view-controls">
         <button
@@ -71,7 +147,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
             "rounded-full px-4 py-2 text-xs font-medium border min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900",
             sort === "displayName"
               ? "bg-neutral-900 text-neutral-50 border-neutral-900 dark:bg-white dark:text-neutral-900"
-              : "border-neutral-200 dark:border-neutral-800 text-neutral-600"
+              : "border-neutral-200 dark:border-neutral-800 text-neutral-600",
           )}
         >
           Name {sort === "displayName" ? (dir === "asc" ? "↑" : "↓") : ""}
@@ -83,7 +159,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
             "rounded-full px-4 py-2 text-xs font-medium border min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900",
             sort === "weekStartDate"
               ? "bg-neutral-900 text-neutral-50 border-neutral-900 dark:bg-white dark:text-neutral-900"
-              : "border-neutral-200 dark:border-neutral-800 text-neutral-600"
+              : "border-neutral-200 dark:border-neutral-800 text-neutral-600",
           )}
         >
           Week {sort === "weekStartDate" ? (dir === "asc" ? "↑" : "↓") : ""}
@@ -94,141 +170,149 @@ export function TeamRollupTable({ onSelectMember }: Props) {
       <div className="team-rollup-table-view">
         <TableScroller>
           <Table>
-          <THead>
-            <tr>
-              <TH
-                aria-sort={
-                  sort === "displayName" ? (dir === "asc" ? "ascending" : "descending") : "none"
-                }
-                className="p-0"
-              >
-                {/* Activator is a real <button> so keyboard users get native
+            <THead>
+              <tr>
+                <TH
+                  aria-sort={
+                    sort === "displayName" ? (dir === "asc" ? "ascending" : "descending") : "none"
+                  }
+                  className="p-0"
+                >
+                  {/* Activator is a real <button> so keyboard users get native
                     Enter/Space activation and focus rings. The TH keeps
                     aria-sort for table semantics. */}
-                <button
-                  type="button"
-                  onClick={() => toggleSort("displayName")}
-                  className="w-full px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
-                  aria-label={`Sort by direct report, currently ${
-                    sort === "displayName"
-                      ? dir === "asc"
-                        ? "ascending"
-                        : "descending"
-                      : "unsorted"
-                  }`}
-                >
-                  Direct report <SortIcon k="displayName" />
-                </button>
-              </TH>
-              <TH>Week of</TH>
-              <TH>Status</TH>
-              <TH>High-priority alignment</TH>
-              <TH>Commits</TH>
-              <TH className="text-right">
-                <span className="sr-only">Open</span>
-              </TH>
-            </tr>
-          </THead>
-          <TBody>
-            {isFetching && !data ? (
-              <TR hover={false}>
-                <TD colSpan={6} className="py-8 text-center text-neutral-600">
-                  <Spinner size="sm" /> Loading team…
-                </TD>
-              </TR>
-            ) : (data?.content ?? []).length === 0 ? (
-              <TR hover={false}>
-                <TD colSpan={6} className="py-8 text-center text-sm text-neutral-600">
-                  No direct reports linked to your account. (Seeded as
-                  manager@st6.dev → Ada / Ben / Chris in the H2 demo profile.)
-                </TD>
-              </TR>
-            ) : (
-              data?.content.map((m) => {
-                const plan = m.currentPlan;
-                const tier = alignmentTier(plan?.alignment.alignmentPct ?? 0);
-                return (
-                  <TR
-                    key={m.userId}
-                    onClick={() => onSelectMember(m)}
-                    className="cursor-pointer"
-                    data-cy="team-row"
-                    data-clickable="true"
+                  <button
+                    type="button"
+                    onClick={() => toggleSort("displayName")}
+                    className="w-full px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
+                    aria-label={`Sort by direct report, currently ${
+                      sort === "displayName"
+                        ? dir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "unsorted"
+                    }`}
                   >
-                    <TD className="whitespace-nowrap">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-7 w-7 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-semibold text-neutral-600 dark:text-neutral-300">
-                          {initials(m.displayName)}
-                        </div>
-                        <div className="leading-tight">
-                          <div className="font-medium text-sm text-neutral-900 dark:text-neutral-50">
-                            {m.displayName}
+                    Direct report <SortIcon k="displayName" />
+                  </button>
+                </TH>
+                <TH>Week of</TH>
+                <TH>Status</TH>
+                <TH>High-priority alignment</TH>
+                <TH className="hidden md:table-cell">Posture</TH>
+                <TH className="hidden md:table-cell">Δ Last week</TH>
+                <TH>Commits</TH>
+                <TH className="text-right">
+                  <span className="sr-only">Open</span>
+                </TH>
+              </tr>
+            </THead>
+            <TBody>
+              {isFetching && !data ? (
+                <TR hover={false}>
+                  <TD colSpan={8} className="py-8 text-center text-neutral-600">
+                    <Spinner size="sm" /> Loading team…
+                  </TD>
+                </TR>
+              ) : (data?.content ?? []).length === 0 ? (
+                <TR hover={false}>
+                  <TD colSpan={8} className="py-8 text-center text-sm text-neutral-600">
+                    No direct reports linked to your account. (Seeded as manager@st6.dev → Ada / Ben
+                    / Chris in the H2 demo profile.)
+                  </TD>
+                </TR>
+              ) : (
+                data?.content.map((m) => {
+                  const plan = m.currentPlan;
+                  const tier = alignmentTier(plan?.alignment.alignmentPct ?? 0);
+                  return (
+                    <TR
+                      key={m.userId}
+                      onClick={() => onSelectMember(m)}
+                      className="cursor-pointer"
+                      data-cy="team-row"
+                      data-clickable="true"
+                    >
+                      <TD className="whitespace-nowrap">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-7 w-7 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-semibold text-neutral-600 dark:text-neutral-300">
+                            {initials(m.displayName)}
                           </div>
-                          <div className="text-xs text-neutral-600 dark:text-neutral-400 font-mono">
-                            {m.email}
+                          <div className="leading-tight">
+                            <div className="font-medium text-sm text-neutral-900 dark:text-neutral-50">
+                              {m.displayName}
+                            </div>
+                            <div className="text-xs text-neutral-600 dark:text-neutral-400 font-mono">
+                              {m.email}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TD>
-                    <TD className="whitespace-nowrap text-xs text-neutral-600 dark:text-neutral-400 tabular-nums">
-                      {plan?.weekStartDate ?? <span className="text-neutral-400">—</span>}
-                    </TD>
-                    <TD>
-                      {plan ? (
-                        <PlanStatePill state={plan.state} size="xs" />
-                      ) : (
-                        <Badge tone="neutral" size="xs">
-                          No plan
-                        </Badge>
-                      )}
-                    </TD>
-                    <TD className="w-52">
-                      {plan ? (
-                        <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-24 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-                            <div
-                              className={cn("h-1.5 rounded-full", tier.bar)}
-                              style={{
-                                width: `${Math.max(0, Math.min(100, plan.alignment.alignmentPct))}%`,
-                              }}
-                              role="progressbar"
-                              aria-valuenow={plan.alignment.alignmentPct}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                              aria-label={`${m.displayName} high-priority alignment ${plan.alignment.alignmentPct}%`}
-                            />
+                      </TD>
+                      <TD className="whitespace-nowrap text-xs text-neutral-600 dark:text-neutral-400 tabular-nums">
+                        {plan?.weekStartDate ?? <span className="text-neutral-400">—</span>}
+                      </TD>
+                      <TD>
+                        {plan ? (
+                          <PlanStatePill state={plan.state} size="xs" />
+                        ) : (
+                          <Badge tone="neutral" size="xs">
+                            No plan
+                          </Badge>
+                        )}
+                      </TD>
+                      <TD className="w-52">
+                        {plan ? (
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-24 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                              <div
+                                className={cn("h-1.5 rounded-full", tier.bar)}
+                                style={{
+                                  width: `${Math.max(0, Math.min(100, plan.alignment.alignmentPct))}%`,
+                                }}
+                                role="progressbar"
+                                aria-valuenow={plan.alignment.alignmentPct}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-label={`${m.displayName} high-priority alignment ${plan.alignment.alignmentPct}%`}
+                              />
+                            </div>
+                            <span className={cn("text-xs font-medium tabular-nums", tier.label)}>
+                              {plan.alignment.alignmentPct}%
+                            </span>
                           </div>
-                          <span className={cn("text-xs font-medium tabular-nums", tier.label)}>
-                            {plan.alignment.alignmentPct}%
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-neutral-400">—</span>
-                      )}
-                    </TD>
-                    <TD className="tabular-nums text-sm">
-                      {plan ? plan.commits.length : <span className="text-neutral-400">—</span>}
-                    </TD>
-                    <TD className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectMember(m);
-                        }}
-                        leftIcon={<HiOutlineEye className="h-3.5 w-3.5" />}
-                        aria-label={`Review ${m.displayName}'s week`}
-                      >
-                        Review
-                      </Button>
-                    </TD>
-                  </TR>
-                );
-              })
-            )}
-          </TBody>
-        </Table>
+                        ) : (
+                          <span className="text-xs text-neutral-400">—</span>
+                        )}
+                      </TD>
+                      <TD className="hidden md:table-cell">
+                        <PostureChips counts={postureCounts(plan?.commits)} />
+                      </TD>
+                      <TD className="hidden md:table-cell" data-cy="team-row-delta">
+                        <DeltaCell delta={deltaHours(plan?.commits)} />
+                      </TD>
+                      <TD className="tabular-nums text-sm">
+                        {plan ? plan.commits.length : <span className="text-neutral-400">—</span>}
+                      </TD>
+                      <TD className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectMember(m);
+                          }}
+                          leftIcon={<HiOutlineEye className="h-3.5 w-3.5" />}
+                          aria-label={`Review ${m.displayName}'s week`}
+                        >
+                          Review
+                        </Button>
+                      </TD>
+                    </TR>
+                  );
+                })
+              )}
+            </TBody>
+          </Table>
         </TableScroller>
       </div>
 
@@ -308,6 +392,12 @@ function TeamRollupCard({
         {plan ? (
           <span className="text-xs text-neutral-600 tabular-nums shrink-0">
             {plan.commits.length} commit{plan.commits.length === 1 ? "" : "s"}
+          </span>
+        ) : null}
+        {plan ? <PostureChips counts={postureCounts(plan.commits)} size="xs" /> : null}
+        {plan ? (
+          <span className="text-xs shrink-0">
+            <DeltaCell delta={deltaHours(plan.commits)} />
           </span>
         ) : null}
         {plan ? (

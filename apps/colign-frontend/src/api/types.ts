@@ -44,6 +44,10 @@ export interface WeeklyCommitDto {
   ordinal: number;
   carriedFromCommitId: number | null;
   reconciliation: ReconciliationDto | null;
+  /** Resolved Defining Objective title for the commit's Outcome (may be null on partial data). */
+  definingObjectiveTitle?: string | null;
+  /** Resolved Rally Cry title for the commit's Outcome (may be null on partial data). */
+  rallyCryTitle?: string | null;
 }
 
 export interface PlanDto {

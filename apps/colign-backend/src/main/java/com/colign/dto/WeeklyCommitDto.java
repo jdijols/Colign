@@ -17,4 +17,12 @@ public record WeeklyCommitDto(
     CommitStatus status,
     Integer ordinal,
     Long carriedFromCommitId,
-    ReconciliationDto reconciliation) {}
+    ReconciliationDto reconciliation,
+    /**
+     * Resolved Defining Objective title for the commit's leaf Outcome. Nullable for legacy or
+     * partial data. Surfaces full RCDO path so the manager drill-drawer can group commits by
+     * objective without an extra client round-trip.
+     */
+    String definingObjectiveTitle,
+    /** Resolved Rally Cry title for the commit's leaf Outcome. Nullable for the same reason. */
+    String rallyCryTitle) {}

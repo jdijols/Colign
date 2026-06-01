@@ -1,5 +1,6 @@
+import { useMemo } from "react";
 import { HiOutlineSwitchHorizontal } from "react-icons/hi";
-import type { TeamMemberDto } from "@/api/types";
+import type { TeamMemberDto, WeeklyCommitDto } from "@/api/types";
 import { Badge, Drawer } from "@/components/ui";
 import { PlanStatePill } from "@/components/PlanStatePill";
 import { AlignmentBar } from "@/components/AlignmentBar";
@@ -16,7 +17,42 @@ interface Props {
   onClose: () => void;
 }
 
+interface RcdoGroup {
+  rallyCry: string;
+  objectives: { objective: string; commits: WeeklyCommitDto[] }[];
+}
+
+const NO_RC = "(no Rally Cry)";
+const NO_DO = "(no Defining Objective)";
+
+/**
+ * Group commits by Rally Cry → Defining Objective. Preserves first-seen order
+ * so the drawer reads predictably across re-renders.
+ */
+function groupByRcdo(commits: WeeklyCommitDto[]): RcdoGroup[] {
+  const map = new Map<string, Map<string, WeeklyCommitDto[]>>();
+  commits.forEach((c) => {
+    const rc = c.rallyCryTitle ?? NO_RC;
+    const obj = c.definingObjectiveTitle ?? NO_DO;
+    if (!map.has(rc)) map.set(rc, new Map());
+    const rcMap = map.get(rc)!;
+    if (!rcMap.has(obj)) rcMap.set(obj, []);
+    rcMap.get(obj)!.push(c);
+  });
+  return Array.from(map.entries()).map(([rallyCry, objectives]) => ({
+    rallyCry,
+    objectives: Array.from(objectives.entries()).map(([objective, list]) => ({
+      objective,
+      commits: list,
+    })),
+  }));
+}
+
 export function IcDrillDrawer({ member, onClose }: Props) {
+  const grouped = useMemo<RcdoGroup[]>(
+    () => groupByRcdo(member?.currentPlan?.commits ?? []),
+    [member],
+  );
   return (
     <Drawer
       open={!!member}
@@ -54,64 +90,98 @@ export function IcDrillDrawer({ member, onClose }: Props) {
               {member.currentPlan.commits.length === 0 ? (
                 <p className="text-sm text-neutral-600">No commits in this plan.</p>
               ) : (
-                <ul className="ic-drill-commit-list space-y-3">
-                  {member.currentPlan.commits.map((c) => (
-                    <li
-                      key={c.id}
-                      className="rounded-md border border-neutral-200 dark:border-neutral-800 p-3"
-                    >
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-medium text-sm text-neutral-900 dark:text-neutral-50">
-                          {c.title}
-                        </span>
-                        <Badge tone={priorityTone(c.outcomePriority)} size="xs">
-                          {c.outcomePriority ?? "—"}
-                        </Badge>
-                        {c.chessTagCode ? (
-                          <Badge tone={chessTagTone(c.chessTagCode)} size="xs">
-                            {c.chessTagCode}
-                          </Badge>
-                        ) : null}
-                        {c.carriedFromCommitId != null ? (
-                          <Badge tone="neutral" size="xs" variant="outline">
-                            <HiOutlineSwitchHorizontal className="h-2.5 w-2.5 mr-0.5" aria-hidden />
-                            carried
-                          </Badge>
-                        ) : null}
-                        <Badge tone={commitStatusTone(c.status)} size="xs" className="ml-auto">
-                          {commitStatusLabel(c.status)}
-                        </Badge>
-                      </div>
-                      <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-                        {c.outcomeTitle ?? `Outcome #${c.outcomeId}`}
-                        {c.plannedEffortHours != null ? ` · planned ${c.plannedEffortHours}h` : ""}
+                <div className="space-y-5" data-cy="rcdo-grouped-commits">
+                  {grouped.map((rc) => (
+                    <section key={rc.rallyCry}>
+                      <p
+                        className="text-[10px] uppercase tracking-wider text-neutral-600 mb-2"
+                        data-cy="drill-rally-cry"
+                      >
+                        Rally Cry · {rc.rallyCry}
                       </p>
-
-                      {c.reconciliation ? (
-                        <div className="mt-2 rounded-md bg-neutral-50 dark:bg-neutral-900 p-2.5 text-xs space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              tone={reconcileStatusTone(c.reconciliation.actualStatus)}
-                              size="xs"
-                            >
-                              {c.reconciliation.actualStatus}
-                            </Badge>
-                            {c.reconciliation.actualEffortHours != null ? (
-                              <span className="text-neutral-600 dark:text-neutral-400 tabular-nums">
-                                {c.reconciliation.actualEffortHours}h actual
-                              </span>
-                            ) : null}
-                          </div>
-                          {c.reconciliation.actualOutcomeNote ? (
-                            <p className="text-neutral-600 dark:text-neutral-400 italic">
-                              “{c.reconciliation.actualOutcomeNote}”
+                      <div className="space-y-3">
+                        {rc.objectives.map((obj) => (
+                          <div
+                            key={`${rc.rallyCry}::${obj.objective}`}
+                            className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-3"
+                            data-cy="drill-objective-group"
+                          >
+                            <p className="text-xs font-semibold text-neutral-900 dark:text-neutral-50 mb-2">
+                              {obj.objective}
                             </p>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </li>
+                            <ul className="space-y-2">
+                              {obj.commits.map((c) => (
+                                <li
+                                  key={c.id}
+                                  className="rounded-md border border-neutral-200 dark:border-neutral-800 p-3"
+                                >
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="font-medium text-sm text-neutral-900 dark:text-neutral-50">
+                                      {c.title}
+                                    </span>
+                                    <Badge tone={priorityTone(c.outcomePriority)} size="xs">
+                                      {c.outcomePriority ?? "—"}
+                                    </Badge>
+                                    {c.chessTagCode ? (
+                                      <Badge tone={chessTagTone(c.chessTagCode)} size="xs">
+                                        {c.chessTagCode}
+                                      </Badge>
+                                    ) : null}
+                                    {c.carriedFromCommitId != null ? (
+                                      <Badge tone="neutral" size="xs" variant="outline">
+                                        <HiOutlineSwitchHorizontal
+                                          className="h-2.5 w-2.5 mr-0.5"
+                                          aria-hidden
+                                        />
+                                        carried
+                                      </Badge>
+                                    ) : null}
+                                    <Badge
+                                      tone={commitStatusTone(c.status)}
+                                      size="xs"
+                                      className="ml-auto"
+                                    >
+                                      {commitStatusLabel(c.status)}
+                                    </Badge>
+                                  </div>
+                                  <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+                                    {c.outcomeTitle ?? `Outcome #${c.outcomeId}`}
+                                    {c.plannedEffortHours != null
+                                      ? ` · planned ${c.plannedEffortHours}h`
+                                      : ""}
+                                  </p>
+
+                                  {c.reconciliation ? (
+                                    <div className="mt-2 rounded-md bg-neutral-50 dark:bg-neutral-900 p-2.5 text-xs space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <Badge
+                                          tone={reconcileStatusTone(c.reconciliation.actualStatus)}
+                                          size="xs"
+                                        >
+                                          {c.reconciliation.actualStatus}
+                                        </Badge>
+                                        {c.reconciliation.actualEffortHours != null ? (
+                                          <span className="text-neutral-600 dark:text-neutral-400 tabular-nums">
+                                            {c.reconciliation.actualEffortHours}h actual
+                                          </span>
+                                        ) : null}
+                                      </div>
+                                      {c.reconciliation.actualOutcomeNote ? (
+                                        <p className="text-neutral-600 dark:text-neutral-400 italic">
+                                          “{c.reconciliation.actualOutcomeNote}”
+                                        </p>
+                                      ) : null}
+                                    </div>
+                                  ) : null}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
 
