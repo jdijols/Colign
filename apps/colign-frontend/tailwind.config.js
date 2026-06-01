@@ -37,6 +37,17 @@ export default {
         sans: ["Geist", "Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
         mono: ["Geist Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
+      fontSize: {
+        "fluid-sm": "clamp(0.8125rem, 0.78rem + 0.16vw, 0.875rem)",
+        "fluid-base": "clamp(0.9375rem, 0.91rem + 0.16vw, 1rem)",
+        "fluid-lg": "clamp(1.0625rem, 1.02rem + 0.22vw, 1.125rem)",
+        "fluid-xl": "clamp(1.25rem, 1.18rem + 0.36vw, 1.5rem)",
+        "fluid-2xl": "clamp(1.5rem, 1.36rem + 0.71vw, 2rem)",
+        "fluid-3xl": "clamp(1.875rem, 1.55rem + 1.61vw, 3rem)",
+      },
+      spacing: {
+        "section-fluid": "clamp(1.5rem, 1.0rem + 2.5vw, 4rem)",
+      },
     },
   },
   plugins: [flowbite, forms],
