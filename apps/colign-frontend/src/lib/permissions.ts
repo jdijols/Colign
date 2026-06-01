@@ -1,5 +1,3 @@
-import type { MeDto } from "@/api/me";
-
 /**
  * True when the caller may rename the team, set its avatar, or remove members.
  * Mirrors the backend rule: MANAGER or ADMIN by derived role, OR the team
