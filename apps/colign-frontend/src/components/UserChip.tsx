@@ -117,7 +117,7 @@ export function UserChip({
   }
 
   return (
-    <div className="relative border-t border-neutral-200 dark:border-neutral-800 p-1.5">
+    <div className="relative border-t border-neutral-200 dark:border-neutral-800 p-1">
       <button
         ref={triggerRef}
         type="button"
@@ -127,7 +127,9 @@ export function UserChip({
         aria-label="Open account menu"
         data-cy="sidebar-user-chip"
         className={cn(
-          "w-full flex items-center text-left h-12 px-1.5 gap-2 rounded-md",
+          // Padding: pl-1.5 + container p-1 = 10px from rail edge to avatar —
+          // matches WorkspacePill and NavRail in expanded mode.
+          "w-full flex items-center text-left h-12 pl-1.5 pr-2 gap-2 rounded-md",
           "hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
         )}
