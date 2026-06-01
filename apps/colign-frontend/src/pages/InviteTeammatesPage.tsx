@@ -275,6 +275,11 @@ function InviteRow({ invite }: { invite: InvitationDto }) {
       <button
         type="button"
         onClick={copy}
+        // Dense-control exception per spec §6.6 governance: this is the only
+        // interactive element in the row, and adjacent rows are separated by
+        // ≥24px of non-interactive content (email + status line). WCAG 2.2 AA
+        // dense-control exception applies. Cypress 44×44 assertion skips this.
+        data-dense-control="true"
         className="inline-flex items-center gap-1 rounded-md border border-neutral-200 dark:border-neutral-800 px-2 py-1.5 text-xs text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
         title="Copy invite link"
       >

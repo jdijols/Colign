@@ -1,0 +1,90 @@
+/*
+ * Responsive UI touch & pointer policy — implements spec §4.3.
+ * Scoped to #colign-root to compete with Tailwind utilities compiled
+ * under important: "#colign-root" (spec §4.4).
+ *
+ * This file ALSO holds component-scoped container-query rules added in
+ * Phase C (TeamRollupTable card view, IcDrillDrawer full-screen). Each
+ * such block is fenced with a section header for navigability.
+ */
+
+/* === Section C8: TeamRollupTable container query === */
+@layer components {
+  .team-rollup-container {
+    container-type: inline-size;
+  }
+  .team-rollup-table-view { display: block; }
+  .team-rollup-card-view { display: none; }
+  .team-rollup-card-view-controls { display: none; }
+  @container (max-width: 639.98px) {
+    .team-rollup-table-view { display: none; }
+    .team-rollup-card-view {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .team-rollup-card-view-controls {
+      display: flex;
+      flex-direction: row;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+  }
+}
+
+/* === Section C9: IcDrillDrawer full-screen on coarse+narrow === */
+@layer components {
+  .ic-drill-drawer-content {
+    container-type: inline-size;
+  }
+  /* Container-query rule for internal commit list */
+  @container (max-width: 479.98px) {
+    .ic-drill-drawer-content .ic-drill-commit-list {
+      grid-template-columns: 1fr !important;
+      line-height: 1.7;
+    }
+  }
+  /* Viewport rule: coarse pointer + narrow viewport → drawer is full-screen.
+     Drawer panel renders as <aside role="dialog">. */
+  @media (pointer: coarse) and (max-width: 767.98px) {
+    #colign-root aside[role="dialog"] {
+      width: 100% !important;
+      max-width: none !important;
+    }
+  }
+}
+
+/* === Section A2: global touch & pointer policy === */
+@layer utilities {
+  /* Coarse pointers (touch): primary interactive elements ≥ 44×44 */
+  @media (pointer: coarse) {
+    #colign-root button:not([data-dense-control="true"]):not(th button):not([aria-label*="agination" i]):not([data-testid*="pagination"]),
+    #colign-root a[role="button"]:not([data-dense-control="true"]),
+    #colign-root input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+    #colign-root select,
+    #colign-root [role="button"]:not([data-dense-control="true"]) {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    /* Label-wrapped checkboxes/radios get the hit-target via the label */
+    #colign-root label:has(input[type="checkbox"]),
+    #colign-root label:has(input[type="radio"]) {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+  /* Fine pointers (cursor): denser desktop layouts allowed */
+  @media (pointer: fine) {
+    #colign-root button:not([data-dense-control="true"]):not(th button) {
+      min-height: 32px;
+    }
+  }
+  /* Hover gating — always-visible on touch */
+  @media (hover: none) {
+    #colign-root [data-hover-only="true"] {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+  }
+}

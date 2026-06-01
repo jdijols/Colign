@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useRef } from "react";
-import { HiX } from "react-icons/hi";
+import { HiX, HiArrowLeft } from "react-icons/hi";
 import { cn } from "@/lib/cn";
 
 interface DrawerProps {
@@ -10,6 +10,13 @@ interface DrawerProps {
   children: ReactNode;
   footer?: ReactNode;
   width?: "md" | "lg" | "xl";
+  /**
+   * Visual affordance for the close action. `"x"` (default) renders an X icon
+   * with `aria-label="Close"`. `"back"` renders a left-pointing arrow with
+   * `aria-label="Back to team list"` — used by IcDrillDrawer in its full-screen
+   * mode on touch+narrow viewports (spec §5.1).
+   */
+  closeAffordance?: "x" | "back";
 }
 
 const WIDTHS: Record<"md" | "lg" | "xl", string> = {
@@ -32,7 +39,7 @@ const FOCUSABLE_SELECTOR =
  *   - Focus moves into the panel on open (first focusable, else close button).
  *   - Tab/Shift-Tab cycle is trapped inside the panel while open.
  *   - Focus restores to the previously-focused element on close.
- *   - Close button is 40×40 (above WCAG 2.5.8 minimum 24×24, near 2.5.5 AAA 44).
+ *   - Close button is 44×44 (meets WCAG 2.5.5 AAA Target Size Enhanced).
  */
 export function Drawer({
   open,
@@ -42,6 +49,7 @@ export function Drawer({
   children,
   footer,
   width = "xl",
+  closeAffordance = "x",
 }: DrawerProps) {
   const panelRef = useRef<HTMLElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -141,10 +149,14 @@ export function Drawer({
               ref={closeBtnRef}
               type="button"
               onClick={onClose}
-              aria-label="Close"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-50 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950"
+              aria-label={closeAffordance === "back" ? "Back to team list" : "Close"}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-md text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-50 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950"
             >
-              <HiX className="h-4 w-4" />
+              {closeAffordance === "back" ? (
+                <HiArrowLeft className="h-5 w-5" />
+              ) : (
+                <HiX className="h-4 w-4" />
+              )}
             </button>
           </header>
         )}

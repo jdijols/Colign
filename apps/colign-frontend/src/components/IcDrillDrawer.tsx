@@ -22,10 +22,12 @@ export function IcDrillDrawer({ member, onClose }: Props) {
       open={!!member}
       onClose={onClose}
       width="xl"
+      closeAffordance="back"
       title={member?.displayName ?? ""}
       description={member ? `${member.email} · ${member.role}` : undefined}
     >
-      {!member ? null : !member.currentPlan ? (
+      <div className="ic-drill-drawer-content">
+        {!member ? null : !member.currentPlan ? (
         <div className="rounded-md border border-dashed border-neutral-300 dark:border-neutral-700 p-8 text-sm text-neutral-600 text-center">
           No plan recorded yet.
         </div>
@@ -52,7 +54,7 @@ export function IcDrillDrawer({ member, onClose }: Props) {
             {member.currentPlan.commits.length === 0 ? (
               <p className="text-sm text-neutral-600">No commits in this plan.</p>
             ) : (
-              <ul className="space-y-3">
+              <ul className="ic-drill-commit-list space-y-3">
                 {member.currentPlan.commits.map((c) => (
                   <li
                     key={c.id}
@@ -122,6 +124,7 @@ export function IcDrillDrawer({ member, onClose }: Props) {
           </div>
         </div>
       )}
+      </div>
     </Drawer>
   );
 }
