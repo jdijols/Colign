@@ -202,10 +202,19 @@ async function runSurfaceLoop(surface, designMd) {
   let finalStatus = "complete";
   const cycleLog = [];
 
+  // v2 FIX: force teardown + re-boot in THIS worktree before any other agent
+  // runs. Previous run had a coordination bug — boot-stack.sh was idempotent
+  // and skipped if ports were busy, so surfaces 2+ inherited weekly-plan's
+  // running stack and took screenshots/ran Cypress against the wrong worktree.
+  await agent(
+    buildPreparePrompt(surface),
+    { label: `prepare:${surface.slug}:v2` }
+  );
+
   // Take a "before" snapshot (cycle-0) for the PR description
   await agent(
     buildSnapshotPrompt(surface, 0, "before"),
-    { label: `snapshot:${surface.slug}:before` }
+    { label: `snapshot:${surface.slug}:before:v2` }
   );
 
   for (let cycle = 1; cycle <= MAX_CYCLES; cycle++) {
@@ -214,7 +223,7 @@ async function runSurfaceLoop(surface, designMd) {
     // --- Critic ---
     const critique = await agent(
       buildCriticPrompt(surface, cycle, designMd),
-      { label: `critic:${surface.slug}:c${cycle}`, schema: CRITIQUE_SCHEMA }
+      { label: `critic-v2:${surface.slug}:c${cycle}`, schema: CRITIQUE_SCHEMA }
     );
 
     // Early-exit: critic finds nothing significant
@@ -228,13 +237,13 @@ async function runSurfaceLoop(surface, designMd) {
     // --- Designer ---
     const designerResult = await agent(
       buildDesignerPrompt(surface, cycle, critique, designMd),
-      { label: `designer:${surface.slug}:c${cycle}`, schema: DESIGNER_SCHEMA }
+      { label: `designer-v2:${surface.slug}:c${cycle}`, schema: DESIGNER_SCHEMA }
     );
 
     // --- Verifier ---
     const verdict = await agent(
       buildVerifierPrompt(surface, cycle, critique, designerResult),
-      { label: `verifier:${surface.slug}:c${cycle}`, schema: VERDICT_SCHEMA }
+      { label: `verifier-v2:${surface.slug}:c${cycle}`, schema: VERDICT_SCHEMA }
     );
 
     cycleLog.push({
@@ -286,13 +295,13 @@ async function runSurfaceLoop(surface, designMd) {
   // Take an "after" snapshot using lastGoodCycle
   await agent(
     buildSnapshotPrompt(surface, lastGoodCycle, "after"),
-    { label: `snapshot:${surface.slug}:after` }
+    { label: `snapshot:${surface.slug}:after:v2` }
   );
 
   // Open the PR
   const prResult = await agent(
     buildPrPrompt(surface, lastGoodCycle, finalStatus, cycleLog),
-    { label: `open-pr:${surface.slug}` }
+    { label: `open-pr-v2:${surface.slug}` }
   );
 
   return {
@@ -408,6 +417,52 @@ function buildFoundationPrompt(designMd) {
     "- `token_summary`: 1-paragraph summary of changes",
     "- `components_refactored`: list of component names you actually touched",
     "- `cypress_passed`: boolean",
+  ].join("\n");
+}
+
+function buildPreparePrompt(surface) {
+  return [
+    `# Prepare Stack — ${surface.label}`,
+    "",
+    "## Your role",
+    "Make absolutely sure the dev stack on :8080 / :5174 / :4173 is bound to THIS surface's worktree, not someone else's. This is the v2 harness fix — the first run had a coordination bug where surfaces 2+ inherited the previous worktree's running stack.",
+    "",
+    "## Environment",
+    `- Repo root: \`${REPO_ROOT}\``,
+    `- Worktree (mine): \`${WORKTREE_ROOT}/design-${surface.slug}\``,
+    `- Expected vite cwd on :5174: \`${WORKTREE_ROOT}/design-${surface.slug}/apps/colign-frontend\``,
+    `- Expected vite cwd on :4173: \`${WORKTREE_ROOT}/design-${surface.slug}/apps/pa-host\``,
+    "",
+    "## Actions",
+    "1. `cd` into the worktree.",
+    "2. Check whether vite on :5174 is bound to THIS worktree. Run:",
+    "   ```",
+    "   vite_pid=$(lsof -ti:5174 | head -1)",
+    "   if [ -n \"$vite_pid\" ]; then",
+    "     vite_cwd=$(lsof -p $vite_pid 2>/dev/null | awk '$4==\"cwd\" {print $NF}')",
+    "     echo \"vite on :5174 cwd=$vite_cwd\"",
+    "   else",
+    "     echo \"vite on :5174 not running\"",
+    "   fi",
+    "   ```",
+    `3. If the cwd does NOT match \`${WORKTREE_ROOT}/design-${surface.slug}/apps/colign-frontend\` (resolved via realpath if needed), or if the stack is down, force a clean reboot:`,
+    "   a. From ANY worktree, run teardown to free the ports — pick the worktree the stack is currently bound to so its `.design-loop-pids` and `.env.local.bak` get cleaned up too:",
+    `      \`cd <bound-worktree> && ${REPO_ROOT}/tools/design-loop/teardown-stack.sh\``,
+    `      If you can't tell, run \`${REPO_ROOT}/tools/design-loop/teardown-stack.sh\` from THIS worktree — it has a belt-and-suspenders \`lsof\`-based kill that handles orphans on the ports.`,
+    "   b. Wait 2 seconds for ports to settle.",
+    "   c. Verify all 3 ports are free: `lsof -ti:8080 -i:5174 -i:4173` should return empty.",
+    `   d. Boot from THIS worktree: \`cd ${WORKTREE_ROOT}/design-${surface.slug} && ${REPO_ROOT}/tools/design-loop/boot-stack.sh\``,
+    "   e. Wait for the boot script to report `[boot] stack ready`.",
+    "4. Re-verify vite cwd on :5174 matches THIS worktree. If it still doesn't match, STOP and emit an error message instead of proceeding (downstream agents would produce hollow verification).",
+    "5. Quick sanity probes (all must return 200/302/401):",
+    "   ```",
+    "   curl -s -o /dev/null -w 'host:%{http_code}\\n' http://localhost:4173/",
+    "   curl -s -o /dev/null -w 'remote:%{http_code}\\n' http://localhost:5174/remoteEntry.js",
+    "   curl -s -o /dev/null -w 'backend:%{http_code}\\n' http://localhost:8080/actuator/health",
+    "   ```",
+    "",
+    "## Return value",
+    "Return a brief message: which path was taken (no-op / rebooted), final vite cwd on :5174, and the 3 HTTP codes from step 5. If you had to STOP in step 4, return the error message instead.",
   ].join("\n");
 }
 
