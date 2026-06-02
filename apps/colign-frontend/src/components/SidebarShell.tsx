@@ -175,7 +175,7 @@ export function SidebarShell({ me, onSignOut, children, showTeam, showTimelineTa
   );
 
   return (
-    <div className="min-h-screen flex bg-white dark:bg-neutral-950">
+    <div className="min-h-screen flex flex-col md:flex-row bg-white dark:bg-neutral-950">
       {/* Mobile-only top strip */}
       <header className="md:hidden sticky top-0 z-30 h-12 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex items-center gap-2 px-3">
         <button
