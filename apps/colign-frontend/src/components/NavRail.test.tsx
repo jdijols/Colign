@@ -34,11 +34,17 @@ describe("NavRail", () => {
     expect(links).toEqual(["Dashboard", "Goals", "Commits", "Plan", "Reconcile"]);
   });
 
-  it("shows Dashboard / Goals / Commits for every role (always ungated)", () => {
+  it("shows Dashboard / Goals / Commits for every role (timeline flag on)", () => {
     renderWithRouter(<NavRail role="IC" />);
     expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /goals/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /commits/i })).toBeInTheDocument();
+  });
+
+  it("hides Dashboard / Goals / Commits when showTimelineTabs is false (prod)", () => {
+    renderWithRouter(<NavRail role="MANAGER" showTimelineTabs={false} />);
+    const links = screen.getAllByRole("link").map((el) => el.textContent?.trim());
+    expect(links).toEqual(["Plan", "Reconcile", "Team"]);
   });
 
   // showTeam prop: AppShell passes canManageTeam(me, team) so a solo team lead

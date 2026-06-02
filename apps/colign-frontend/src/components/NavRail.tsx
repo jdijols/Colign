@@ -21,6 +21,12 @@ interface Props {
    * yet) also sees the Team rollup.
    */
   showTeam?: boolean;
+  /**
+   * Whether to show the in-progress timeline tabs (Dashboard / Goals / Commits).
+   * Gated by the TIMELINE_TABS_ENABLED feature flag (off in prod). Defaults true
+   * so existing callers/tests are unaffected; AppShell passes the real flag.
+   */
+  showTimelineTabs?: boolean;
 }
 
 /**
@@ -91,42 +97,52 @@ function NavRailItem({ to, icon, label, end, dataCy, collapsed, onNavigate }: It
 }
 
 /**
- * Sidebar route links: Dashboard / Goals / Commits / Plan / Reconcile / Team.
- * Dashboard / Goals / Commits are visible to everyone; Team is gated to
- * MANAGER / ADMIN / team-lead via the showTeam prop. Settings lives in the
- * user-chip popover, not here.
+ * Sidebar route links. Plan / Reconcile always show; Team is gated to
+ * MANAGER / ADMIN / team-lead via showTeam; Dashboard / Goals / Commits are
+ * gated by showTimelineTabs (the TIMELINE_TABS_ENABLED feature flag — off in
+ * prod). Settings lives in the user-chip popover, not here.
  */
-export function NavRail({ role, collapsed = false, onNavigate, showTeam }: Props) {
+export function NavRail({
+  role,
+  collapsed = false,
+  onNavigate,
+  showTeam,
+  showTimelineTabs = true,
+}: Props) {
   const showTeamEntry = showTeam ?? (role === "MANAGER" || role === "ADMIN");
   return (
     <nav
       className={cn("flex flex-col gap-0.5 py-2", collapsed ? "items-center" : "items-stretch")}
       aria-label="Primary"
     >
-      <NavRailItem
-        to="dashboard"
-        dataCy="sidebar-dashboard"
-        collapsed={collapsed}
-        onNavigate={onNavigate}
-        icon={<HiOutlineViewGrid className="h-5 w-5" aria-hidden />}
-        label="Dashboard"
-      />
-      <NavRailItem
-        to="goals"
-        dataCy="sidebar-goals"
-        collapsed={collapsed}
-        onNavigate={onNavigate}
-        icon={<HiOutlineFlag className="h-5 w-5" aria-hidden />}
-        label="Goals"
-      />
-      <NavRailItem
-        to="commits"
-        dataCy="sidebar-commits"
-        collapsed={collapsed}
-        onNavigate={onNavigate}
-        icon={<HiOutlineClipboardList className="h-5 w-5" aria-hidden />}
-        label="Commits"
-      />
+      {showTimelineTabs ? (
+        <>
+          <NavRailItem
+            to="dashboard"
+            dataCy="sidebar-dashboard"
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+            icon={<HiOutlineViewGrid className="h-5 w-5" aria-hidden />}
+            label="Dashboard"
+          />
+          <NavRailItem
+            to="goals"
+            dataCy="sidebar-goals"
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+            icon={<HiOutlineFlag className="h-5 w-5" aria-hidden />}
+            label="Goals"
+          />
+          <NavRailItem
+            to="commits"
+            dataCy="sidebar-commits"
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+            icon={<HiOutlineClipboardList className="h-5 w-5" aria-hidden />}
+            label="Commits"
+          />
+        </>
+      ) : null}
       <NavRailItem
         to="."
         end

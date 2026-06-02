@@ -25,6 +25,8 @@ interface Props {
    * NavRail falls back to its role-only check.
    */
   showTeam?: boolean;
+  /** Whether the timeline tabs (Dashboard / Goals / Commits) show. Forwarded to NavRail. */
+  showTimelineTabs?: boolean;
 }
 
 const COLLAPSED_STORAGE_KEY = "colign_sidebar_collapsed";
@@ -52,7 +54,7 @@ const COLLAPSED_STORAGE_KEY = "colign_sidebar_collapsed";
  *   overlay with a backdrop. Tap-backdrop / Esc / select-route dismisses.
  *   Body scroll is locked while the drawer is open.
  */
-export function SidebarShell({ me, onSignOut, children, showTeam }: Props) {
+export function SidebarShell({ me, onSignOut, children, showTeam, showTimelineTabs }: Props) {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(COLLAPSED_STORAGE_KEY) === "1";
@@ -128,7 +130,12 @@ export function SidebarShell({ me, onSignOut, children, showTeam }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <NavRail role={me.role} collapsed={collapsed} showTeam={showTeam} />
+        <NavRail
+          role={me.role}
+          collapsed={collapsed}
+          showTeam={showTeam}
+          showTimelineTabs={showTimelineTabs}
+        />
       </div>
 
       <UserChip
@@ -150,7 +157,12 @@ export function SidebarShell({ me, onSignOut, children, showTeam }: Props) {
         <SidebarToggle collapsed={false} onToggle={() => setDrawerOpen(false)} />
       </div>
       <div className="flex-1 overflow-y-auto">
-        <NavRail role={me.role} onNavigate={() => setDrawerOpen(false)} showTeam={showTeam} />
+        <NavRail
+          role={me.role}
+          onNavigate={() => setDrawerOpen(false)}
+          showTeam={showTeam}
+          showTimelineTabs={showTimelineTabs}
+        />
       </div>
       <UserChip
         email={me.email ?? ""}

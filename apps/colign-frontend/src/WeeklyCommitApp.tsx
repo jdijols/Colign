@@ -1,5 +1,5 @@
 import { Provider } from "react-redux";
-import { Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 // --- Module Federation CSS crossing ---------------------------------------
 // @module-federation/vite (v1.x) does NOT inject a remote's CSS into the host
 // document: a plain `import "./index.css"` only styles the remote's own dev
@@ -16,6 +16,7 @@ import { Outlet, Route, Routes } from "react-router-dom";
 // its global preflight never leaks onto the host's landing/architecture routes.
 import colignStyles from "./colign-compiled.css?inline";
 import { store } from "@/store";
+import { TIMELINE_TABS_ENABLED } from "@/lib/featureFlags";
 import { Auth0Bridge } from "@/auth/Auth0Bridge";
 import { AppShell } from "@/components/AppShell";
 import { AuthGate } from "@/auth/AuthGate";
@@ -98,9 +99,20 @@ export default function WeeklyCommitApp() {
             }
           >
             <Route index element={<WeeklyPlanPage />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="goals" element={<GoalsPage />} />
-            <Route path="commits" element={<CommitsPage />} />
+            {/* Timeline surfaces are feature-flagged: hidden + unnavigable in prod
+                (redirect to the plan), live in dev. See lib/featureFlags.ts. */}
+            <Route
+              path="dashboard"
+              element={TIMELINE_TABS_ENABLED ? <DashboardPage /> : <Navigate to="." replace />}
+            />
+            <Route
+              path="goals"
+              element={TIMELINE_TABS_ENABLED ? <GoalsPage /> : <Navigate to="." replace />}
+            />
+            <Route
+              path="commits"
+              element={TIMELINE_TABS_ENABLED ? <CommitsPage /> : <Navigate to="." replace />}
+            />
             <Route path="reconcile" element={<ReconcilePage />} />
             <Route path="manager" element={<ManagerDashboardPage />} />
             <Route path="settings" element={<WorkspaceSettingsPage />} />

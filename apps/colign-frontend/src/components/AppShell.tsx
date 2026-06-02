@@ -6,6 +6,7 @@ import { isReal } from "@/auth/auth0Config";
 import { useGetMeQuery } from "@/api/me";
 import { useGetTeamQuery } from "@/api/team";
 import { canManageTeam } from "@/lib/permissions";
+import { TIMELINE_TABS_ENABLED } from "@/lib/featureFlags";
 import { SidebarShell } from "@/components/SidebarShell";
 
 /**
@@ -52,6 +53,7 @@ export function AppShell() {
         role,
       }}
       showTeam={showTeam}
+      showTimelineTabs={TIMELINE_TABS_ENABLED}
       onSignOut={handleSignOut}
     >
       <Outlet />

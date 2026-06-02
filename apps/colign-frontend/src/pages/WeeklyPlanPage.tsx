@@ -13,6 +13,8 @@ import { CommitForm } from "@/components/CommitForm";
 import { CommitRow } from "@/components/CommitRow";
 import { PlanStatePill } from "@/components/PlanStatePill";
 import { AlignmentBar } from "@/components/AlignmentBar";
+import { StrategyAnchor } from "@/components/StrategyAnchor";
+import { TIMELINE_TABS_ENABLED } from "@/lib/featureFlags";
 
 export function WeeklyPlanPage() {
   const { data, isLoading, error } = useGetCurrentPlanQuery();
@@ -95,6 +97,9 @@ export function WeeklyPlanPage() {
 
   return (
     <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6">
+      {/* When the timeline tabs are hidden (prod), the "Aiming for" anchor lives
+          here on Plan, as it did before it moved to the Dashboard tab. */}
+      {!TIMELINE_TABS_ENABLED ? <StrategyAnchor /> : null}
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-wider text-neutral-600">My weekly plan</p>
