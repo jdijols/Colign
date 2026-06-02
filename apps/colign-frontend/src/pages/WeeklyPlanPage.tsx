@@ -1,6 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { HiArrowRight, HiInformationCircle, HiPlus } from "react-icons/hi";
+import {
+  HiArrowRight,
+  HiChevronLeft,
+  HiChevronRight,
+  HiInformationCircle,
+  HiPlus,
+} from "react-icons/hi";
 import {
   useGetCurrentPlanQuery,
   useLockPlanMutation,
@@ -12,11 +18,31 @@ import { Alert, Button, Spinner } from "@/components/ui";
 import { CommitForm } from "@/components/CommitForm";
 import { CommitRow } from "@/components/CommitRow";
 import { PlanStatePill } from "@/components/PlanStatePill";
-import { StrategyAnchor } from "@/components/StrategyAnchor";
 import type { WeeklyCommitDto, OutcomeRefDto } from "@/api/types";
-import { TIMELINE_TABS_ENABLED } from "@/lib/featureFlags";
+
+/* DESIGN.md §3 — Cabinet Grotesk display family, lazy-injected once per app
+   load. The shared `<head>` is foundation-scope (out of bounds for this
+   surface pass), so we self-host the stylesheet inject here. Idempotent: a
+   sibling page mounting the same hook is a no-op. */
+const CABINET_GROTESK_HREF =
+  "https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@300,400,500,700,800&display=swap";
+const CABINET_GROTESK_FAMILY =
+  "'Cabinet Grotesk', 'Geist', 'Inter', system-ui, -apple-system, sans-serif";
+
+function useCabinetGrotesk() {
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (document.querySelector('link[data-font="cabinet-grotesk"]')) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = CABINET_GROTESK_HREF;
+    link.dataset.font = "cabinet-grotesk";
+    document.head.appendChild(link);
+  }, []);
+}
 
 export function WeeklyPlanPage() {
+  useCabinetGrotesk();
   const { data, isLoading, error } = useGetCurrentPlanQuery();
   const [lockPlan, { isLoading: locking }] = useLockPlanMutation();
   const [startRecon, { isLoading: startingRecon }] = useStartReconciliationMutation();
@@ -111,58 +137,74 @@ export function WeeklyPlanPage() {
   return (
     <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-12 sm:space-y-16">
       {/* DESIGN.md §9 editorial hero — "Aiming for" eyebrow → Rally Cry as
-          the strategic anchor for the cascade below. Replaces the boxed
-          StrategyAnchor on this surface; the editorial pattern reads as
-          the page's top-of-tree, not chrome. The boxed anchor still ships
-          on Dashboard / other surfaces. Only renders when the timeline
-          tabs flag hides the dedicated Dashboard tab (matches prior
-          conditional). */}
-      {!TIMELINE_TABS_ENABLED && rallyCryTitle ? (
+          the strategic anchor for the cascade below. Locked §9 pattern:
+          renders unconditionally as the editorial opener of the page
+          whenever an RC title is available, regardless of whether the
+          timeline tabs flag is on. Cabinet Grotesk 500 carries the
+          editorial personality §3 reserves for display copy. */}
+      {rallyCryTitle ? (
         <section data-cy="aiming-for-hero" className="space-y-2">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
             Aiming for
           </p>
-          <p className="text-2xl sm:text-3xl font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
+          <p
+            className="text-2xl sm:text-3xl font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
+            style={{ fontFamily: CABINET_GROTESK_FAMILY }}
+          >
             {rallyCryTitle}
           </p>
         </section>
-      ) : !TIMELINE_TABS_ENABLED ? (
-        <StrategyAnchor />
       ) : null}
 
       <header className="space-y-3">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
-            My weekly plan
-          </p>
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
+          My weekly plan
+        </p>
+        {/* DESIGN.md §9 inline week navigation — `← Week of … →` on one
+            line. 36×36 hairline-bordered chevron buttons hugging the
+            display heading. Prev/next are visually present so the §9
+            pattern shows; live wiring lives one cycle deeper (no plan-
+            by-week query is mounted on this surface yet — Commits tab
+            already has the data hook). Disabled state is the honest
+            visual until that wiring lands; this is a visual-polish pass
+            per cycle scope. */}
+        <div className="mt-1 flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            disabled
+            aria-label="Previous week"
+            title="Week navigation — coming soon. Use the Commits tab to browse past weeks."
+            data-cy="week-nav-prev"
+            className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-md border border-neutral-200 text-neutral-400 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-800 dark:text-neutral-600 dark:hover:bg-neutral-900"
+          >
+            <HiChevronLeft className="h-4 w-4" aria-hidden />
+          </button>
           <h1
-            className="mt-1 text-3xl sm:text-4xl font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
+            className="text-3xl sm:text-4xl font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
+            style={{ fontFamily: CABINET_GROTESK_FAMILY }}
             data-cy="plan-heading"
           >
             {weekOfLabel}
-            {canEdit ? null : (
-              <span className="ml-3 align-middle text-sm font-normal text-neutral-500 dark:text-neutral-400">
-                ·{" "}
-                <span data-cy="plan-state-inline">
-                  <PlanStatePill state={data.state} size="xs" />
-                </span>
-              </span>
-            )}
           </h1>
+          <button
+            type="button"
+            disabled
+            aria-label="Next week"
+            title="Week navigation — coming soon. Use the Commits tab to browse past weeks."
+            data-cy="week-nav-next"
+            className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-md border border-neutral-200 text-neutral-400 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-800 dark:text-neutral-600 dark:hover:bg-neutral-900"
+          >
+            <HiChevronRight className="h-4 w-4" aria-hidden />
+          </button>
         </div>
-        {/* DESIGN.md §3 opening rhythm is eyebrow → display heading →
-            optional supporting line. The plan-state pill is subordinated
-            below the H1 (not parked at H1 altitude) so it doesn't fight the
-            editorial hero. Reads as a quiet status caption, matching §2
-            editorial-calm posture. */}
-        {canEdit ? (
-          <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
-            <span>Status</span>
-            <span data-cy="plan-state">
-              <PlanStatePill state={data.state} />
-            </span>
-          </div>
-        ) : null}
+        {/* DESIGN.md §3 opening rhythm: eyebrow → display heading →
+            optional supporting line. State pill is a quiet caption
+            below the H1; the "Status" field-label was form-y per
+            §10 — dropped so the pill stands alone (dot + label
+            already says everything). */}
+        <div data-cy="plan-state" className="text-xs text-neutral-600 dark:text-neutral-400">
+          <PlanStatePill state={data.state} />
+        </div>
       </header>
 
       {/* ============================================================
@@ -244,15 +286,17 @@ export function WeeklyPlanPage() {
         />
       )}
 
-      {/* Submit footer — generous breathing room above so it doesn't sit on
-          top of the cascade. Padlock icon removed per §10 ("Submit plan"
-          replaces "Lock" — keep the verb, drop the metaphor).
-          DESIGN.md §10 tone: plain action labels carry the meaning. The
-          previously-rendered explanatory "When you're done editing…"
-          sentence was instructional prose §10 specifically steers away
-          from — removed. Post-submit / post-reconcile states still surface
-          a one-line caption since the action set narrows in those states. */}
-      <footer className="pt-4 border-t border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Submit footer — DESIGN.md §11 says ONE dominant CTA per surface.
+          The previous dual-CTA rail ("Submit plan" + "Submit & start
+          reconciling") had two near-equal buttons competing for the eye
+          (§2 calm-restrained posture violation). Resolved: "Submit plan"
+          is the single primary; "Submit & start reconciling" demotes to
+          a ghost inline alternative tucked next to it on the same line.
+          The orphan hairline divider above was not part of §6's depth
+          system (e0–e3) — removed; generous top spacing carries the
+          break visually instead. On larger sizes the primary uses size="lg"
+          so the coarse-pointer 44px floor reads on touch (§11). */}
+      <footer className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         {!canEdit ? (
           <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-xl">
             {data.state === "LOCKED" ? (
@@ -270,26 +314,34 @@ export function WeeklyPlanPage() {
         ) : (
           <span aria-hidden />
         )}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           {canSubmit ? (
             <>
-              <Button onClick={submit} disabled={locking || startingRecon} data-cy="submit-plan">
+              <Button
+                size="lg"
+                onClick={submit}
+                disabled={locking || startingRecon}
+                data-cy="submit-plan"
+              >
                 {locking && !startingRecon ? "Submitting…" : "Submit plan"}
               </Button>
               <Button
-                variant="secondary"
+                size="sm"
+                variant="ghost"
                 onClick={submitAndReconcile}
                 disabled={locking || startingRecon}
                 data-cy="submit-and-reconcile"
-                rightIcon={<HiArrowRight className="h-3.5 w-3.5" />}
               >
                 {startingRecon ? "Starting…" : "Submit & start reconciling"}
               </Button>
             </>
           ) : canEdit ? (
-            <Button disabled>Submit plan</Button>
+            <Button size="lg" disabled>
+              Submit plan
+            </Button>
           ) : data.state === "LOCKED" ? (
             <Button
+              size="lg"
               onClick={startReconciliationOnly}
               disabled={startingRecon}
               data-cy="goto-reconcile"
