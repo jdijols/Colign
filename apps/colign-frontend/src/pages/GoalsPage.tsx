@@ -1,8 +1,23 @@
+import { useState } from "react";
+import { WeekNavigator } from "@/components/WeekNavigator";
+import { StrategyWeekView } from "@/components/StrategyWeekView";
+import { currentWeek } from "@/lib/weeks";
+
 /**
- * Goals — blank canvas. Intentionally empty for now; content gets built up here
- * over time. The standard page container is kept so future content inherits the
- * same padding + max width as the rest of the app.
+ * Goals — the week-navigable strategy view. The navigator picks a week; the
+ * tree below shows the RC → DO → Outcome strategy as it stood that week (each
+ * element appears from the week it was created until it's retired). Editing
+ * (add/remove outcomes) is allowed only on the current week — you edit the
+ * present and view the past. Defaults to the current week.
  */
 export function GoalsPage() {
-  return <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6" />;
+  const thisWeek = currentWeek();
+  const [week, setWeek] = useState<string>(() => thisWeek);
+
+  return (
+    <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6">
+      <WeekNavigator week={week} onWeekChange={setWeek} eyebrow="Goals" />
+      <StrategyWeekView week={week} editable={week === thisWeek} />
+    </div>
+  );
 }

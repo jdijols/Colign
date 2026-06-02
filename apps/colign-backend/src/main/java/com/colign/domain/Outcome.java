@@ -9,6 +9,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -73,4 +74,13 @@ public class Outcome extends AbstractAuditingEntity {
 
   @Column(nullable = false, length = 20)
   private String status;
+
+  /**
+   * When this Outcome was retired (soft delete). Null = still active. With
+   * {@code createdDate} from the auditing base, this gives the effective range
+   * the timeline views filter on; removing an Outcome stamps this instead of
+   * deleting the row so history survives.
+   */
+  @Column(name = "effective_to")
+  private Instant effectiveTo;
 }

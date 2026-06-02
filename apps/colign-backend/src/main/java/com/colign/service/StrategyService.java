@@ -19,6 +19,7 @@ import com.colign.repository.DefiningObjectiveRepository;
 import com.colign.repository.OutcomeRepository;
 import com.colign.repository.RallyCryRepository;
 import com.colign.repository.TeamRepository;
+import java.time.Instant;
 import java.time.LocalDate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -261,6 +262,24 @@ public class StrategyService {
     return toRefDto(saved, parent);
   }
 
+  /**
+   * Soft-delete an Outcome: stamp {@code effectiveTo = now} instead of removing the row, so the
+   * timeline still shows it in the weeks it was live. Idempotent — re-deleting a retired Outcome
+   * keeps the original retirement timestamp.
+   */
+  @Transactional
+  public void deleteOutcome(User caller, Long id) {
+    Outcome o =
+        outcomes
+            .findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "outcome not found"));
+    requireStrategyAuthority(caller, o.getTeamId());
+    if (o.getEffectiveTo() == null) {
+      o.setEffectiveTo(Instant.now());
+      outcomes.save(o);
+    }
+  }
+
   // ===================== helpers =====================
 
   private OutcomeRefDto toRefDto(Outcome o, DefiningObjective parent) {
@@ -273,7 +292,9 @@ public class StrategyService {
         parent == null ? null : parent.getId(),
         parent == null ? null : parent.getTitle(),
         rc == null ? null : rc.getId(),
-        rc == null ? null : rc.getTitle());
+        rc == null ? null : rc.getTitle(),
+        o.getCreatedDate(),
+        o.getEffectiveTo());
   }
 
   private Long requireCallerTeam(User caller) {

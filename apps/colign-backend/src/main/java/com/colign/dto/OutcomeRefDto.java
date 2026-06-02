@@ -1,8 +1,11 @@
 package com.colign.dto;
 
+import java.time.Instant;
+
 /**
  * Slim Outcome view for FE pickers (combobox) — no metrics, just identity and the strategy-chain
- * context the IC sees when choosing.
+ * context the IC sees when choosing. {@code createdDate} lets the timeline views place each Outcome
+ * in the week it was established.
  */
 public record OutcomeRefDto(
     Long id,
@@ -11,4 +14,6 @@ public record OutcomeRefDto(
     Long definingObjectiveId,
     String definingObjectiveTitle,
     Long rallyCryId,
-    String rallyCryTitle) {}
+    String rallyCryTitle,
+    Instant createdDate,
+    Instant effectiveTo) {}

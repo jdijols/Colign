@@ -59,6 +59,11 @@ export const strategyApi = colignApi.injectEndpoints({
       query: (body) => ({ url: "outcomes", method: "POST", body }),
       invalidatesTags: ["Me", "Outcome"],
     }),
+    /** Soft-delete (retire) an Outcome. Invalidates Me too: removing the last active Outcome flips strategySetupComplete. */
+    deleteOutcome: build.mutation<void, number>({
+      query: (id) => ({ url: `outcomes/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Me", "Outcome"],
+    }),
   }),
 });
 
@@ -66,4 +71,5 @@ export const {
   useCreateRallyCryMutation,
   useCreateDefiningObjectiveMutation,
   useCreateOutcomeMutation,
+  useDeleteOutcomeMutation,
 } = strategyApi;

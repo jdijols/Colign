@@ -73,6 +73,19 @@ export interface OutcomeRefDto {
   definingObjectiveTitle: string | null;
   rallyCryId: number | null;
   rallyCryTitle: string | null;
+  /**
+   * ISO-8601 instant the Outcome was created (from the backend auditing
+   * fields). Drives the timeline views — an Outcome is "established as of" a
+   * week when its creation date is on or before that week's end. Optional so
+   * callers built before the field shipped still type-check.
+   */
+  createdDate?: string;
+  /**
+   * ISO-8601 instant the Outcome was retired (soft delete); null/absent = still
+   * active. With createdDate this is the effective range the timeline filters
+   * on — an Outcome shows in weeks between its creation and its retirement.
+   */
+  effectiveTo?: string | null;
 }
 
 export interface ChessTagDto {

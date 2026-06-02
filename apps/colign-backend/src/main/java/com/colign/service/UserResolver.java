@@ -142,7 +142,7 @@ public class UserResolver {
         .needsInvite(needsInvite(teamId))
         .teamName(teamName)
         .teamAvatarUrl(teamAvatarUrl)
-        .strategySetupComplete(teamId != null && outcomes.existsByTeamId(teamId))
+        .strategySetupComplete(teamId != null && outcomes.existsByTeamIdAndEffectiveToIsNull(teamId))
         .build();
   }
 

@@ -6,6 +6,8 @@ import com.colign.service.PlanService;
 import com.colign.service.UserResolver;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -46,6 +49,18 @@ public class PlanController {
   @GetMapping("/{id}")
   public PlanDto getById(@PathVariable Long id) {
     return plans.toDto(plans.getById(id));
+  }
+
+  /** Read-only: the JWT user's plan for a given week (Monday), or 204 if none exists yet. */
+  @GetMapping("/by-week")
+  public ResponseEntity<PlanDto> getByWeek(
+      @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    var me = users.resolveCurrent();
+    return plans
+        .findForWeek(me.getId(), date)
+        .map(plans::toDto)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.noContent().build());
   }
 
   @PatchMapping("/{id}/lock")

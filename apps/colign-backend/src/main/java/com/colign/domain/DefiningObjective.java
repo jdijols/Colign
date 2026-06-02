@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -53,4 +54,12 @@ public class DefiningObjective extends AbstractAuditingEntity {
 
   @Column(nullable = false, length = 20)
   private String status;
+
+  /**
+   * When this Objective was retired (soft delete). Null = still active. Removing
+   * an Objective stamps this and soft-cascades to its active Outcomes so the
+   * timeline can still show it in the weeks it was live.
+   */
+  @Column(name = "effective_to")
+  private Instant effectiveTo;
 }

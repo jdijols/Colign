@@ -22,12 +22,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -60,16 +62,25 @@ public class OutcomeController {
    */
   @GetMapping
   public Page<OutcomeRefDto> list(
+      @RequestParam(name = "includeRetired", defaultValue = "false") boolean includeRetired,
       @PageableDefault(size = 50, sort = "priorityTier", direction = Sort.Direction.ASC)
           Pageable pageable) {
     User me = users.resolveCurrent();
     Pageable capped =
         PageRequest.of(
             pageable.getPageNumber(), Math.min(pageable.getPageSize(), 500), pageable.getSort());
-    Page<Outcome> page =
-        me.getRole() == UserRole.ADMIN || me.getTeamId() == null
-            ? outcomes.findAll(capped)
-            : outcomes.findByTeamId(me.getTeamId(), capped);
+    // Default to active (non-retired) outcomes so the commit-form picker and the
+    // Dashboard anchor never show a retired Outcome. The Goals timeline passes
+    // includeRetired=true and filters by each Outcome's effective range per week.
+    boolean adminScope = me.getRole() == UserRole.ADMIN || me.getTeamId() == null;
+    Page<Outcome> page;
+    if (adminScope) {
+      page = includeRetired ? outcomes.findAll(capped) : outcomes.findByEffectiveToIsNull(capped);
+    } else if (includeRetired) {
+      page = outcomes.findByTeamId(me.getTeamId(), capped);
+    } else {
+      page = outcomes.findByTeamIdAndEffectiveToIsNull(me.getTeamId(), capped);
+    }
 
     // Hydrate parent labels in bulk (no N+1)
     var doIds = page.getContent().stream().map(Outcome::getDefiningObjectiveId).distinct().toList();
@@ -91,7 +102,9 @@ public class OutcomeController {
               d == null ? null : d.getId(),
               d == null ? null : d.getTitle(),
               rc == null ? null : rc.getId(),
-              rc == null ? null : rc.getTitle());
+              rc == null ? null : rc.getTitle(),
+              o.getCreatedDate(),
+              o.getEffectiveTo());
         });
   }
 
@@ -104,5 +117,12 @@ public class OutcomeController {
   @PutMapping("/{id}")
   public OutcomeRefDto update(@PathVariable Long id, @Valid @RequestBody UpdateOutcomeRequest req) {
     return strategy.updateOutcome(users.resolveCurrent(), id, req);
+  }
+
+  /** Soft-delete (retire) an Outcome. The row stays so past weeks still show it. */
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void delete(@PathVariable Long id) {
+    strategy.deleteOutcome(users.resolveCurrent(), id);
   }
 }

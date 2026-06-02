@@ -27,6 +27,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,6 +87,17 @@ public class PlanService {
                         .weekStartDate(weekStart)
                         .state(PlanState.DRAFT)
                         .build()));
+  }
+
+  /**
+   * Read-only fetch of a user's plan for a specific week. Unlike {@link
+   * #getOrCreatePlanForWeek}, this never creates one — the timeline views scrub
+   * across many weeks and must not spawn empty plans for weeks the user never
+   * planned.
+   */
+  @Transactional(readOnly = true)
+  public Optional<Plan> findForWeek(Long userId, LocalDate weekStart) {
+    return plans.findByUserIdAndWeekStartDate(userId, weekStart);
   }
 
   @Transactional(readOnly = true)
