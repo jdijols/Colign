@@ -17,6 +17,7 @@ import {
 } from "@/components/ui";
 import { PlanStatePill } from "@/components/PlanStatePill";
 import { ReconcileRow } from "@/components/ReconcileRow";
+import { StrategyAnchor } from "@/components/StrategyAnchor";
 import { formatWeekOf } from "@/lib/weeks";
 
 export function ReconcilePage() {
@@ -62,39 +63,82 @@ export function ReconcilePage() {
   }
 
   return (
-    <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-12 sm:space-y-16">
+    <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-12 sm:space-y-16">
+      {/* Locked product idiom (DESIGN.md §11): strategy anchor pinned at top
+          so the WHY context stays present even in the empty state. Renders
+          null when no outcomes exist (defensive). */}
+      <StrategyAnchor />
+
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600">
-            Looking back
+            Reconciliation
           </p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 tabular-nums">
+          {/* Hero: largest type on the page. Geist semibold + tight tracking
+              at text-4xl/5xl approximates the --t-display token until Cabinet
+              Grotesk lands in the shared foundation. tabular-nums keeps the
+              date width stable across weeks. */}
+          <h1 className="mt-1 text-4xl sm:text-5xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 tabular-nums">
             Week of {formatWeekOf(data.weekStartDate)}
           </h1>
+          {/* Single supporting line under the display — anchors the --s-pillar
+              gap below the hero (DESIGN.md §5 vertical rhythm). */}
+          <p className="mt-3 text-[15px] leading-relaxed text-neutral-600 dark:text-neutral-400 max-w-[58ch]">
+            The week-end walk-through. Each commit gets a quick record of what actually shipped, and
+            anything that slipped carries forward.
+          </p>
         </div>
         {data.state !== "DRAFT" && <PlanStatePill state={data.state} />}
       </header>
 
       {data.state === "DRAFT" && (
-        <section className="max-w-xl space-y-3">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600">
-            Nothing to reconcile yet
+        <section className="space-y-6">
+          <p className="text-[15px] leading-[1.7] text-neutral-700 dark:text-neutral-300 max-w-[58ch]">
+            Reconciliation opens once you submit this week’s plan.{" "}
+            <a
+              className="text-neutral-600 hover:text-neutral-900 underline decoration-neutral-300 hover:decoration-neutral-700 underline-offset-4 transition-colors"
+              href="."
+            >
+              Open My weekly plan
+              <span aria-hidden> →</span>
+            </a>
           </p>
-          <h2 className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
-            This week is still a draft.
-          </h2>
-          <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-            Reconciliation is the week-end walk-through: each commit gets a quick record of what
-            actually shipped, and anything that slipped carries forward into next week. It opens
-            once you submit the plan.
-          </p>
-          <p className="text-sm text-neutral-700 dark:text-neutral-300">
-            Submit the plan on{" "}
-            <a className="underline underline-offset-2 hover:text-neutral-900" href=".">
-              My weekly plan
-            </a>{" "}
-            to begin.
-          </p>
+
+          {/* Quiet e2 preview: hairlined surface with ghost reconcile rows so
+              the empty state shows structure rather than just words
+              (DESIGN.md §6 depth from layered surfaces + hairline borders).
+              Reads as "calmly waiting", not "broken / half-loaded". */}
+          <Card aria-hidden className="max-w-2xl">
+            <div className="px-5 py-3 border-b border-neutral-200 dark:border-neutral-800">
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
+                Preview
+              </p>
+            </div>
+            <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
+              <li className="px-5 py-4 flex items-center gap-3 text-neutral-400 dark:text-neutral-600">
+                <span
+                  className="h-4 w-4 rounded-sm border border-dashed border-neutral-300 dark:border-neutral-700 shrink-0"
+                  aria-hidden
+                />
+                <span className="flex-1 truncate text-sm">Commit title</span>
+                <span className="inline-flex items-center gap-1.5 text-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+                  Shipped
+                </span>
+              </li>
+              <li className="px-5 py-4 flex items-center gap-3 text-neutral-400 dark:text-neutral-600">
+                <span
+                  className="h-4 w-4 rounded-sm border border-dashed border-neutral-300 dark:border-neutral-700 shrink-0"
+                  aria-hidden
+                />
+                <span className="flex-1 truncate text-sm">Commit title</span>
+                <span className="inline-flex items-center gap-1.5 text-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+                  Carried forward
+                </span>
+              </li>
+            </ul>
+          </Card>
         </section>
       )}
 
