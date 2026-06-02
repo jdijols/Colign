@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -50,4 +51,12 @@ public class RallyCry extends AbstractAuditingEntity {
 
   @Column(nullable = false, length = 20)
   private String status;
+
+  /**
+   * When this Rally Cry was retired (a pivot to a new one). Null = active. The
+   * pivot soft-deletes it and cascades to its objectives + outcomes so the
+   * timeline still shows the old strategy in the weeks it was live.
+   */
+  @Column(name = "effective_to")
+  private Instant effectiveTo;
 }

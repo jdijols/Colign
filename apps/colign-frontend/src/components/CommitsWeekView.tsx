@@ -81,6 +81,11 @@ function CommitItem({ commit }: { commit: WeeklyCommitDto }) {
           </div>
         ) : null}
       </div>
+      {commit.carriedFromCommitId != null ? (
+        <Badge tone="neutral" size="xs">
+          Carried
+        </Badge>
+      ) : null}
       {commit.chessTagCode ? (
         <Badge tone={chessTagTone(commit.chessTagCode)} size="xs">
           {POSTURE_LABEL[commit.chessTagCode] ?? commit.chessTagCode}

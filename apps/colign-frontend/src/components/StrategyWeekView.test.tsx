@@ -9,7 +9,14 @@ vi.mock("@/api/outcomes", () => ({
 vi.mock("@/api/strategy", () => ({
   useCreateOutcomeMutation: () => [vi.fn(), { isLoading: false }],
   useDeleteOutcomeMutation: () => [vi.fn(), { isLoading: false }],
+  useCreateDefiningObjectiveMutation: () => [vi.fn(), { isLoading: false }],
+  useDeleteDefiningObjectiveMutation: () => [vi.fn(), { isLoading: false }],
+  useDeleteRallyCryMutation: () => [vi.fn(), { isLoading: false }],
 }));
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  return { ...actual, useNavigate: () => vi.fn() };
+});
 
 import { StrategyWeekView } from "./StrategyWeekView";
 
@@ -83,5 +90,8 @@ describe("StrategyWeekView", () => {
     render(<StrategyWeekView week="2026-06-01" editable />);
     expect(document.querySelector('[data-cy="add-outcome"]')).toBeTruthy();
     expect(document.querySelector('[data-cy="remove-outcome-1"]')).toBeTruthy();
+    expect(document.querySelector('[data-cy="add-objective"]')).toBeTruthy();
+    expect(document.querySelector('[data-cy="remove-objective-10"]')).toBeTruthy();
+    expect(document.querySelector('[data-cy="pivot-rally-cry"]')).toBeTruthy();
   });
 });

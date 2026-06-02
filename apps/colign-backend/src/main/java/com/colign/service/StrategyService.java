@@ -127,6 +127,11 @@ public class StrategyService {
     return RallyCryDto.of(rallyCries.save(rc));
   }
 
+  /**
+   * Pivot away from a Rally Cry: soft-delete it and cascade {@code effectiveTo} to its objectives
+   * and their outcomes, so the timeline keeps showing the old strategy in the weeks it was live
+   * while "current" views go empty (routing the team to set up a new Rally Cry).
+   */
   @Transactional
   public void deleteRallyCry(User caller, Long id) {
     RallyCry rc =
@@ -134,7 +139,14 @@ public class StrategyService {
             .findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "rally cry not found"));
     requireStrategyAuthority(caller, rc.getTeamId());
-    rallyCries.delete(rc); // defining_objective / outcome cascade via FK ON DELETE CASCADE
+    Instant now = Instant.now();
+    if (rc.getEffectiveTo() == null) {
+      rc.setEffectiveTo(now);
+      rallyCries.save(rc);
+    }
+    for (DefiningObjective d : definingObjectives.findByRallyCryId(id)) {
+      retireObjective(d, now);
+    }
   }
 
   // ===================== Defining Objective =====================
@@ -182,6 +194,7 @@ public class StrategyService {
     return DefiningObjectiveDto.of(definingObjectives.save(d));
   }
 
+  /** Soft-delete an Objective and cascade {@code effectiveTo} to its active outcomes. */
   @Transactional
   public void deleteDefiningObjective(User caller, Long id) {
     DefiningObjective d =
@@ -190,7 +203,21 @@ public class StrategyService {
             .orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "objective not found"));
     requireStrategyAuthority(caller, d.getTeamId());
-    definingObjectives.delete(d); // outcome cascades via FK ON DELETE CASCADE
+    retireObjective(d, Instant.now());
+  }
+
+  /** Stamp effectiveTo on an Objective and its active outcomes (idempotent). Shared by pivot + delete. */
+  private void retireObjective(DefiningObjective d, Instant now) {
+    if (d.getEffectiveTo() == null) {
+      d.setEffectiveTo(now);
+      definingObjectives.save(d);
+    }
+    for (Outcome o : outcomes.findByDefiningObjectiveId(d.getId())) {
+      if (o.getEffectiveTo() == null) {
+        o.setEffectiveTo(now);
+        outcomes.save(o);
+      }
+    }
   }
 
   // ===================== Outcome =====================

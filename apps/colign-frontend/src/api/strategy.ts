@@ -64,6 +64,16 @@ export const strategyApi = colignApi.injectEndpoints({
       query: (id) => ({ url: `outcomes/${id}`, method: "DELETE" }),
       invalidatesTags: ["Me", "Outcome"],
     }),
+    /** Soft-delete (retire) an Objective; the backend cascades to its active outcomes. */
+    deleteDefiningObjective: build.mutation<void, number>({
+      query: (id) => ({ url: `defining-objectives/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Me", "Outcome"],
+    }),
+    /** Pivot: soft-delete (retire) a Rally Cry; the backend cascades to its objectives + outcomes. */
+    deleteRallyCry: build.mutation<void, number>({
+      query: (id) => ({ url: `rally-cries/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Me", "Outcome"],
+    }),
   }),
 });
 
@@ -72,4 +82,6 @@ export const {
   useCreateDefiningObjectiveMutation,
   useCreateOutcomeMutation,
   useDeleteOutcomeMutation,
+  useDeleteDefiningObjectiveMutation,
+  useDeleteRallyCryMutation,
 } = strategyApi;
