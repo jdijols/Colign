@@ -2,15 +2,21 @@ import { useMemo } from "react";
 import { HiChevronRight } from "react-icons/hi";
 import { useListOutcomesQuery } from "@/api/outcomes";
 import type { OutcomeRefDto } from "@/api/types";
-import { Badge, Card } from "@/components/ui";
+import { Badge } from "@/components/ui";
 import { priorityTone } from "@/lib/tokens";
 
 /**
- * Slim "Aiming for" header pinned at the top of every plan surface. Reinforces
- * the alignment story — every weekly commit lives downstream of one strategic
- * chain (Rally Cry → Defining Objective → Outcome). Renders the full chain
- * when the team's strategy is small (1 RC, 1 DO, 1 Outcome) and compacts to a
- * summary once it grows.
+ * "Aiming for" strategy breadcrumb — a discrete pill primitive (DESIGN.md §11)
+ * pinned at the top of strategy-aware surfaces. Reinforces the alignment story:
+ * every weekly commit lives downstream of one strategic chain (Rally Cry →
+ * Defining Objective → Outcome). Renders the full chain when the team's
+ * strategy is small (1 RC, 1 DO, 1 Outcome) and compacts to a summary once it
+ * grows.
+ *
+ * Rendered as an inline-flex pill — not a full-width card — so it reads as a
+ * discrete anchor on the surface rather than a banner. Surface background +
+ * hairline border + rounded-full per DESIGN.md §11 (depth from hairlines, not
+ * elevation; §6).
  *
  * Renders nothing when no outcomes exist (pre-strategy-setup state — the
  * OnboardingGate routes the user to the wizard before this surface should
@@ -24,26 +30,23 @@ export function StrategyAnchor() {
   if (isLoading || shape == null) return null;
 
   return (
-    <Card variant="muted">
-      <div className="px-5 py-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm">
-        <span className="text-[10px] uppercase tracking-wider text-neutral-600 shrink-0">
-          Aiming for
-        </span>
-        {shape.kind === "full" ? (
-          <FullChain
-            rallyCry={shape.rallyCry}
-            objective={shape.objective}
-            outcome={shape.outcome}
-          />
-        ) : (
-          <SummaryChain
-            rallyCry={shape.rallyCry}
-            objectiveCount={shape.objectiveCount}
-            outcomeCount={shape.outcomeCount}
-          />
-        )}
-      </div>
-    </Card>
+    <div
+      className="inline-flex flex-wrap items-center gap-x-2.5 gap-y-1.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 pl-4 pr-5 py-2 text-sm max-w-full"
+      data-cy="strategy-anchor"
+    >
+      <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400 shrink-0">
+        Aiming for
+      </span>
+      {shape.kind === "full" ? (
+        <FullChain rallyCry={shape.rallyCry} objective={shape.objective} outcome={shape.outcome} />
+      ) : (
+        <SummaryChain
+          rallyCry={shape.rallyCry}
+          objectiveCount={shape.objectiveCount}
+          outcomeCount={shape.outcomeCount}
+        />
+      )}
+    </div>
   );
 }
 
@@ -61,11 +64,17 @@ function FullChain({
       <span className="font-medium" data-cy="strategy-rc">
         {rallyCry}
       </span>
-      <HiChevronRight className="h-3 w-3 text-neutral-400 shrink-0" aria-hidden />
+      <HiChevronRight
+        className="h-3 w-3 text-neutral-400 dark:text-neutral-500 shrink-0"
+        aria-hidden
+      />
       <span className="font-medium" data-cy="strategy-do">
         {objective}
       </span>
-      <HiChevronRight className="h-3 w-3 text-neutral-400 shrink-0" aria-hidden />
+      <HiChevronRight
+        className="h-3 w-3 text-neutral-400 dark:text-neutral-500 shrink-0"
+        aria-hidden
+      />
       <Badge tone={priorityTone(outcome.priorityTier)} size="xs">
         {outcome.priorityTier}
       </Badge>
@@ -90,8 +99,10 @@ function SummaryChain({
       <span className="font-medium" data-cy="strategy-rc">
         {rallyCry}
       </span>
-      <span className="text-neutral-400">·</span>
-      <span className="text-neutral-700 dark:text-neutral-300">
+      <span className="text-neutral-400 dark:text-neutral-500" aria-hidden>
+        ·
+      </span>
+      <span className="text-neutral-600 dark:text-neutral-400">
         {objectiveCount} {objectiveCount === 1 ? "Objective" : "Objectives"} · {outcomeCount}{" "}
         {outcomeCount === 1 ? "Outcome" : "Outcomes"}
       </span>
