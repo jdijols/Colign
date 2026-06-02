@@ -32,6 +32,10 @@ export function WeeklyPlanPage() {
     () => buildCascade(outcomes, data?.commits ?? []),
     [outcomes, data?.commits],
   );
+  // DESIGN.md §9 editorial hero: "Aiming for" eyebrow → Rally Cry display
+  // headline above the week-of header. Pulled from the denormalized RC title
+  // on any outcome (all outcomes in a team share one RC).
+  const rallyCryTitle = outcomes[0]?.rallyCryTitle ?? null;
 
   if (isLoading) {
     return (
@@ -106,11 +110,27 @@ export function WeeklyPlanPage() {
 
   return (
     <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-12 sm:space-y-16">
-      {/* When the timeline tabs are hidden (prod), the "Aiming for" anchor lives
-          here on Plan, as it did before it moved to the Dashboard tab. */}
-      {!TIMELINE_TABS_ENABLED ? <StrategyAnchor /> : null}
+      {/* DESIGN.md §9 editorial hero — "Aiming for" eyebrow → Rally Cry as
+          the strategic anchor for the cascade below. Replaces the boxed
+          StrategyAnchor on this surface; the editorial pattern reads as
+          the page's top-of-tree, not chrome. The boxed anchor still ships
+          on Dashboard / other surfaces. Only renders when the timeline
+          tabs flag hides the dedicated Dashboard tab (matches prior
+          conditional). */}
+      {!TIMELINE_TABS_ENABLED && rallyCryTitle ? (
+        <section data-cy="aiming-for-hero" className="space-y-2">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
+            Aiming for
+          </p>
+          <p className="text-2xl sm:text-3xl font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
+            {rallyCryTitle}
+          </p>
+        </section>
+      ) : !TIMELINE_TABS_ENABLED ? (
+        <StrategyAnchor />
+      ) : null}
 
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+      <header className="space-y-3">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
             My weekly plan
@@ -130,6 +150,11 @@ export function WeeklyPlanPage() {
             )}
           </h1>
         </div>
+        {/* DESIGN.md §3 opening rhythm is eyebrow → display heading →
+            optional supporting line. The plan-state pill is subordinated
+            below the H1 (not parked at H1 altitude) so it doesn't fight the
+            editorial hero. Reads as a quiet status caption, matching §2
+            editorial-calm posture. */}
         {canEdit ? (
           <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
             <span>Status</span>
@@ -204,20 +229,10 @@ export function WeeklyPlanPage() {
               </div>
             </article>
           ))}
-
-          {canEdit && !adding ? (
-            <div className="pt-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setAdding(true)}
-                leftIcon={<HiPlus className="h-3.5 w-3.5" />}
-                data-cy="add-commit"
-              >
-                Add commit
-              </Button>
-            </div>
-          ) : null}
+          {/* DESIGN.md §9 locks the per-Outcome ghost "Add a commit to this
+              outcome" affordance as the canonical add-commit pattern. The
+              previously-rendered boxed secondary "Add commit" CTA here was
+              a duplicate that broke the minimal-first stance — removed. */}
         </section>
       ) : null}
 
@@ -231,27 +246,30 @@ export function WeeklyPlanPage() {
 
       {/* Submit footer — generous breathing room above so it doesn't sit on
           top of the cascade. Padlock icon removed per §10 ("Submit plan"
-          replaces "Lock" — keep the verb, drop the metaphor). */}
+          replaces "Lock" — keep the verb, drop the metaphor).
+          DESIGN.md §10 tone: plain action labels carry the meaning. The
+          previously-rendered explanatory "When you're done editing…"
+          sentence was instructional prose §10 specifically steers away
+          from — removed. Post-submit / post-reconcile states still surface
+          a one-line caption since the action set narrows in those states. */}
       <footer className="pt-4 border-t border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-xl">
-          {canEdit ? (
-            <>
-              When you’re done editing,{" "}
-              <strong className="text-neutral-900 dark:text-neutral-100">submit the plan</strong>{" "}
-              for the week — or skip ahead and reconcile in one step.
-            </>
-          ) : data.state === "LOCKED" ? (
-            <>This week’s plan has been submitted. Reconcile when the week is done.</>
-          ) : (
-            <>
-              This week has been reconciled.{" "}
-              <a className="underline" href="reconcile">
-                See it under Reconcile
-              </a>
-              .
-            </>
-          )}
-        </p>
+        {!canEdit ? (
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-xl">
+            {data.state === "LOCKED" ? (
+              <>This week’s plan has been submitted. Reconcile when the week is done.</>
+            ) : (
+              <>
+                This week has been reconciled.{" "}
+                <a className="underline" href="reconcile">
+                  See it under Reconcile
+                </a>
+                .
+              </>
+            )}
+          </p>
+        ) : (
+          <span aria-hidden />
+        )}
         <div className="flex items-center gap-2 flex-wrap">
           {canSubmit ? (
             <>

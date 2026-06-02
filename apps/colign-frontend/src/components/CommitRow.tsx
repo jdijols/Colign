@@ -90,11 +90,12 @@ export function CommitRow({ commit, canEdit, onDelete }: CommitRowProps) {
           ) : null}
         </div>
 
-        {commit.description ? (
-          <p className="mt-0.5 text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed">
-            {commit.description}
-          </p>
-        ) : null}
+        {/* DESIGN.md §9 commit row spec: 14px checkbox + title + priority
+            indicator only — "estimated hours, chess posture, P0/P1/P2 codes"
+            and other detail go one layer deep on click. §12 anti-pattern
+            list extends the "one layer deep" rule to commit descriptions;
+            keeping them inline competes with the cascade's minimal-first
+            stance. Description is still rendered by the drill drawer. */}
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
