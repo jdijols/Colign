@@ -87,30 +87,27 @@ function FullChain({
 
 function SummaryChain({
   rallyCry,
-  objectiveCount,
-  outcomeCount,
 }: {
   rallyCry: string;
+  // objectiveCount / outcomeCount intentionally unused — see comment below.
   objectiveCount: number;
   outcomeCount: number;
 }) {
+  // Per cycle-3 critic #3 (severity 4): dropped the trailing
+  // "· N Objectives · M Outcomes" count metadata. Counts of structural
+  // nodes are taxonomy noise on the dashboard — they tell an IC nothing
+  // actionable about their week, and DESIGN.md §10 explicitly steers
+  // away from this kind of plain-language-over-taxonomy violation
+  // ("Aiming for · {Rally Cry}" is the locked breadcrumb shape per §11;
+  // the full strategy tree appears one click deeper). Dropping the tail
+  // also resolves cycle-3 critic #4 in the common case: with only the
+  // rally cry inside, the pill stays one line at 375px and stops
+  // wrapping into a 3-line blob that violated §12's over-rounded bubble
+  // anti-pattern.
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-neutral-900 dark:text-neutral-50">
       <span className="font-medium" data-cy="strategy-rc">
         {rallyCry}
-      </span>
-      {/* Separator + meta share one flex item so the dot can never wrap onto
-          the rally-cry line tail (where it reads as an orphaned " · ").
-          Whitespace-nowrap on the meta count also prevents the inner " · "
-          from breaking mid-phrase on narrow widths. */}
-      <span className="inline-flex items-center gap-x-2 text-neutral-600 dark:text-neutral-400">
-        <span className="text-neutral-400 dark:text-neutral-500" aria-hidden>
-          ·
-        </span>
-        <span className="whitespace-nowrap">
-          {objectiveCount} {objectiveCount === 1 ? "Objective" : "Objectives"} · {outcomeCount}{" "}
-          {outcomeCount === 1 ? "Outcome" : "Outcomes"}
-        </span>
       </span>
     </div>
   );

@@ -54,32 +54,33 @@ export function DashboardPage() {
 
   return (
     <div className="px-6 sm:px-8 py-10 sm:py-14 max-w-5xl mx-auto">
-      {/* Hero band: display heading → strategy anchor pill. The anchor sits
-          within --s-xl of the heading (§5) — it's part of the hero, not its
-          own section. Per cycle-2 critic #6: dropped the page-level
-          "DASHBOARD" eyebrow so the "AIMING FOR" inside the anchor reads as
-          the lone editorial label in this band (route + nav already names the
-          page; §3's eyebrow examples frame this slot for editorial labels,
-          not page names). */}
-      <header className="space-y-6">
-        <h1
-          className="text-[clamp(2.75rem,1.8rem+4vw,4.5rem)] font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 max-w-[14ch] sm:max-w-none [text-wrap:balance] leading-[1.05]"
-          data-cy="dashboard-heading"
-        >
-          This week
-        </h1>
+      {/* Hero band: strategy anchor pill — single editorial element. Per
+          cycle-3 critic #0+#1: removed the "This week" H1, which collided
+          three times across the surface (H1 + alignment eyebrow + commits
+          eyebrow) and stole display-tier weight from the alignment number
+          below — §9 assigns the signature data viz to that numeral on this
+          surface, so the eye should land there, not on a redundant page
+          title. DESIGN.md §3 reserves "This week" for the alignment eyebrow;
+          the sidebar nav already names the page "Dashboard". The anchor now
+          leads the hero, then the alignment block — eyebrow → display
+          numeral — reads as the §3 hierarchy proper. */}
+      <header data-cy="dashboard-heading">
         <StrategyAnchor />
       </header>
 
       {/* Alignment instrument — compact summary above the fold (§9 assigns
-          this to Dashboard). Separated from the hero by --s-pillar. */}
-      <section className="mt-16 sm:mt-20" aria-labelledby="alignment-eyebrow">
+          this to Dashboard). Separated from the hero by --s-pillar. Tightened
+          from mt-16/20 (64–80px) to mt-12/14 (48–56px) per cycle-3 critic #2
+          to bring the gap to the lower --s-pillar bound (§5) — the prior
+          spacing read as stranded white space between the anchor and the
+          alignment block. */}
+      <section className="mt-12 sm:mt-14" aria-labelledby="alignment-eyebrow">
         <AlignmentInstrument plan={plan} isLoading={isLoading} />
       </section>
 
       {/* This week's quick view — read-only commit list at a glance.
           Separated from the alignment block by --s-pillar (§5). */}
-      <section className="mt-16 sm:mt-20" aria-labelledby="thisweek-eyebrow">
+      <section className="mt-12 sm:mt-14" aria-labelledby="thisweek-eyebrow">
         <ThisWeekQuickView plan={plan} isLoading={isLoading} />
       </section>
     </div>

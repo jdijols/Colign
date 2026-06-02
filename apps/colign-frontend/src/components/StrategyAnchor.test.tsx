@@ -79,11 +79,16 @@ describe("StrategyAnchor", () => {
       ),
     );
     renderWithRouter(<StrategyAnchor />);
-    // 2 distinct DOs across the 3 outcomes.
-    expect(screen.getByText(/2 Objectives · 3 Outcomes/i)).toBeInTheDocument();
-    // RC remains visible.
+    // RC remains visible — the locked §11 breadcrumb shape is
+    // "Aiming for · {Rally Cry}". The previous "· N Objectives · M Outcomes"
+    // count tail was dropped (cycle-3 critic #3 / DESIGN.md §10): structural
+    // node counts are taxonomy noise that don't help an IC act on their week,
+    // and the wrap they caused at 375px regressed §12's pill anti-pattern.
     expect(screen.getByText("Ship 10x faster")).toBeInTheDocument();
-    // Full-chain bits NOT rendered.
+    // Pin the absence: the surface must not regress to count metadata.
+    expect(screen.queryByText(/Objectives/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Outcomes/i)).not.toBeInTheDocument();
+    // Full-chain bits NOT rendered (the deriver still routes to summary mode).
     expect(screen.queryByText("Migrate auth to JWT")).not.toBeInTheDocument();
   });
 
