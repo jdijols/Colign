@@ -40,13 +40,18 @@ describe("CommitsWeekView", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the week's commits with posture and hours", () => {
+  it("renders the week's commits with posture and hours, grouped under the Outcome", () => {
     hoisted.getPlanByWeek.mockReturnValue(mockQueryResult(PLAN));
     render(<CommitsWeekView week="2026-06-01" />);
     expect(screen.getByText("Wire the auth flow")).toBeInTheDocument();
-    expect(screen.getByText("→ Ship the MVP")).toBeInTheDocument();
+    // DESIGN.md §9: Outcome is the section header (left-rule cascade), not a
+    // "→ outcome" subtitle on each commit row.
+    expect(screen.getByText("Ship the MVP")).toBeInTheDocument();
     expect(screen.getByText("Offense")).toBeInTheDocument();
     expect(screen.getByText("8h")).toBeInTheDocument();
+    // DESIGN.md §10: priority is surfaced as "Medium" (consumer-friendly tone),
+    // translated from the internal P1 code.
+    expect(screen.getByText("Medium")).toBeInTheDocument();
   });
 
   it("shows the empty state when there is no plan for the week", () => {
