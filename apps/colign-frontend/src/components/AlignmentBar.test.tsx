@@ -46,9 +46,11 @@ describe("AlignmentBar", () => {
 
   it("announces a full sentence in the live region when commits exist", () => {
     render(<AlignmentBar alignment={fixture(50, 4, 2)} />);
+    // DESIGN.md §10: consumer-friendly tone — sr-only sentence uses
+    // "high-priority outcomes", never the internal P0/P1 codes.
     expect(
       screen.getByText(
-        /high-priority alignment 50 percent\. 2 of 4 commits on p0 or p1 outcomes\./i,
+        /high-priority alignment 50 percent\. 2 of 4 commits on high-priority outcomes\./i,
       ),
     ).toBeInTheDocument();
   });

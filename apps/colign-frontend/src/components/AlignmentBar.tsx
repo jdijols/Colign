@@ -52,22 +52,22 @@ export function AlignmentBar({ alignment, size = "sm" }: AlignmentBarProps) {
           aria-label={`High-priority alignment ${alignmentPct}%`}
         />
       </div>
-      <span
-        className={cn("text-xs font-medium tabular-nums", tier.label)}
-        aria-hidden="true"
-      >
+      <span className={cn("text-xs font-medium tabular-nums", tier.label)} aria-hidden="true">
         {alignmentPct}%
       </span>
+      {/* DESIGN.md §10: consumer-friendly tone — never "P0/P1" in user-facing
+          UI. Restated as "N/M high-priority" so the inline label stays brief
+          but never leaks the internal taxonomy. */}
       <span
         className="text-xs text-neutral-600 dark:text-neutral-400 tabular-nums"
         aria-hidden="true"
       >
-        {linkedToHighPriority}/{totalCommits} on P0/P1
+        {linkedToHighPriority}/{totalCommits} high-priority
       </span>
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {totalCommits === 0
           ? "High-priority alignment unavailable: no commits yet."
-          : `High-priority alignment ${alignmentPct} percent. ${linkedToHighPriority} of ${totalCommits} commits on P0 or P1 outcomes.`}
+          : `High-priority alignment ${alignmentPct} percent. ${linkedToHighPriority} of ${totalCommits} commits on high-priority outcomes.`}
       </span>
     </div>
   );

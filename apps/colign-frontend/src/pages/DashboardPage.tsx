@@ -2,9 +2,36 @@ import { useGetCurrentPlanQuery } from "@/api/plans";
 import type { PlanDto, WeeklyCommitDto } from "@/api/types";
 import { AlignmentBar } from "@/components/AlignmentBar";
 import { StrategyAnchor } from "@/components/StrategyAnchor";
-import { Badge, Spinner } from "@/components/ui";
-import { alignmentTier, commitStatusLabel, commitStatusTone, priorityTone } from "@/lib/tokens";
+import { Spinner } from "@/components/ui";
+import { commitStatusLabel, commitStatusTone, priorityLabel, priorityTone } from "@/lib/tokens";
 import { cn } from "@/lib/cn";
+
+/**
+ * Map a {@link StatusTone} to the dot color for the §11 priority indicator —
+ * the "smallest, quietest signal" primitive (7px colored dot + label, no
+ * border, no background). Kept local to this surface for now; promote to a
+ * shared primitive when a second surface needs the same treatment.
+ */
+const PRIORITY_DOT_TONE: Record<string, string> = {
+  danger: "bg-rose-600 dark:bg-rose-400",
+  warning: "bg-amber-500 dark:bg-amber-400",
+  info: "bg-neutral-400 dark:bg-neutral-500",
+  success: "bg-emerald-600 dark:bg-emerald-400",
+  neutral: "bg-neutral-400 dark:bg-neutral-500",
+};
+
+/**
+ * Map a status {@link StatusTone} to the §11 pill dot prefix color. Pills
+ * keep their hairline border + surface bg; only the leading 6px dot carries
+ * the semantic tone, so the chrome stays calm and the dot does the work.
+ */
+const STATUS_DOT_TONE: Record<string, string> = {
+  danger: "bg-rose-600 dark:bg-rose-400",
+  warning: "bg-amber-500 dark:bg-amber-400",
+  info: "bg-neutral-900 dark:bg-neutral-50",
+  success: "bg-emerald-600 dark:bg-emerald-400",
+  neutral: "bg-neutral-400 dark:bg-neutral-500",
+};
 
 /**
  * Dashboard — the IC's "where you stand this week" surface (DESIGN.md §13).
@@ -95,7 +122,13 @@ function AlignmentInstrument({ plan, isLoading }: { plan?: PlanDto; isLoading: b
 
 function AlignmentReadout({ alignment }: { alignment: PlanDto["alignment"] }) {
   const { alignmentPct, linkedToHighPriority, totalCommits } = alignment;
-  const tier = alignmentTier(alignmentPct);
+  // tier is intentionally not applied to the numeral / inline label here.
+  // DESIGN.md §4: "semantic color is used only where it carries meaning,
+  // never decoratively." The AlignmentBar already encodes the tier; the
+  // hero numeral stays in --text (neutral) so the surface reads calm.
+  // alignmentTier(alignmentPct) — kept off; if a future variant needs the
+  // tier color on the numeral, flip to text-rose-700 / amber-700 / emerald-700
+  // by routing through the helper again.
   // Consumer-friendly mapping per DESIGN.md §10: "High" (not "P0/P1").
   const labelCopy =
     totalCommits === 0
@@ -103,27 +136,31 @@ function AlignmentReadout({ alignment }: { alignment: PlanDto["alignment"] }) {
       : `${linkedToHighPriority} of ${totalCommits} commits on high-priority outcomes`;
 
   return (
-    <div className="space-y-4" data-cy="dashboard-alignment">
+    <div data-cy="dashboard-alignment">
+      {/* Numeral → bar rhythm: tight (--s-sm, 12px) so the readout reads as
+          one unit. Numeral and "%" both in --text so the bar is the sole
+          carrier of tier color (§4). */}
       <div className="flex items-baseline gap-3">
         <span
-          className={cn(
-            "text-6xl sm:text-7xl font-light tracking-tight tabular-nums leading-none",
-            tier.label,
-          )}
+          className="text-6xl sm:text-7xl font-light tracking-tight tabular-nums leading-none text-neutral-900 dark:text-neutral-50"
           aria-hidden="true"
         >
           {alignmentPct}
         </span>
         <span
-          className="text-2xl font-light text-neutral-400 dark:text-neutral-500 tabular-nums leading-none"
+          className="text-2xl font-light text-neutral-900 dark:text-neutral-50 tabular-nums leading-none"
           aria-hidden="true"
         >
           %
         </span>
         <span className="sr-only">High-priority alignment {alignmentPct} percent.</span>
       </div>
-      <AlignmentBar alignment={alignment} size="md" />
-      <p className="text-sm text-neutral-600 dark:text-neutral-400">{labelCopy}</p>
+      <div className="mt-3">
+        <AlignmentBar alignment={alignment} size="md" />
+      </div>
+      {/* Bar → label rhythm: --s-md (16px) so the consumer-friendly line
+          reads as its own beat under the instrument. */}
+      <p className="mt-4 text-sm text-neutral-600 dark:text-neutral-400">{labelCopy}</p>
     </div>
   );
 }
@@ -170,6 +207,8 @@ function ThisWeekQuickView({ plan, isLoading }: { plan?: PlanDto; isLoading: boo
 }
 
 function QuickViewRow({ commit }: { commit: WeeklyCommitDto }) {
+  const priorityToneKey = commit.outcomePriority ? priorityTone(commit.outcomePriority) : null;
+  const statusToneKey = commitStatusTone(commit.status);
   return (
     <li className="py-3 flex items-center gap-3">
       <div className="min-w-0 flex-1">
@@ -177,19 +216,51 @@ function QuickViewRow({ commit }: { commit: WeeklyCommitDto }) {
           {commit.title}
         </div>
         {commit.outcomeTitle ? (
+          // DESIGN.md §9 issue: a heavy "→" arrow competed with the title.
+          // Switch to an em-dash — quieter glyph that still signals the
+          // outcome relationship without pulling eye-weight off the commit.
           <div className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
-            → {commit.outcomeTitle}
+            <span className="text-neutral-400 dark:text-neutral-500" aria-hidden>
+              {"— "}
+            </span>
+            {commit.outcomeTitle}
           </div>
         ) : null}
       </div>
-      {commit.outcomePriority ? (
-        <Badge tone={priorityTone(commit.outcomePriority)} size="xs">
-          {commit.outcomePriority}
-        </Badge>
+      {commit.outcomePriority && priorityToneKey ? (
+        // §11 priority indicator: 7px colored dot + consumer-friendly label
+        // ("High / Medium / Low" per §10). No border, no background — the
+        // smallest, quietest signal. Replaces the P0/P2 Badge pill that
+        // violated both the §10 wording rule and the §11 visual spec.
+        <span
+          className="inline-flex items-center gap-1.5 text-xs tabular-nums whitespace-nowrap"
+          data-cy="quickview-priority"
+        >
+          <span
+            aria-hidden
+            className={cn(
+              "inline-block h-[7px] w-[7px] rounded-full",
+              PRIORITY_DOT_TONE[priorityToneKey] ?? PRIORITY_DOT_TONE.neutral,
+            )}
+          />
+          <span className="text-neutral-700 dark:text-neutral-300">
+            {priorityLabel(commit.outcomePriority)}
+          </span>
+        </span>
       ) : null}
-      <Badge tone={commitStatusTone(commit.status)} size="xs">
+      {/* §11 status pill: hairline border + surface bg + leading 6px colored
+          dot. The dot — not the pill fill — carries the semantic tone, so the
+          chrome stays calm and the signal is precise. */}
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-2 py-0.5 text-[11px] font-medium leading-none text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
+        <span
+          aria-hidden
+          className={cn(
+            "inline-block h-1.5 w-1.5 rounded-full",
+            STATUS_DOT_TONE[statusToneKey] ?? STATUS_DOT_TONE.neutral,
+          )}
+        />
         {commitStatusLabel(commit.status)}
-      </Badge>
+      </span>
     </li>
   );
 }

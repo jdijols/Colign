@@ -99,12 +99,18 @@ function SummaryChain({
       <span className="font-medium" data-cy="strategy-rc">
         {rallyCry}
       </span>
-      <span className="text-neutral-400 dark:text-neutral-500" aria-hidden>
-        ·
-      </span>
-      <span className="text-neutral-600 dark:text-neutral-400">
-        {objectiveCount} {objectiveCount === 1 ? "Objective" : "Objectives"} · {outcomeCount}{" "}
-        {outcomeCount === 1 ? "Outcome" : "Outcomes"}
+      {/* Separator + meta share one flex item so the dot can never wrap onto
+          the rally-cry line tail (where it reads as an orphaned " · ").
+          Whitespace-nowrap on the meta count also prevents the inner " · "
+          from breaking mid-phrase on narrow widths. */}
+      <span className="inline-flex items-center gap-x-2 text-neutral-600 dark:text-neutral-400">
+        <span className="text-neutral-400 dark:text-neutral-500" aria-hidden>
+          ·
+        </span>
+        <span className="whitespace-nowrap">
+          {objectiveCount} {objectiveCount === 1 ? "Objective" : "Objectives"} · {outcomeCount}{" "}
+          {outcomeCount === 1 ? "Outcome" : "Outcomes"}
+        </span>
       </span>
     </div>
   );
