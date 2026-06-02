@@ -174,37 +174,35 @@ export function StrategyWeekView({ week, editable = false }: Props) {
     <div className="space-y-12" data-cy="strategy-week-view">
       {groups.map((rc) => (
         <section key={rc.rallyCryId ?? rc.rallyCryTitle ?? "rc"} className="space-y-8">
-          {/* Rally Cry — top-of-tree, no card boxing (DESIGN.md §9: containment from rule weights alone). */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
-                Aiming for
-              </p>
-              {editable && rc.rallyCryId != null ? (
-                <EditableTitle
-                  value={rc.rallyCryTitle ?? "Untitled Rally Cry"}
-                  onSave={(t) => renameRallyCry({ id: rc.rallyCryId!, title: t })}
-                  className="mt-2 text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
-                  cy={`rename-rally-cry-${rc.rallyCryId}`}
-                />
-              ) : (
-                <h2 className="mt-2 text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
-                  {rc.rallyCryTitle ?? "Untitled Rally Cry"}
-                </h2>
-              )}
-            </div>
+          {/* Rally Cry — top-of-tree, no card boxing (DESIGN.md §9: containment from rule weights alone).
+              Title leads on its own line; Pivot is a quiet ghost inline action below it (DESIGN.md §11:
+              destructive-adjacent secondary action shouldn't compete with the eyebrow for first read). */}
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
+              Aiming for
+            </p>
             {editable && rc.rallyCryId != null ? (
-              <Button
+              <EditableTitle
+                value={rc.rallyCryTitle ?? "Untitled Rally Cry"}
+                onSave={(t) => renameRallyCry({ id: rc.rallyCryId!, title: t })}
+                className="mt-2 text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
+                cy={`rename-rally-cry-${rc.rallyCryId}`}
+              />
+            ) : (
+              <h2 className="mt-2 text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
+                {rc.rallyCryTitle ?? "Untitled Rally Cry"}
+              </h2>
+            )}
+            {editable && rc.rallyCryId != null ? (
+              <button
                 type="button"
-                variant="secondary"
-                size="sm"
                 onClick={() => setPivotTarget(rc)}
                 data-cy="pivot-rally-cry"
-                className="shrink-0"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
               >
-                <HiOutlineSwitchHorizontal className="h-4 w-4" aria-hidden />
-                <span>Pivot</span>
-              </Button>
+                <HiOutlineSwitchHorizontal className="h-3.5 w-3.5" aria-hidden />
+                <span>Pivot Rally Cry</span>
+              </button>
             ) : null}
           </div>
 
@@ -241,8 +239,9 @@ export function StrategyWeekView({ week, editable = false }: Props) {
                   ) : null}
                 </div>
 
-                {/* Outcomes — 1px solid --hairline-strong left rule with 16px padding-left, nested inside the Objective rule (DESIGN.md §9). */}
-                <div className="border-l border-neutral-300 dark:border-neutral-700 pl-4 space-y-3">
+                {/* Outcomes — 1px solid --hairline-strong left rule with 16px padding-left, nested inside the Objective rule (DESIGN.md §9).
+                    Vertical rhythm: --s-md (16px) between outcomes per DESIGN.md §5 ("Generous over tight … the brand says calm"). */}
+                <div className="border-l border-neutral-300 dark:border-neutral-700 pl-4 space-y-4">
                   {dobj.outcomes.map((o) => (
                     <div
                       key={o.id}
@@ -430,9 +429,16 @@ function InlineAdd({
         type="button"
         onClick={onOpen}
         data-cy={cy}
-        className="inline-flex items-center gap-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
+        className="group inline-flex items-center gap-2 pt-1 text-xs font-medium text-neutral-500 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
       >
-        <HiPlus className="h-3.5 w-3.5" aria-hidden /> {label}
+        {/* DESIGN.md §9: ghost add affordance — dashed-border circle plus, faint text. */}
+        <span
+          aria-hidden
+          className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border border-dashed border-neutral-400 dark:border-neutral-600 group-hover:border-neutral-900 dark:group-hover:border-neutral-50"
+        >
+          <HiPlus className="h-3 w-3" aria-hidden />
+        </span>
+        {label}
       </button>
     );
   }
@@ -442,7 +448,7 @@ function InlineAdd({
         e.preventDefault();
         onSubmit();
       }}
-      className="flex items-center gap-2"
+      className="flex items-center gap-2 pt-1"
     >
       <input
         ref={inputRef}
@@ -565,9 +571,16 @@ function AddObjective({
         type="button"
         onClick={onOpen}
         data-cy="add-objective"
-        className="inline-flex items-center gap-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
+        className="group inline-flex items-center gap-2 pt-2 text-xs font-medium text-neutral-500 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
       >
-        <HiPlus className="h-3.5 w-3.5" aria-hidden /> Add objective
+        {/* DESIGN.md §9: ghost add affordance — dashed-border circle plus, faint text. */}
+        <span
+          aria-hidden
+          className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border border-dashed border-neutral-400 dark:border-neutral-600 group-hover:border-neutral-900 dark:group-hover:border-neutral-50"
+        >
+          <HiPlus className="h-3 w-3" aria-hidden />
+        </span>
+        Add objective
       </button>
     );
   }

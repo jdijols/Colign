@@ -16,7 +16,8 @@ export function GoalsPage() {
 
   return (
     <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-12 sm:space-y-16">
-      <WeekNavigator week={week} onWeekChange={setWeek} eyebrow="Goals" />
+      {/* No page-level eyebrow — the in-cascade "Aiming for" leads the surface (DESIGN.md §3, §10: consumer-friendly tone, no route-name labels). */}
+      <WeekNavigator week={week} onWeekChange={setWeek} />
       <StrategyWeekView week={week} editable={week === thisWeek} />
     </div>
   );
