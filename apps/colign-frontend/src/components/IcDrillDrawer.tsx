@@ -62,17 +62,29 @@ export function IcDrillDrawer({ member, onClose }: Props) {
       title={member?.displayName ?? ""}
       description={member ? `${member.email} · ${member.role}` : undefined}
     >
+      {/* DESIGN.md hookup:
+          - eyebrow class for the "Week of" / "Rally Cry" labels (11px,
+            uppercase, tracking-wider, soft text) — replaces ad-hoc
+            text-[10px] uppercase tracking-wider text-neutral-600.
+          - font-display + display-sm for the week-of-date — the drawer's
+            visual anchor.
+          - Token-named borders/text colors (border-hairline, text-fg, etc.)
+            so the drawer participates in the canvas/surface/hairline scale
+            rather than reaching for raw neutral-* shades.
+          - Objective group rendered with the left-rule cascade idiom
+            (border-l-2 border-hairline-strong + pl-md) instead of nested
+            boxes — directly implements DESIGN.md §9 locked pattern. */}
       <div className="ic-drill-drawer-content">
         {!member ? null : !member.currentPlan ? (
-          <div className="rounded-md border border-dashed border-neutral-300 dark:border-neutral-700 p-8 text-sm text-neutral-600 text-center">
+          <div className="rounded-r-md border border-dashed border-hairline dark:border-neutral-700 p-xl text-sm text-fg-soft text-center">
             No plan recorded yet.
           </div>
         ) : (
-          <div className="space-y-5">
-            <div className="flex items-center justify-between gap-3">
+          <div className="space-y-lg">
+            <div className="flex items-center justify-between gap-sm">
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-neutral-600">Week of</p>
-                <p className="text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 tabular-nums">
+                <p className="eyebrow">Week of</p>
+                <p className="font-display text-2xl font-medium tracking-tight text-fg dark:text-neutral-50 tabular-nums mt-2xs">
                   {member.currentPlan.weekStartDate}
                 </p>
               </div>
@@ -81,42 +93,40 @@ export function IcDrillDrawer({ member, onClose }: Props) {
 
             <AlignmentBar alignment={member.currentPlan.alignment} size="md" />
 
-            <div className="h-px bg-neutral-200 dark:bg-neutral-800" />
+            <div className="h-px bg-hairline dark:bg-neutral-800" />
 
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-3">
-                Commits · {member.currentPlan.commits.length}
-              </h3>
+              <h3 className="eyebrow mb-sm">Commits · {member.currentPlan.commits.length}</h3>
               {member.currentPlan.commits.length === 0 ? (
-                <p className="text-sm text-neutral-600">No commits in this plan.</p>
+                <p className="text-sm text-fg-soft">No commits in this plan.</p>
               ) : (
-                <div className="space-y-5" data-cy="rcdo-grouped-commits">
+                <div className="space-y-lg" data-cy="rcdo-grouped-commits">
                   {grouped.map((rc) => (
                     <section key={rc.rallyCry}>
-                      <p
-                        className="text-[10px] uppercase tracking-wider text-neutral-600 mb-2"
-                        data-cy="drill-rally-cry"
-                      >
+                      <p className="eyebrow mb-xs" data-cy="drill-rally-cry">
                         Rally Cry · {rc.rallyCry}
                       </p>
-                      <div className="space-y-3">
+                      {/* Outcome / Objective groups: left-rule cascade —
+                          1px solid hairline-strong on the left, 16px padding.
+                          No nested boxes. */}
+                      <div className="space-y-sm">
                         {rc.objectives.map((obj) => (
                           <div
                             key={`${rc.rallyCry}::${obj.objective}`}
-                            className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-3"
+                            className="border-l border-hairline-strong dark:border-neutral-700 pl-md"
                             data-cy="drill-objective-group"
                           >
-                            <p className="text-xs font-semibold text-neutral-900 dark:text-neutral-50 mb-2">
+                            <p className="text-sm font-medium text-fg dark:text-neutral-50 mb-xs">
                               {obj.objective}
                             </p>
-                            <ul className="space-y-2">
+                            <ul className="space-y-xs">
                               {obj.commits.map((c) => (
                                 <li
                                   key={c.id}
-                                  className="rounded-md border border-neutral-200 dark:border-neutral-800 p-3"
+                                  className="rounded-r-md border border-hairline dark:border-neutral-800 p-sm bg-surface"
                                 >
                                   <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="font-medium text-sm text-neutral-900 dark:text-neutral-50">
+                                    <span className="font-medium text-sm text-fg dark:text-neutral-50">
                                       {c.title}
                                     </span>
                                     <Badge tone={priorityTone(c.outcomePriority)} size="xs">
@@ -144,7 +154,7 @@ export function IcDrillDrawer({ member, onClose }: Props) {
                                       {commitStatusLabel(c.status)}
                                     </Badge>
                                   </div>
-                                  <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+                                  <p className="mt-1 text-xs text-fg-soft dark:text-neutral-400">
                                     {c.outcomeTitle ?? `Outcome #${c.outcomeId}`}
                                     {c.plannedEffortHours != null
                                       ? ` · planned ${c.plannedEffortHours}h`
@@ -152,7 +162,7 @@ export function IcDrillDrawer({ member, onClose }: Props) {
                                   </p>
 
                                   {c.reconciliation ? (
-                                    <div className="mt-2 rounded-md bg-neutral-50 dark:bg-neutral-900 p-2.5 text-xs space-y-1">
+                                    <div className="mt-2 rounded-r-md bg-surface-tint dark:bg-neutral-900 p-2.5 text-xs space-y-1">
                                       <div className="flex items-center gap-2">
                                         <Badge
                                           tone={reconcileStatusTone(c.reconciliation.actualStatus)}
@@ -161,13 +171,13 @@ export function IcDrillDrawer({ member, onClose }: Props) {
                                           {c.reconciliation.actualStatus}
                                         </Badge>
                                         {c.reconciliation.actualEffortHours != null ? (
-                                          <span className="text-neutral-600 dark:text-neutral-400 tabular-nums">
+                                          <span className="text-fg-soft dark:text-neutral-400 tabular-nums">
                                             {c.reconciliation.actualEffortHours}h actual
                                           </span>
                                         ) : null}
                                       </div>
                                       {c.reconciliation.actualOutcomeNote ? (
-                                        <p className="text-neutral-600 dark:text-neutral-400 italic">
+                                        <p className="text-fg-soft dark:text-neutral-400 italic">
                                           “{c.reconciliation.actualOutcomeNote}”
                                         </p>
                                       ) : null}
@@ -185,10 +195,8 @@ export function IcDrillDrawer({ member, onClose }: Props) {
               )}
             </div>
 
-            <div className="rounded-md border border-dashed border-neutral-300 dark:border-neutral-700 p-3 text-xs text-neutral-600 dark:text-neutral-400">
-              <strong className="text-neutral-700 dark:text-neutral-300 font-semibold">
-                Coming next.
-              </strong>{" "}
+            <div className="rounded-r-md border border-dashed border-hairline dark:border-neutral-700 p-sm text-xs text-fg-soft dark:text-neutral-400">
+              <strong className="text-fg dark:text-neutral-300 font-semibold">Coming next.</strong>{" "}
               Approve / Request changes / Comment actions. Read-only for now — managers see the full
               plan + reconciliation state at a glance.
             </div>
