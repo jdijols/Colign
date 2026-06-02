@@ -54,21 +54,20 @@ export function DashboardPage() {
 
   return (
     <div className="px-6 sm:px-8 py-10 sm:py-14 max-w-5xl mx-auto">
-      {/* Hero band: eyebrow → display heading → strategy anchor pill. The
-          anchor sits within --s-xl of the heading (§5) — it's part of the
-          hero, not its own section. */}
+      {/* Hero band: display heading → strategy anchor pill. The anchor sits
+          within --s-xl of the heading (§5) — it's part of the hero, not its
+          own section. Per cycle-2 critic #6: dropped the page-level
+          "DASHBOARD" eyebrow so the "AIMING FOR" inside the anchor reads as
+          the lone editorial label in this band (route + nav already names the
+          page; §3's eyebrow examples frame this slot for editorial labels,
+          not page names). */}
       <header className="space-y-6">
-        <div className="space-y-2">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-neutral-600 dark:text-neutral-400">
-            Dashboard
-          </p>
-          <h1
-            className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50"
-            data-cy="dashboard-heading"
-          >
-            Where you stand this week
-          </h1>
-        </div>
+        <h1
+          className="text-[clamp(2.75rem,1.8rem+4vw,4.5rem)] font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 max-w-[14ch] sm:max-w-none [text-wrap:balance] leading-[1.05]"
+          data-cy="dashboard-heading"
+        >
+          This week
+        </h1>
         <StrategyAnchor />
       </header>
 
@@ -155,8 +154,14 @@ function AlignmentReadout({ alignment }: { alignment: PlanDto["alignment"] }) {
         </span>
         <span className="sr-only">High-priority alignment {alignmentPct} percent.</span>
       </div>
-      <div className="mt-3">
-        <AlignmentBar alignment={alignment} size="md" />
+      {/* Bare bar — strips the inline "%" and "N/M high-priority" labels the
+          standalone AlignmentBar carries. Per cycle-2 critic #4: the hero
+          numeral above already renders the percentage, and the supporting
+          sentence below already restates the count, so the labeled variant
+          here was a triple restatement. The result is the §9 calm rhythm:
+          numeral → bar → one sentence. */}
+      <div className="mt-3 max-w-md">
+        <AlignmentBar alignment={alignment} size="md" variant="bare" />
       </div>
       {/* Bar → label rhythm: --s-md (16px) so the consumer-friendly line
           reads as its own beat under the instrument. */}
