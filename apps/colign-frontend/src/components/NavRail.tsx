@@ -36,24 +36,26 @@ interface Props {
  * expanded toggles. Icons (20px) sit centered inside the tile; avatars
  * (filling 36×36) sit at exactly the same X-position.
  */
+// DESIGN.md hookup — rail items use the monochrome scale via token classes
+// (text-fg-soft, hover bg-canvas, hover text-fg, active bg-surface-tint).
+// Transition is the micro motion token (120ms) with the project ease.
 const ITEM_BASE_COLLAPSED =
-  "relative flex items-center justify-center h-9 w-9 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 dark:focus-visible:ring-white";
+  "relative flex items-center justify-center h-9 w-9 rounded-r-md transition-colors duration-micro ease-ease focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fg dark:focus-visible:ring-white";
 
 const ITEM_BASE_EXPANDED =
-  "relative flex items-center h-9 mx-1 pl-1.5 pr-2 gap-2 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 dark:focus-visible:ring-white";
+  "relative flex items-center h-9 mx-1 pl-1.5 pr-2 gap-2 rounded-r-md transition-colors duration-micro ease-ease focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fg dark:focus-visible:ring-white";
 
 const ITEM_INACTIVE =
-  "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 hover:text-neutral-900 dark:hover:text-neutral-50";
+  "text-fg-soft dark:text-neutral-400 hover:bg-canvas dark:hover:bg-neutral-900 hover:text-fg dark:hover:text-neutral-50";
 
-const ITEM_ACTIVE =
-  "bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50 font-medium";
+const ITEM_ACTIVE = "bg-surface-tint dark:bg-neutral-900 text-fg dark:text-neutral-50 font-medium";
 
-/** Linear-style left-edge accent for the active route. */
+/** Linear-style left-edge accent for the active route. Uses --text token. */
 function ActiveAccent() {
   return (
     <span
       aria-hidden
-      className="absolute -left-0.5 top-1.5 bottom-1.5 w-0.5 rounded-r-full bg-neutral-900 dark:bg-white"
+      className="absolute -left-0.5 top-1.5 bottom-1.5 w-0.5 rounded-r-full bg-fg dark:bg-white"
     />
   );
 }

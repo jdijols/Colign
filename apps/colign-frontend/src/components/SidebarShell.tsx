@@ -86,11 +86,16 @@ export function SidebarShell({ me, onSignOut, children, showTeam, showTimelineTa
 
   // The desktop rail keeps its identity + icons visible at both widths. The
   // toggle's `collapsed` reflects desktop state only.
+  //
+  // DESIGN.md hookup: the rail sits on --surface; the divider rule uses
+  // --hairline (1px solid). Border-r retains `border-neutral-800` dark fallback
+  // so the dark-mode pass downstream can polish without re-touching this file.
   const desktopRail = (
     <aside
       className={cn(
         "hidden md:flex flex-col h-screen sticky top-0 overflow-hidden",
-        "border-r border-neutral-200 dark:border-neutral-800",
+        "bg-surface dark:bg-neutral-950",
+        "border-r border-hairline dark:border-neutral-800",
         // No width transition: animating it makes the labels appear to slide
         // in from behind the right rail edge while overflow-hidden clips them.
         // Tiles already sit at the same X position in both states, so an
@@ -112,7 +117,7 @@ export function SidebarShell({ me, onSignOut, children, showTeam, showTimelineTa
             centers, producing the horizontal step the user spotted. */}
       <div
         className={cn(
-          "flex items-center border-b border-neutral-200 dark:border-neutral-800 py-1.5",
+          "flex items-center border-b border-hairline dark:border-neutral-800 py-1.5",
           // No horizontal padding in expanded — WorkspacePill's own mx-1 + pl-1.5
           // lands the avatar at exactly 10px from the rail edge, which is where
           // NavRail items and UserChip put theirs. `pr-1` gives the toggle a
@@ -152,7 +157,7 @@ export function SidebarShell({ me, onSignOut, children, showTeam, showTimelineTa
   // Mobile drawer body — always rendered expanded-style (no compact mode).
   const mobileDrawerBody = (
     <>
-      <div className="flex items-center py-1 pr-1 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="flex items-center py-1 pr-1 border-b border-hairline dark:border-neutral-800">
         <WorkspacePill name={me.teamName ?? ""} avatarUrl={me.teamAvatarUrl ?? null} />
         <SidebarToggle collapsed={false} onToggle={() => setDrawerOpen(false)} />
       </div>
@@ -175,21 +180,24 @@ export function SidebarShell({ me, onSignOut, children, showTeam, showTimelineTa
   );
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white dark:bg-neutral-950">
+    // DESIGN.md §4 — app background sits on --canvas (warm off-white), not
+    // pure white. The previous bg-white kept the page reading as
+    // "spreadsheet"; canvas + surface gives the layered paper feel.
+    <div className="min-h-screen flex flex-col md:flex-row bg-canvas dark:bg-neutral-950">
       {/* Mobile-only top strip */}
-      <header className="md:hidden sticky top-0 z-30 h-12 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex items-center gap-2 px-3">
+      <header className="md:hidden sticky top-0 z-30 h-12 border-b border-hairline dark:border-neutral-800 bg-surface dark:bg-neutral-950 flex items-center gap-2 px-3">
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
           aria-label="Open navigation"
           aria-expanded={drawerOpen}
           data-cy="sidebar-hamburger"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-r-md text-fg-soft dark:text-neutral-400 hover:bg-canvas dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-fg dark:focus-visible:ring-white transition-colors duration-micro ease-ease"
         >
           <HiOutlineMenu className="h-5 w-5" aria-hidden />
         </button>
         {me.teamName ? (
-          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-50 truncate">
+          <span className="text-sm font-medium text-fg dark:text-neutral-50 truncate">
             {me.teamName}
           </span>
         ) : null}
@@ -205,8 +213,9 @@ export function SidebarShell({ me, onSignOut, children, showTeam, showTimelineTa
             onClick={() => setDrawerOpen(false)}
             className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
           />
+          {/* Drawer = e3 (popover-tier). Hairline border, the one allowed shadow. */}
           <aside
-            className="md:hidden fixed inset-y-0 left-0 z-50 w-64 border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 flex flex-col"
+            className="md:hidden fixed inset-y-0 left-0 z-50 w-64 border-r border-hairline dark:border-neutral-800 bg-surface dark:bg-neutral-950 flex flex-col shadow-e3"
             aria-label="Primary navigation"
             data-cy="sidebar-drawer"
           >
