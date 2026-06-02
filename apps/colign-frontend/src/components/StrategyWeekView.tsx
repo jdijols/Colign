@@ -173,7 +173,10 @@ export function StrategyWeekView({ week, editable = false }: Props) {
   return (
     <div className="space-y-12" data-cy="strategy-week-view">
       {groups.map((rc) => (
-        <section key={rc.rallyCryId ?? rc.rallyCryTitle ?? "rc"} className="space-y-8">
+        // Rally Cry → first Objective gap at --s-pillar (≈48px) so the cascade reads as
+        // "calm editorial" rather than a settings form (DESIGN.md §5: "Generous over
+        // tight when in doubt — the brand says calm").
+        <section key={rc.rallyCryId ?? rc.rallyCryTitle ?? "rc"} className="space-y-12">
           {/* Rally Cry — top-of-tree, no card boxing (DESIGN.md §9: containment from rule weights alone).
               Title leads on its own line; Pivot is a quiet ghost inline action below it (DESIGN.md §11:
               destructive-adjacent secondary action shouldn't compete with the eyebrow for first read). */}
@@ -181,15 +184,18 @@ export function StrategyWeekView({ week, editable = false }: Props) {
             <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
               Aiming for
             </p>
+            {/* Font stack puts Cabinet Grotesk (DESIGN.md §3: editorial display face)
+                ahead of Geist so the Rally Cry picks it up the moment foundation loads
+                the Fontshare stylesheet. Falls back gracefully to Geist 500 today. */}
             {editable && rc.rallyCryId != null ? (
               <EditableTitle
                 value={rc.rallyCryTitle ?? "Untitled Rally Cry"}
                 onSave={(t) => renameRallyCry({ id: rc.rallyCryId!, title: t })}
-                className="mt-2 text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
+                className="mt-2 font-['Cabinet_Grotesk',_Geist,_system-ui,_sans-serif] text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
                 cy={`rename-rally-cry-${rc.rallyCryId}`}
               />
             ) : (
-              <h2 className="mt-2 text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
+              <h2 className="mt-2 font-['Cabinet_Grotesk',_Geist,_system-ui,_sans-serif] text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
                 {rc.rallyCryTitle ?? "Untitled Rally Cry"}
               </h2>
             )}
@@ -214,15 +220,17 @@ export function StrategyWeekView({ week, editable = false }: Props) {
                 className="border-l-2 border-neutral-900 dark:border-neutral-50 pl-[18px] space-y-4"
               >
                 <div className="group flex items-center gap-2">
+                  {/* Same Cabinet-Grotesk-first stack on the Objective tier so the cascade's
+                      two display rows pick up the editorial face together once loaded. */}
                   {editable && dobj.definingObjectiveId != null ? (
                     <EditableTitle
                       value={dobj.definingObjectiveTitle ?? "Untitled Objective"}
                       onSave={(t) => renameObjective({ id: dobj.definingObjectiveId!, title: t })}
-                      className="text-xl leading-snug font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
+                      className="font-['Cabinet_Grotesk',_Geist,_system-ui,_sans-serif] text-xl leading-snug font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
                       cy={`rename-objective-${dobj.definingObjectiveId}`}
                     />
                   ) : (
-                    <p className="text-xl leading-snug font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
+                    <p className="font-['Cabinet_Grotesk',_Geist,_system-ui,_sans-serif] text-xl leading-snug font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
                       {dobj.definingObjectiveTitle ?? "Untitled Objective"}
                     </p>
                   )}
@@ -368,14 +376,21 @@ export function StrategyWeekView({ week, editable = false }: Props) {
  * no background. Color carries meaning only on High/Medium; Low is muted
  * neutral so it reads quieter than High, never heavier (DESIGN.md §10 priority
  * table). API + DB keep the internal P0/P1/P2 codes; this is the UI layer.
+ *
+ * Dot colors are the DESIGN.md §4 tuned semantic hex values — explicitly
+ * "tuned away from Tailwind defaults — quieter, less candy." Never bind to
+ * rose-* / amber-* utilities here; those read enterprise/Jira, not editorial.
+ *   --destructive  #c8334a  → High
+ *   --warning      #c4831d  → Medium
+ *   --text-faint   #a3a3a3  → Low
  */
 function PriorityIndicator({ tier }: { tier: string | null | undefined }) {
   const dot =
     tier === "P0"
-      ? "bg-rose-600 dark:bg-rose-500"
+      ? "bg-[#c8334a]"
       : tier === "P1"
-        ? "bg-amber-600 dark:bg-amber-500"
-        : "bg-neutral-400 dark:bg-neutral-600";
+        ? "bg-[#c4831d]"
+        : "bg-[#a3a3a3] dark:bg-[#737373]";
   const text =
     tier === "P0"
       ? "text-neutral-900 dark:text-neutral-50"
