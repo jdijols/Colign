@@ -20,7 +20,8 @@
   },
   "devDependencies": {
     "husky": "^9.1.6",
-    "lint-staged": "^15.2.10"
+    "lint-staged": "^15.2.10",
+    "playwright": "^1.60.0"
   },
   "lint-staged": {
     "apps/colign-frontend/src/**/*.{ts,tsx}": [

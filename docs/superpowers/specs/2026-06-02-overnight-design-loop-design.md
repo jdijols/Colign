@@ -73,7 +73,7 @@ PHASE 2 — Per-surface polish (autonomous, parallel, ~3-6 hrs total)
     ┌──────────────────────────────────────────────────────────┐
     │  CRITIC (Opus, read-only sub-agent — no commit access)   │
     │    1. /browse to <surface> URL                           │
-    │       - mock auth as Ada (PM persona)                    │
+    │       - mock auth as Sam Manager (sees rollup + IC views)│
     │       - dev server already booted by harness             │
     │    2. Screenshot at 375×667 (mobile) + 1440×900 (desktop)│
     │    3. Compare screenshots to DESIGN.md principles        │
@@ -157,9 +157,9 @@ Putting the Critic and Designer on the *same* branch but with role separation ge
 
 ## 6. Authentication + persona
 
-Mock auth via `CYPRESS_VITE_AUTH_MODE=mock`. Loop authenticates as **Ada** (PM persona) for all surface visits. Reasoning: Ada has more visible data in the seed (Goals + Commits populated), so screenshots will be visually richer and the critic has more to react to than empty states.
+Mock auth via `CYPRESS_VITE_AUTH_MODE=mock`. Loop authenticates as **Sam Manager** (`manager@st6.dev`, role MANAGER) for all surface visits. Reasoning: the manager persona has access to every surface an IC sees PLUS the `/manager` rollup (Ada/Ben/Chris populated by `DemoDataInitializer`). Single-persona simplicity beats per-surface role switching.
 
-Empty-state polish is a follow-up scope — handled by a second pass after this one, or by manually clearing Ada's data in a future run.
+Caveat: `DemoDataInitializer` seeds plans for Ada/Ben/Chris but not Sam herself, so IC-flavored surfaces (`/`, `/commits`, `/reconcile`) render empty state for her. Team-level surfaces (`/goals`, `/dashboard`) and the manager rollup (`/manager`) render populated. Empty states are real UX surfaces — the loop should polish them as much as populated ones.
 
 ## 7. Open questions (resolved by `/design-consultation`)
 

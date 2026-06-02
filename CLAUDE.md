@@ -28,3 +28,19 @@ as well before finishing.
   per service, secrets, certs, rollback, known deploy gotchas).
 - **Local dev + recurring gotchas:** the `colign-dev-runbook` project memory.
 - **Session/work history:** `docs/handoffs/`.
+
+## Design system
+
+Always read **`docs/superpowers/design/DESIGN.md`** before making any visual or
+UI decision. All font choices, colors, spacing, motion, depth, and the locked
+signature pattern (left-rule cascade for the strategy → commits hierarchy) are
+defined there. Do not deviate without explicit user approval.
+
+The brand identity (logomark, wordmark, tagline, monochrome stance) lives in
+`docs/BRAND.md`. DESIGN.md is its technical implementation — they must stay
+consistent.
+
+Tone: consumer-friendly (Notion-adjacent), not enterprise/engineering. Full
+words over abbreviations (Objective/Outcome/Commit, never DO·1/O2/WC). Priority
+surfaces as **High / Medium / Low** even though the internal codes remain
+P0/P1/P2 — translate at the UI layer via `lib/tokens.ts`.

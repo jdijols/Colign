@@ -68,3 +68,8 @@ apps/*/src/*-compiled.css
 .superpowers/
 .audit-snapshot/
 apps/colign-frontend/cypress/screenshots/
+
+# --- Design loop harness state (runtime only) ---
+tools/design-loop/state/*
+!tools/design-loop/state/.gitkeep
+.design-loop-pids
