@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HiOutlineEye, HiArrowSmUp, HiArrowSmDown } from "react-icons/hi";
+import { HiArrowSmRight, HiArrowSmUp, HiArrowSmDown } from "react-icons/hi";
 import { useGetManagerTeamQuery } from "@/api/team";
 import type { TeamMemberDto, WeeklyCommitDto } from "@/api/types";
 import { PlanStatePill } from "@/components/PlanStatePill";
@@ -18,24 +18,6 @@ import {
 } from "@/components/ui";
 import { alignmentTier } from "@/lib/tokens";
 import { cn } from "@/lib/cn";
-
-/**
- * Posture distribution per IC: Offense / Defense / Maintenance commit counts.
- * Surfaces team-wide drift (e.g. "90% maintenance, 0% offense") without a
- * server-side aggregation pass — the commits already ride along with each
- * TeamMemberDto.currentPlan.
- */
-function postureCounts(commits: WeeklyCommitDto[] | undefined) {
-  let offense = 0;
-  let defense = 0;
-  let maintenance = 0;
-  (commits ?? []).forEach((c) => {
-    if (c.chessTagCode === "OFFENSE") offense += 1;
-    else if (c.chessTagCode === "DEFENSE") defense += 1;
-    else if (c.chessTagCode === "MAINTENANCE") maintenance += 1;
-  });
-  return { offense, defense, maintenance };
-}
 
 /**
  * Sum of (actual − planned) effort hours across the commits that were
@@ -72,31 +54,16 @@ function DeltaCell({ delta }: { delta: number | null }) {
   );
 }
 
-function PostureChips({
-  counts,
-  size = "xs",
-}: {
-  counts: { offense: number; defense: number; maintenance: number };
-  size?: "xs" | "sm";
-}) {
-  const { offense, defense, maintenance } = counts;
-  if (offense + defense + maintenance === 0) {
-    return <span className="text-neutral-400 text-xs">—</span>;
-  }
-  return (
-    <div className="flex items-center gap-1" aria-label="Posture distribution">
-      <Badge tone="success" size={size}>
-        O {offense}
-      </Badge>
-      <Badge tone="warning" size={size}>
-        D {defense}
-      </Badge>
-      <Badge tone="neutral" size={size}>
-        M {maintenance}
-      </Badge>
-    </div>
-  );
-}
+/*
+ * PostureChips removed from the default rollup view per DESIGN.md §12, which
+ * bans chess-posture codes (O / D / M) in the default surface — they go one
+ * layer deep on click. IcDrillDrawer already renders the chess tag per
+ * commit in the drill-down panel, so the data remains reachable.
+ *
+ * Also removed: the soft-tinted Badge palette that those chips wore. §4
+ * disallows decorative semantic colour; categorical encoding of posture has
+ * no semantic mapping in the token table, so monochrome is the answer.
+ */
 
 type SortKey = "displayName" | "weekStartDate";
 type SortDir = "asc" | "desc";
@@ -138,16 +105,22 @@ export function TeamRollupTable({ onSelectMember }: Props) {
 
   return (
     <div className="space-y-3 team-rollup-container" style={{ containerType: "inline-size" }}>
-      {/* Sort chip row — visible only in card mode (container < 640px) via responsive.css */}
+      {/* Sort chip row — visible only in card mode (container < 640px) via
+          responsive.css. DESIGN.md §11 reserves the solid-black pill for the
+          Primary CTA; the active sort indicator here is a quieter
+          ghost-segmented control — hairline border in both states, with the
+          active state filling the surface tint instead of inverting to
+          high-contrast black. */}
       <div className="team-rollup-card-view-controls">
         <button
           type="button"
           onClick={() => toggleSort("displayName")}
+          aria-pressed={sort === "displayName"}
           className={cn(
             "rounded-full px-4 py-2 text-xs font-medium border min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900",
             sort === "displayName"
-              ? "bg-neutral-900 text-neutral-50 border-neutral-900 dark:bg-white dark:text-neutral-900"
-              : "border-neutral-200 dark:border-neutral-800 text-neutral-600",
+              ? "border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50"
+              : "border-neutral-200 dark:border-neutral-800 bg-transparent text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-900",
           )}
         >
           Name {sort === "displayName" ? (dir === "asc" ? "↑" : "↓") : ""}
@@ -155,11 +128,12 @@ export function TeamRollupTable({ onSelectMember }: Props) {
         <button
           type="button"
           onClick={() => toggleSort("weekStartDate")}
+          aria-pressed={sort === "weekStartDate"}
           className={cn(
             "rounded-full px-4 py-2 text-xs font-medium border min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900",
             sort === "weekStartDate"
-              ? "bg-neutral-900 text-neutral-50 border-neutral-900 dark:bg-white dark:text-neutral-900"
-              : "border-neutral-200 dark:border-neutral-800 text-neutral-600",
+              ? "border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50"
+              : "border-neutral-200 dark:border-neutral-800 bg-transparent text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-900",
           )}
         >
           Week {sort === "weekStartDate" ? (dir === "asc" ? "↑" : "↓") : ""}
@@ -199,8 +173,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                 <TH>Week of</TH>
                 <TH>Status</TH>
                 <TH>High-priority alignment</TH>
-                <TH className="hidden md:table-cell">Posture</TH>
-                <TH className="hidden md:table-cell">Δ Last week</TH>
+                <TH className="hidden md:table-cell">vs. last week</TH>
                 <TH>Commits</TH>
                 <TH className="text-right">
                   <span className="sr-only">Open</span>
@@ -210,13 +183,13 @@ export function TeamRollupTable({ onSelectMember }: Props) {
             <TBody>
               {isFetching && !data ? (
                 <TR hover={false}>
-                  <TD colSpan={8} className="py-8 text-center text-neutral-600">
+                  <TD colSpan={7} className="py-8 text-center text-neutral-600">
                     <Spinner size="sm" /> Loading team…
                   </TD>
                 </TR>
               ) : (data?.content ?? []).length === 0 ? (
                 <TR hover={false}>
-                  <TD colSpan={8} className="py-8 text-center text-sm text-neutral-600">
+                  <TD colSpan={7} className="py-8 text-center text-sm text-neutral-600">
                     No direct reports to show.
                   </TD>
                 </TR>
@@ -283,9 +256,6 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                           <span className="text-xs text-neutral-400">—</span>
                         )}
                       </TD>
-                      <TD className="hidden md:table-cell">
-                        <PostureChips counts={postureCounts(plan?.commits)} />
-                      </TD>
                       <TD className="hidden md:table-cell" data-cy="team-row-delta">
                         <DeltaCell delta={deltaHours(plan?.commits)} />
                       </TD>
@@ -300,7 +270,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                             e.stopPropagation();
                             onSelectMember(m);
                           }}
-                          leftIcon={<HiOutlineEye className="h-3.5 w-3.5" />}
+                          leftIcon={<HiArrowSmRight className="h-3.5 w-3.5" />}
                           aria-label={`Review ${m.displayName}'s week`}
                         >
                           Review
@@ -332,14 +302,20 @@ export function TeamRollupTable({ onSelectMember }: Props) {
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-1">
-        <span className="text-xs text-neutral-600 dark:text-neutral-400">
-          Showing <span className="font-medium tabular-nums">{from}</span>–
-          <span className="font-medium tabular-nums">{to}</span> of{" "}
-          <span className="font-medium tabular-nums">{data?.totalElements ?? 0}</span>
-        </span>
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-      </div>
+      {/* DESIGN.md §10 — consumer-friendly tone. Pagination + "Showing X of Y"
+          is enterprise-table furniture; surface it only when the dataset is
+          actually paginated. For ≤ perPage rows show nothing (the table
+          itself communicates "this is everything"). */}
+      {data && data.totalElements > perPage ? (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-1">
+          <span className="text-xs text-neutral-600 dark:text-neutral-400">
+            Showing <span className="font-medium tabular-nums">{from}</span>–
+            <span className="font-medium tabular-nums">{to}</span> of{" "}
+            <span className="font-medium tabular-nums">{data.totalElements}</span>
+          </span>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -393,7 +369,6 @@ function TeamRollupCard({
             {plan.commits.length} commit{plan.commits.length === 1 ? "" : "s"}
           </span>
         ) : null}
-        {plan ? <PostureChips counts={postureCounts(plan.commits)} size="xs" /> : null}
         {plan ? (
           <span className="text-xs shrink-0">
             <DeltaCell delta={deltaHours(plan.commits)} />
@@ -428,7 +403,7 @@ function TeamRollupCard({
           onSelect(member);
         }}
         className="mt-3 w-full"
-        leftIcon={<HiOutlineEye className="h-4 w-4" />}
+        leftIcon={<HiArrowSmRight className="h-4 w-4" />}
         aria-label={`Review ${member.displayName}'s week`}
       >
         Review
