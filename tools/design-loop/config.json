@@ -1,24 +1,25 @@
 {
   "surfaces": [
-    { "slug": "weekly-plan", "route": "/",          "page_file": "apps/colign-frontend/src/pages/WeeklyPlanPage.tsx",         "label": "Weekly plan (landing)" },
-    { "slug": "dashboard",   "route": "/dashboard", "page_file": "apps/colign-frontend/src/pages/DashboardPage.tsx",          "label": "Dashboard" },
-    { "slug": "goals",       "route": "/goals",     "page_file": "apps/colign-frontend/src/pages/GoalsPage.tsx",              "label": "Goals" },
-    { "slug": "commits",     "route": "/commits",   "page_file": "apps/colign-frontend/src/pages/CommitsPage.tsx",            "label": "Commits" },
-    { "slug": "reconcile",   "route": "/reconcile", "page_file": "apps/colign-frontend/src/pages/ReconcilePage.tsx",          "label": "Reconcile" },
-    { "slug": "manager",     "route": "/manager",   "page_file": "apps/colign-frontend/src/pages/ManagerDashboardPage.tsx",   "label": "Manager dashboard" }
+    { "slug": "weekly-plan", "route": "/",          "page_file": "apps/colign-frontend/src/pages/WeeklyPlanPage.tsx",         "label": "Weekly plan (landing)", "persona_email": "ada@st6.dev",     "persona_role": "IC"      },
+    { "slug": "dashboard",   "route": "/dashboard", "page_file": "apps/colign-frontend/src/pages/DashboardPage.tsx",          "label": "Dashboard",             "persona_email": "ada@st6.dev",     "persona_role": "IC"      },
+    { "slug": "goals",       "route": "/goals",     "page_file": "apps/colign-frontend/src/pages/GoalsPage.tsx",              "label": "Goals",                 "persona_email": "ada@st6.dev",     "persona_role": "IC"      },
+    { "slug": "commits",     "route": "/commits",   "page_file": "apps/colign-frontend/src/pages/CommitsPage.tsx",            "label": "Commits",               "persona_email": "ada@st6.dev",     "persona_role": "IC"      },
+    { "slug": "reconcile",   "route": "/reconcile", "page_file": "apps/colign-frontend/src/pages/ReconcilePage.tsx",          "label": "Reconcile",             "persona_email": "ada@st6.dev",     "persona_role": "IC"      },
+    { "slug": "manager",     "route": "/manager",   "page_file": "apps/colign-frontend/src/pages/ManagerDashboardPage.tsx",   "label": "Manager dashboard",     "persona_email": "manager@st6.dev", "persona_role": "MANAGER" }
   ],
   "viewports": [
     { "name": "mobile",  "width": 375, "height": 667 },
     { "name": "desktop", "width": 1440, "height": 900 }
   ],
-  "persona": { "email": "manager@st6.dev", "role": "MANAGER" },
+  "foundation_persona": { "email": "ada@st6.dev", "role": "IC" },
   "max_cycles_per_surface": 5,
   "failure_budget": 2,
   "host_base_url": "http://localhost:4173",
   "design_md_path": "docs/superpowers/design/DESIGN.md",
   "worktree_root": "../colign-worktrees",
   "_notes": [
-    "Persona is Sam Manager (manager@st6.dev) — sees /manager rollup of Ada/Ben/Chris (rich) AND has access to every IC surface (some show empty state since DemoDataInitializer seeds plans only for the ICs, not Sam herself).",
+    "Per-surface persona — IC nav (Ada) only shows Dashboard/Goals/Commits/Plan/Reconcile; MANAGER nav (Sam) only shows Plan/Reconcile/Team. Dry-run on 2026-06-02 confirmed Sam can't see Dashboard/Goals/Commits content. Each surface uses the persona who actually navigates to it AND has data.",
+    "Foundation phase uses Ada/IC because it edits shared components — IC nav exercises the most surfaces.",
     "config.json values are mirrored in workflow.js because workflow scripts cannot use fs."
   ]
 }

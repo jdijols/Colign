@@ -20,11 +20,31 @@ PID_FILE="${WORKTREE_ROOT}/.design-loop-pids"
 LOG_DIR="${WORKTREE_ROOT}/tmp/design-loop-logs"
 mkdir -p "$LOG_DIR"
 
-# Probe a port; treat 200/404/302 as "up" (any HTTP response).
+# Probe a port; treat any HTTP response in the 2xx/3xx/4xx range as "up".
+# Spring Boot returns 401 at / (auth required) — that still means the server
+# is responsive. Only 000 (connection refused) and 5xx mean "down."
 is_up() {
   local code
   code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$1" 2>/dev/null || echo "000")
-  [[ "$code" =~ ^(200|302|404)$ ]]
+  [[ "$code" =~ ^[234][0-9][0-9]$ ]]
+}
+
+# Copy .env.local files from the main repo into the worktree if missing.
+# Git worktrees don't share gitignored files, so a fresh worktree has NO
+# .env.local — which means VITE_FEATURE_TIMELINE is unset and the timeline
+# tabs (Dashboard/Goals/Commits) get redirected away.
+seed_env() {
+  # Hard-coded main repo path: this script lives at MAIN/tools/design-loop/.
+  local MAIN_REPO
+  MAIN_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+  for sub in colign-frontend pa-host; do
+    local src="${MAIN_REPO}/apps/${sub}/.env.local"
+    local dst="${WORKTREE_ROOT}/apps/${sub}/.env.local"
+    if [ ! -f "$dst" ] && [ -f "$src" ]; then
+      cp "$src" "$dst"
+      echo "[boot] seeded ${sub}/.env.local from main repo"
+    fi
+  done
 }
 
 # Flip .env.local files to mock mode (with .bak for restore).
@@ -36,9 +56,20 @@ flip_env() {
       echo "[boot] flipped $(basename "$(dirname "$f")")/.env.local → mock"
     fi
   done
+  # Ensure VITE_FEATURE_TIMELINE=true (gates Dashboard/Goals/Commits routes).
+  local fe="${WORKTREE_ROOT}/apps/colign-frontend/.env.local"
+  if [ -f "$fe" ] && ! grep -q '^VITE_FEATURE_TIMELINE=true' "$fe"; then
+    if grep -q '^VITE_FEATURE_TIMELINE=' "$fe"; then
+      sed -i.tmp 's/^VITE_FEATURE_TIMELINE=.*/VITE_FEATURE_TIMELINE=true/' "$fe" && rm "${fe}.tmp"
+    else
+      printf '\nVITE_FEATURE_TIMELINE=true\n' >> "$fe"
+    fi
+    echo "[boot] ensured VITE_FEATURE_TIMELINE=true"
+  fi
 }
 
-# --- Flip env BEFORE booting vite, so vite reads mock at startup -----
+# --- Seed + flip env BEFORE booting vite ------------------------------
+seed_env
 flip_env
 
 # --- Backend (port 8080, mock mode) ----------------------------------

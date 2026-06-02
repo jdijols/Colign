@@ -25,18 +25,25 @@ export const meta = {
 // === Config (mirror of tools/design-loop/config.json) ================
 
 const SURFACES = [
-  { slug: "weekly-plan", route: "/",          page_file: "apps/colign-frontend/src/pages/WeeklyPlanPage.tsx",         label: "Weekly plan (landing)",  persona_role: "MANAGER"},
-  { slug: "dashboard",   route: "/dashboard", page_file: "apps/colign-frontend/src/pages/DashboardPage.tsx",          label: "Dashboard",              persona_role: "MANAGER"},
-  { slug: "goals",       route: "/goals",     page_file: "apps/colign-frontend/src/pages/GoalsPage.tsx",              label: "Goals",                  persona_role: "MANAGER"},
-  { slug: "commits",     route: "/commits",   page_file: "apps/colign-frontend/src/pages/CommitsPage.tsx",            label: "Commits",                persona_role: "MANAGER"},
-  { slug: "reconcile",   route: "/reconcile", page_file: "apps/colign-frontend/src/pages/ReconcilePage.tsx",          label: "Reconcile",              persona_role: "MANAGER"},
-  { slug: "manager",     route: "/manager",   page_file: "apps/colign-frontend/src/pages/ManagerDashboardPage.tsx",   label: "Manager dashboard",      persona_role: "MANAGER" },
+  // Per-surface persona. IC nav (Ada) → Dashboard/Goals/Commits/Plan/Reconcile.
+  // Manager nav (Sam) → Plan/Reconcile/Team only. Pick the persona who actually
+  // navigates to each surface AND has data; IC surfaces are blank for managers.
+  { slug: "weekly-plan", route: "/",          page_file: "apps/colign-frontend/src/pages/WeeklyPlanPage.tsx",         label: "Weekly plan (landing)",  persona_email: "ada@st6.dev",     persona_role: "IC"      },
+  { slug: "dashboard",   route: "/dashboard", page_file: "apps/colign-frontend/src/pages/DashboardPage.tsx",          label: "Dashboard",              persona_email: "ada@st6.dev",     persona_role: "IC"      },
+  { slug: "goals",       route: "/goals",     page_file: "apps/colign-frontend/src/pages/GoalsPage.tsx",              label: "Goals",                  persona_email: "ada@st6.dev",     persona_role: "IC"      },
+  { slug: "commits",     route: "/commits",   page_file: "apps/colign-frontend/src/pages/CommitsPage.tsx",            label: "Commits",                persona_email: "ada@st6.dev",     persona_role: "IC"      },
+  { slug: "reconcile",   route: "/reconcile", page_file: "apps/colign-frontend/src/pages/ReconcilePage.tsx",          label: "Reconcile",              persona_email: "ada@st6.dev",     persona_role: "IC"      },
+  { slug: "manager",     route: "/manager",   page_file: "apps/colign-frontend/src/pages/ManagerDashboardPage.tsx",   label: "Manager dashboard",      persona_email: "manager@st6.dev", persona_role: "MANAGER" },
 ];
 
 // Sam Manager — sees /manager rollup (rich) AND has access to every IC surface.
 // Some IC surfaces show empty state because DemoDataInitializer seeds plans for
 // Ada/Ben/Chris, not Sam. The loop polishes both populated and empty states.
-const PERSONA_EMAIL = "manager@st6.dev";
+// Default persona used by Foundation phase (which doesn't care about role-gated
+// surfaces — it edits shared components). Per-surface personas live on each
+// SURFACE entry above.
+const FOUNDATION_PERSONA_EMAIL = "ada@st6.dev";
+const FOUNDATION_PERSONA_ROLE = "IC";
 const MAX_CYCLES = 5;
 const FAILURE_BUDGET = 2;
 const HOST_BASE = "http://localhost:4173";
@@ -316,7 +323,7 @@ function buildFoundationPrompt(designMd) {
     `- Repo root: \`${REPO_ROOT}\``,
     `- Worktree: \`${WORKTREE_ROOT}/design-foundation\` — already created and branched (\`design/foundation\`)`,
     `- Stack: from the worktree root, run \`${REPO_ROOT}/tools/design-loop/boot-stack.sh\` (idempotent — boots backend in mock auth, remote :5174, host :4173, Tailwind watcher)`,
-    `- Mock auth as \`${PERSONA_EMAIL}\` IC`,
+    `- Mock auth as \`${FOUNDATION_PERSONA_EMAIL}\` ${FOUNDATION_PERSONA_ROLE}`,
     `- Cypress reporter symlinks: the boot script handles this (gotcha: yarn workspaces hoist reporters to root, Cypress doesn't walk up)`,
     "",
     "## DESIGN.md (the taste anchor — every change should be traceable to a line in this doc)",
@@ -362,7 +369,7 @@ function buildFoundationPrompt(designMd) {
     "    - If you can't fix it: revert all edits with `git reset --hard origin/main` and return `cypress_passed: false`.",
     "12. Take before/after screenshots of 3 representative surfaces (Dashboard, Goals, Commits) at both viewports:",
     "    ```",
-    `    node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}/<route> --width <w> --height <h> --out tmp/design-loop/foundation/<surface>-<vp>.png --persona ${PERSONA_EMAIL} --role IC`,
+    `    node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}/<route> --width <w> --height <h> --out tmp/design-loop/foundation/<surface>-<vp>.png --persona ${FOUNDATION_PERSONA_EMAIL} --role ${FOUNDATION_PERSONA_ROLE}`,
     "    ```",
     "    For \"before\", you'll need to checkout main first, screenshot, then come back to your branch. Use:",
     "    ```",
@@ -406,6 +413,7 @@ function buildFoundationPrompt(designMd) {
 
 function buildSnapshotPrompt(surface, cycle, label) {
   const personaRole = surface.persona_role;
+  const personaEmail = surface.persona_email;
   return [
     `# Snapshot — ${surface.label} (${label})`,
     "",
@@ -421,8 +429,8 @@ function buildSnapshotPrompt(surface, cycle, label) {
     "1. `cd` into the worktree. Ensure stack is booted (idempotent — safe to run boot-stack.sh).",
     "2. Take screenshots at mobile (375×667) and desktop (1440×900):",
     "   ```",
-    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 375 --height 667 --out tmp/design-loop/${surface.slug}/cycle-${cycle}-${label}/mobile.png --persona ${PERSONA_EMAIL} --role ${personaRole}`,
-    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 1440 --height 900 --out tmp/design-loop/${surface.slug}/cycle-${cycle}-${label}/desktop.png --persona ${PERSONA_EMAIL} --role ${personaRole}`,
+    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 375 --height 667 --out tmp/design-loop/${surface.slug}/cycle-${cycle}-${label}/mobile.png --persona ${personaEmail} --role ${personaRole}`,
+    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 1440 --height 900 --out tmp/design-loop/${surface.slug}/cycle-${cycle}-${label}/desktop.png --persona ${personaEmail} --role ${personaRole}`,
     "   ```",
     "3. Verify both files exist with non-zero size:",
     `   \`ls -l tmp/design-loop/${surface.slug}/cycle-${cycle}-${label}/\``,
@@ -432,6 +440,7 @@ function buildSnapshotPrompt(surface, cycle, label) {
 
 function buildCriticPrompt(surface, cycle, designMd) {
   const personaRole = surface.persona_role;
+  const personaEmail = surface.persona_email;
   return [
     `# Critic Agent — ${surface.label} cycle ${cycle}`,
     "",
@@ -441,7 +450,7 @@ function buildCriticPrompt(surface, cycle, designMd) {
     "## Environment",
     `- Worktree: \`${WORKTREE_ROOT}/design-${surface.slug}\``,
     `- URL: ${HOST_BASE}${surface.route}`,
-    `- Mock auth: ${PERSONA_EMAIL} (${personaRole})`,
+    `- Mock auth: ${personaEmail} (${personaRole})`,
     "",
     "## DESIGN.md (the taste anchor — be specific to its vocabulary, not generic design jargon)",
     "```markdown",
@@ -452,8 +461,8 @@ function buildCriticPrompt(surface, cycle, designMd) {
     "1. `cd` into the worktree. Ensure stack booted.",
     "2. Take fresh screenshots at both viewports:",
     "   ```",
-    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 375 --height 667 --out tmp/design-loop/${surface.slug}/cycle-${cycle}/mobile.png --persona ${PERSONA_EMAIL} --role ${personaRole}`,
-    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 1440 --height 900 --out tmp/design-loop/${surface.slug}/cycle-${cycle}/desktop.png --persona ${PERSONA_EMAIL} --role ${personaRole}`,
+    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 375 --height 667 --out tmp/design-loop/${surface.slug}/cycle-${cycle}/mobile.png --persona ${personaEmail} --role ${personaRole}`,
+    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 1440 --height 900 --out tmp/design-loop/${surface.slug}/cycle-${cycle}/desktop.png --persona ${personaEmail} --role ${personaRole}`,
     "   ```",
     "3. Read both PNGs (Claude Code's Read tool can view images).",
     "4. Compare what you see to the principles in DESIGN.md — be specific to its vocabulary.",
@@ -533,6 +542,7 @@ function buildDesignerPrompt(surface, cycle, critique, designMd) {
 
 function buildVerifierPrompt(surface, cycle, critique, designerResult) {
   const personaRole = surface.persona_role;
+  const personaEmail = surface.persona_email;
   return [
     `# Verifier Agent — ${surface.label} cycle ${cycle}`,
     "",
@@ -557,8 +567,8 @@ function buildVerifierPrompt(surface, cycle, critique, designerResult) {
     "1. `cd` into the worktree.",
     "2. Take post-cycle screenshots:",
     "   ```",
-    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 375 --height 667 --out tmp/design-loop/${surface.slug}/cycle-${cycle}-post/mobile.png --persona ${PERSONA_EMAIL} --role ${personaRole}`,
-    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 1440 --height 900 --out tmp/design-loop/${surface.slug}/cycle-${cycle}-post/desktop.png --persona ${PERSONA_EMAIL} --role ${personaRole}`,
+    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 375 --height 667 --out tmp/design-loop/${surface.slug}/cycle-${cycle}-post/mobile.png --persona ${personaEmail} --role ${personaRole}`,
+    `   node ${REPO_ROOT}/tools/design-loop/screenshot.mjs --url ${HOST_BASE}${surface.route} --width 1440 --height 900 --out tmp/design-loop/${surface.slug}/cycle-${cycle}-post/desktop.png --persona ${personaEmail} --role ${personaRole}`,
     "   ```",
     "3. Run Cypress responsive specs (HARD GATE):",
     "   ```",
