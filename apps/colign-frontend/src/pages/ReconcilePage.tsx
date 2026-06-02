@@ -62,20 +62,22 @@ export function ReconcilePage() {
   }
 
   return (
-    <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-12 sm:space-y-16">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-wider text-neutral-600">Looking back</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600">
+            Looking back
+          </p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 tabular-nums">
             Week of {formatWeekOf(data.weekStartDate)}
           </h1>
         </div>
-        <PlanStatePill state={data.state} />
+        {data.state !== "DRAFT" && <PlanStatePill state={data.state} />}
       </header>
 
       {data.state === "DRAFT" && (
-        <section className="pt-8 sm:pt-12 max-w-xl space-y-3">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-600">
+        <section className="max-w-xl space-y-3">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600">
             Nothing to reconcile yet
           </p>
           <h2 className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
