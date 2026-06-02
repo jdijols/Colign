@@ -12,6 +12,9 @@ vi.mock("@/api/strategy", () => ({
   useCreateDefiningObjectiveMutation: () => [vi.fn(), { isLoading: false }],
   useDeleteDefiningObjectiveMutation: () => [vi.fn(), { isLoading: false }],
   useDeleteRallyCryMutation: () => [vi.fn(), { isLoading: false }],
+  useRenameRallyCryMutation: () => [vi.fn(), { isLoading: false }],
+  useRenameDefiningObjectiveMutation: () => [vi.fn(), { isLoading: false }],
+  useRenameOutcomeMutation: () => [vi.fn(), { isLoading: false }],
 }));
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
@@ -93,5 +96,8 @@ describe("StrategyWeekView", () => {
     expect(document.querySelector('[data-cy="add-objective"]')).toBeTruthy();
     expect(document.querySelector('[data-cy="remove-objective-10"]')).toBeTruthy();
     expect(document.querySelector('[data-cy="pivot-rally-cry"]')).toBeTruthy();
+    expect(document.querySelector('[data-cy="rename-rally-cry-100"]')).toBeTruthy();
+    expect(document.querySelector('[data-cy="rename-objective-10"]')).toBeTruthy();
+    expect(document.querySelector('[data-cy="rename-outcome-1"]')).toBeTruthy();
   });
 });

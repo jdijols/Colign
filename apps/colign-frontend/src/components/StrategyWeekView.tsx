@@ -8,10 +8,14 @@ import {
   useDeleteDefiningObjectiveMutation,
   useDeleteOutcomeMutation,
   useDeleteRallyCryMutation,
+  useRenameDefiningObjectiveMutation,
+  useRenameOutcomeMutation,
+  useRenameRallyCryMutation,
 } from "@/api/strategy";
 import type { OutcomeRefDto } from "@/api/types";
 import { Badge, Button, Card, Spinner } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { cn } from "@/lib/cn";
 import { priorityTone } from "@/lib/tokens";
 import { formatWeekOf, weekEnd } from "@/lib/weeks";
 
@@ -77,6 +81,9 @@ export function StrategyWeekView({ week, editable = false }: Props) {
   const [createObjective, { isLoading: creatingObjective }] = useCreateDefiningObjectiveMutation();
   const [deleteObjective, { isLoading: deletingObjective }] = useDeleteDefiningObjectiveMutation();
   const [pivotRallyCry, { isLoading: pivoting }] = useDeleteRallyCryMutation();
+  const [renameRallyCry] = useRenameRallyCryMutation();
+  const [renameObjective] = useRenameDefiningObjectiveMutation();
+  const [renameOutcome] = useRenameOutcomeMutation();
 
   // Outcome add/remove
   const [removeOutcome, setRemoveOutcome] = useState<OutcomeRefDto | null>(null);
@@ -168,11 +175,20 @@ export function StrategyWeekView({ week, editable = false }: Props) {
         <Card key={rc.rallyCryId ?? rc.rallyCryTitle ?? "rc"}>
           <div className="px-5 py-4 space-y-4">
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <p className="text-[10px] uppercase tracking-wider text-neutral-600">Rally Cry</p>
-                <h2 className="mt-0.5 text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
-                  {rc.rallyCryTitle ?? "Untitled Rally Cry"}
-                </h2>
+                {editable && rc.rallyCryId != null ? (
+                  <EditableTitle
+                    value={rc.rallyCryTitle ?? "Untitled Rally Cry"}
+                    onSave={(t) => renameRallyCry({ id: rc.rallyCryId!, title: t })}
+                    className="mt-0.5 text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50"
+                    cy={`rename-rally-cry-${rc.rallyCryId}`}
+                  />
+                ) : (
+                  <h2 className="mt-0.5 text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
+                    {rc.rallyCryTitle ?? "Untitled Rally Cry"}
+                  </h2>
+                )}
               </div>
               {editable && rc.rallyCryId != null ? (
                 <button
@@ -192,9 +208,18 @@ export function StrategyWeekView({ week, editable = false }: Props) {
                 className="border-l-2 border-neutral-200 dark:border-neutral-800 pl-4 space-y-2"
               >
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
-                    {dobj.definingObjectiveTitle ?? "Untitled Objective"}
-                  </p>
+                  {editable && dobj.definingObjectiveId != null ? (
+                    <EditableTitle
+                      value={dobj.definingObjectiveTitle ?? "Untitled Objective"}
+                      onSave={(t) => renameObjective({ id: dobj.definingObjectiveId!, title: t })}
+                      className="text-sm font-medium text-neutral-800 dark:text-neutral-200"
+                      cy={`rename-objective-${dobj.definingObjectiveId}`}
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                      {dobj.definingObjectiveTitle ?? "Untitled Objective"}
+                    </p>
+                  )}
                   {editable && dobj.definingObjectiveId != null ? (
                     <button
                       type="button"
@@ -213,7 +238,16 @@ export function StrategyWeekView({ week, editable = false }: Props) {
                       <Badge tone={priorityTone(o.priorityTier)} size="xs">
                         {o.priorityTier}
                       </Badge>
-                      <span className="text-neutral-900 dark:text-neutral-50">{o.title}</span>
+                      {editable ? (
+                        <EditableTitle
+                          value={o.title}
+                          onSave={(t) => renameOutcome({ id: o.id, title: t })}
+                          className="text-neutral-900 dark:text-neutral-50"
+                          cy={`rename-outcome-${o.id}`}
+                        />
+                      ) : (
+                        <span className="text-neutral-900 dark:text-neutral-50">{o.title}</span>
+                      )}
                       {editable ? (
                         <button
                           type="button"
@@ -381,6 +415,77 @@ function InlineAdd({
         Cancel
       </Button>
     </form>
+  );
+}
+
+/**
+ * Click-to-rename title. In-place: committing PUTs the new title, so it shows in
+ * every week (the row's structure + effective range are unchanged). Enter or
+ * blur saves; Escape cancels. Only rendered in the current-week editor.
+ */
+function EditableTitle({
+  value,
+  onSave,
+  className,
+  cy,
+}: {
+  value: string;
+  onSave: (title: string) => void;
+  className: string;
+  cy: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
+
+  function commit() {
+    const t = draft.trim();
+    setEditing(false);
+    if (t && t !== value) onSave(t);
+  }
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setDraft(value);
+          setEditing(true);
+        }}
+        title="Rename"
+        data-cy={cy}
+        className={cn(
+          className,
+          "text-left rounded hover:underline decoration-dotted underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
+        )}
+      >
+        {value}
+      </button>
+    );
+  }
+  return (
+    <input
+      ref={inputRef}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commit();
+        } else if (e.key === "Escape") {
+          setEditing(false);
+        }
+      }}
+      data-cy={`${cy}-input`}
+      className={cn(
+        className,
+        "rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-1.5 py-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
+      )}
+    />
   );
 }
 

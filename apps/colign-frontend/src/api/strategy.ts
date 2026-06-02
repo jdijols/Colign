@@ -74,6 +74,26 @@ export const strategyApi = colignApi.injectEndpoints({
       query: (id) => ({ url: `rally-cries/${id}`, method: "DELETE" }),
       invalidatesTags: ["Me", "Outcome"],
     }),
+    // In-place rename: the PUT endpoints edit the row, so the new title shows in
+    // every week (past weeks keep the structure + effective range, just the
+    // updated label). Invalidate Outcome — the outcomes list carries the
+    // denormalized RC/DO/Outcome titles the timeline renders.
+    renameRallyCry: build.mutation<RallyCryDto, { id: number; title: string }>({
+      query: ({ id, title }) => ({ url: `rally-cries/${id}`, method: "PUT", body: { title } }),
+      invalidatesTags: ["Outcome"],
+    }),
+    renameDefiningObjective: build.mutation<DefiningObjectiveDto, { id: number; title: string }>({
+      query: ({ id, title }) => ({
+        url: `defining-objectives/${id}`,
+        method: "PUT",
+        body: { title },
+      }),
+      invalidatesTags: ["Outcome"],
+    }),
+    renameOutcome: build.mutation<OutcomeRefDto, { id: number; title: string }>({
+      query: ({ id, title }) => ({ url: `outcomes/${id}`, method: "PUT", body: { title } }),
+      invalidatesTags: ["Outcome"],
+    }),
   }),
 });
 
@@ -84,4 +104,7 @@ export const {
   useDeleteOutcomeMutation,
   useDeleteDefiningObjectiveMutation,
   useDeleteRallyCryMutation,
+  useRenameRallyCryMutation,
+  useRenameDefiningObjectiveMutation,
+  useRenameOutcomeMutation,
 } = strategyApi;
