@@ -10,8 +10,14 @@ interface Props {
   eyebrow?: string;
 }
 
+// DESIGN.md §9 ("week navigation pattern"): arrows are 36×36 square buttons
+// with a hairline border at rest, hovering into --canvas. The resting border
+// gives each arrow a quiet container so the inline-with-title pattern reads
+// as an intentional control, not a free-floating chevron.
 const ARROW =
-  "inline-flex h-9 w-9 items-center justify-center rounded-md text-neutral-600 dark:text-neutral-400 " +
+  "inline-flex h-9 w-9 items-center justify-center rounded-md " +
+  "border border-neutral-200 dark:border-neutral-800 " +
+  "text-neutral-600 dark:text-neutral-400 " +
   "hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-50 " +
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white " +
   "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-600";

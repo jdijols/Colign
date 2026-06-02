@@ -219,8 +219,13 @@ export function StrategyWeekView({ week, editable = false }: Props) {
             ) : null}
           </div>
 
-          {/* Objectives — 2px solid --text left rule with 18px padding-left (DESIGN.md §9). */}
-          <div className="space-y-8">
+          {/* Objectives — 2px solid --text left rule with 18px padding-left (DESIGN.md §9).
+              Objective-to-Objective rhythm sits between --s-xl (32px) and a small
+              --s-2xl (48px) so each Objective reads as its own anchored section, not
+              another list row (DESIGN.md §5: "Generous over tight when in doubt — the
+              brand says calm"). Outcomes inside each Objective keep --s-md (16px) so
+              the inner group still feels grouped. */}
+          <div className="space-y-[clamp(2rem,1.25rem+2vw,3rem)]">
             {rc.objectives.map((dobj) => (
               <div
                 key={dobj.definingObjectiveId ?? dobj.definingObjectiveTitle ?? "do"}
@@ -453,10 +458,13 @@ function InlineAdd({
         data-cy={cy}
         className="group inline-flex items-center gap-2 pt-1 text-xs font-medium text-neutral-500 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
       >
-        {/* DESIGN.md §9: ghost add affordance — dashed-border circle plus, faint text. */}
+        {/* DESIGN.md §9: ghost add affordance — dashed-border circle plus, faint text.
+            Circle is 20px so the dashed stroke renders with enough arc to read as
+            dashed (sub-18px the stroke collapses to apparent-solid in most browsers).
+            Keep the 1px weight delicate — it's an invitation, not a CTA. */}
         <span
           aria-hidden
-          className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border border-dashed border-neutral-400 dark:border-neutral-600 group-hover:border-neutral-900 dark:group-hover:border-neutral-50"
+          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-dashed border-neutral-400 dark:border-neutral-600 group-hover:border-neutral-900 dark:group-hover:border-neutral-50"
         >
           <HiPlus className="h-3 w-3" aria-hidden />
         </span>
@@ -600,10 +608,13 @@ function AddObjective({
         data-cy="add-objective"
         className="group inline-flex items-center gap-2 pt-2 text-xs font-medium text-neutral-500 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
       >
-        {/* DESIGN.md §9: ghost add affordance — dashed-border circle plus, faint text. */}
+        {/* DESIGN.md §9: ghost add affordance — dashed-border circle plus, faint text.
+            Same 20px circle as the outcome adder so the two affordances feel like one
+            primitive at two scopes (the inner one to its Objective, this one to the
+            Rally Cry tier). 18px collapsed to apparent-solid; 20px reads as dashed. */}
         <span
           aria-hidden
-          className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border border-dashed border-neutral-400 dark:border-neutral-600 group-hover:border-neutral-900 dark:group-hover:border-neutral-50"
+          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-dashed border-neutral-400 dark:border-neutral-600 group-hover:border-neutral-900 dark:group-hover:border-neutral-50"
         >
           <HiPlus className="h-3 w-3" aria-hidden />
         </span>
