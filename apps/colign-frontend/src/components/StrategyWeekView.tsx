@@ -171,12 +171,16 @@ export function StrategyWeekView({ week, editable = false }: Props) {
   }
 
   return (
-    <div className="space-y-12" data-cy="strategy-week-view">
+    // Multiple Rally Cry groups are rare but when they appear, separate them at
+    // the --s-pillar rhythm (DESIGN.md §5). Inside each group, the Rally-Cry-to-
+    // Objectives gap also lands on --s-pillar so the cascade reads as an editorial
+    // spread, not a form — "Generous over tight when in doubt; the brand says calm."
+    <div className="space-y-[clamp(3rem,1.5rem+4vw,6rem)]" data-cy="strategy-week-view">
       {groups.map((rc) => (
-        // Rally Cry → first Objective gap at --s-pillar (≈48px) so the cascade reads as
-        // "calm editorial" rather than a settings form (DESIGN.md §5: "Generous over
-        // tight when in doubt — the brand says calm").
-        <section key={rc.rallyCryId ?? rc.rallyCryTitle ?? "rc"} className="space-y-12">
+        <section
+          key={rc.rallyCryId ?? rc.rallyCryTitle ?? "rc"}
+          className="space-y-[clamp(2.5rem,1.25rem+3.5vw,5rem)]"
+        >
           {/* Rally Cry — top-of-tree, no card boxing (DESIGN.md §9: containment from rule weights alone).
               Title leads on its own line; Pivot is a quiet ghost inline action below it (DESIGN.md §11:
               destructive-adjacent secondary action shouldn't compete with the eyebrow for first read). */}
@@ -200,11 +204,14 @@ export function StrategyWeekView({ week, editable = false }: Props) {
               </h2>
             )}
             {editable && rc.rallyCryId != null ? (
+              // Quiet ghost action below the display title (DESIGN.md §11) —
+              // mt-4 so the Cabinet Grotesk Rally Cry has room to breathe and
+              // the Pivot link sits clearly subordinate to the title.
               <button
                 type="button"
                 onClick={() => setPivotTarget(rc)}
                 data-cy="pivot-rally-cry"
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
               >
                 <HiOutlineSwitchHorizontal className="h-3.5 w-3.5" aria-hidden />
                 <span>Pivot Rally Cry</span>
@@ -487,6 +494,11 @@ function InlineAdd({
  * Click-to-rename title. In-place: committing PUTs the new title, so it shows in
  * every week (the row's structure + effective range are unchanged). Enter or
  * blur saves; Escape cancels. Only rendered in the current-week editor.
+ *
+ * Hover affordance is intentionally quiet (DESIGN.md §2: "Calm, restrained,
+ * never busy") — a faint background tint on the display tier rather than a
+ * dotted underline, which competes with the Cabinet Grotesk type at display
+ * sizes. Title attribute + cursor still communicate "click to rename."
  */
 function EditableTitle({
   value,
@@ -524,7 +536,7 @@ function EditableTitle({
         data-cy={cy}
         className={cn(
           className,
-          "text-left rounded hover:underline decoration-dotted underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
+          "text-left rounded-md -mx-1 px-1 transition-colors duration-[120ms] hover:bg-neutral-100/70 dark:hover:bg-neutral-800/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
         )}
       >
         {value}

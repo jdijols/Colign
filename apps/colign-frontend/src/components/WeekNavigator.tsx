@@ -29,19 +29,26 @@ export function WeekNavigator({ week, onWeekChange, eyebrow }: Props) {
   const step = (n: number) => onWeekChange(clampWeek(addWeeks(week, n)));
 
   return (
-    <header className="flex items-end gap-3">
-      <div>
+    // Display heading lives at the --t-display tier (DESIGN.md §3 + §9) using the
+    // editorial Cabinet Grotesk face — Geist alone doesn't carry display sizes per
+    // §3 ("Carries personality at display sizes that Geist alone doesn't").
+    // Arrows sit inline immediately adjacent to the title per the §9 "week
+    // navigation pattern" — no pill row, no week-of-year subscript.
+    <header className="flex items-end gap-3 flex-wrap">
+      <div className="min-w-0">
         {eyebrow ? (
-          <p className="text-[10px] uppercase tracking-wider text-neutral-600">{eyebrow}</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
+            {eyebrow}
+          </p>
         ) : null}
         <h1
-          className="mt-1 text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 tabular-nums"
+          className="mt-2 font-['Cabinet_Grotesk',_Geist,_system-ui,_sans-serif] text-[clamp(2rem,1.5rem+2vw,2.75rem)] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50 tabular-nums"
           data-cy="week-label"
         >
           Week of {formatWeekOf(week)}
         </h1>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 pb-1">
         <button
           type="button"
           onClick={() => step(-1)}
