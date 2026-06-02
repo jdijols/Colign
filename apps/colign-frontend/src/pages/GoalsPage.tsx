@@ -15,7 +15,7 @@ export function GoalsPage() {
   const [week, setWeek] = useState<string>(() => thisWeek);
 
   return (
-    <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-12 sm:space-y-16">
       <WeekNavigator week={week} onWeekChange={setWeek} eyebrow="Goals" />
       <StrategyWeekView week={week} editable={week === thisWeek} />
     </div>

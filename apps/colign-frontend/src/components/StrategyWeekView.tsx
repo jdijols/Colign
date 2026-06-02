@@ -13,10 +13,10 @@ import {
   useRenameRallyCryMutation,
 } from "@/api/strategy";
 import type { OutcomeRefDto } from "@/api/types";
-import { Badge, Button, Card, Spinner } from "@/components/ui";
+import { Button, Spinner } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/cn";
-import { priorityTone } from "@/lib/tokens";
+import { priorityLabel } from "@/lib/tokens";
 import { formatWeekOf, weekEnd } from "@/lib/weeks";
 
 interface Props {
@@ -155,68 +155,76 @@ export function StrategyWeekView({ week, editable = false }: Props) {
 
   if (groups.length === 0) {
     return (
-      <Card>
-        <div className="flex flex-col items-center text-center px-6 py-14">
-          <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-50">
-            No goals established yet
-          </h2>
-          <p className="mt-1.5 max-w-sm text-sm text-neutral-600 dark:text-neutral-400">
-            Nothing was in place as of the week of {formatWeekOf(week)}. Step forward to the week
-            your strategy was set.
-          </p>
-        </div>
-      </Card>
+      <div className="py-16 text-center" data-cy="strategy-week-empty">
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
+          Aiming for
+        </p>
+        <h2 className="mt-2 text-2xl font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
+          No goals established yet
+        </h2>
+        <p className="mt-3 mx-auto max-w-sm text-sm text-neutral-600 dark:text-neutral-400">
+          Nothing was in place as of the week of {formatWeekOf(week)}. Step forward to the week your
+          strategy was set.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4" data-cy="strategy-week-view">
+    <div className="space-y-12" data-cy="strategy-week-view">
       {groups.map((rc) => (
-        <Card key={rc.rallyCryId ?? rc.rallyCryTitle ?? "rc"}>
-          <div className="px-5 py-4 space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-neutral-600">Rally Cry</p>
-                {editable && rc.rallyCryId != null ? (
-                  <EditableTitle
-                    value={rc.rallyCryTitle ?? "Untitled Rally Cry"}
-                    onSave={(t) => renameRallyCry({ id: rc.rallyCryId!, title: t })}
-                    className="mt-0.5 text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50"
-                    cy={`rename-rally-cry-${rc.rallyCryId}`}
-                  />
-                ) : (
-                  <h2 className="mt-0.5 text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
-                    {rc.rallyCryTitle ?? "Untitled Rally Cry"}
-                  </h2>
-                )}
-              </div>
+        <section key={rc.rallyCryId ?? rc.rallyCryTitle ?? "rc"} className="space-y-8">
+          {/* Rally Cry — top-of-tree, no card boxing (DESIGN.md §9: containment from rule weights alone). */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
+                Aiming for
+              </p>
               {editable && rc.rallyCryId != null ? (
-                <button
-                  type="button"
-                  onClick={() => setPivotTarget(rc)}
-                  data-cy="pivot-rally-cry"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded px-1.5 py-1"
-                >
-                  <HiOutlineSwitchHorizontal className="h-3.5 w-3.5" aria-hidden /> Pivot
-                </button>
-              ) : null}
+                <EditableTitle
+                  value={rc.rallyCryTitle ?? "Untitled Rally Cry"}
+                  onSave={(t) => renameRallyCry({ id: rc.rallyCryId!, title: t })}
+                  className="mt-2 text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
+                  cy={`rename-rally-cry-${rc.rallyCryId}`}
+                />
+              ) : (
+                <h2 className="mt-2 text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
+                  {rc.rallyCryTitle ?? "Untitled Rally Cry"}
+                </h2>
+              )}
             </div>
+            {editable && rc.rallyCryId != null ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setPivotTarget(rc)}
+                data-cy="pivot-rally-cry"
+                className="shrink-0"
+              >
+                <HiOutlineSwitchHorizontal className="h-4 w-4" aria-hidden />
+                <span>Pivot</span>
+              </Button>
+            ) : null}
+          </div>
 
+          {/* Objectives — 2px solid --text left rule with 18px padding-left (DESIGN.md §9). */}
+          <div className="space-y-8">
             {rc.objectives.map((dobj) => (
               <div
                 key={dobj.definingObjectiveId ?? dobj.definingObjectiveTitle ?? "do"}
-                className="border-l-2 border-neutral-200 dark:border-neutral-800 pl-4 space-y-2"
+                className="border-l-2 border-neutral-900 dark:border-neutral-50 pl-[18px] space-y-4"
               >
-                <div className="flex items-center gap-2">
+                <div className="group flex items-center gap-2">
                   {editable && dobj.definingObjectiveId != null ? (
                     <EditableTitle
                       value={dobj.definingObjectiveTitle ?? "Untitled Objective"}
                       onSave={(t) => renameObjective({ id: dobj.definingObjectiveId!, title: t })}
-                      className="text-sm font-medium text-neutral-800 dark:text-neutral-200"
+                      className="text-xl leading-snug font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
                       cy={`rename-objective-${dobj.definingObjectiveId}`}
                     />
                   ) : (
-                    <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                    <p className="text-xl leading-snug font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
                       {dobj.definingObjectiveTitle ?? "Untitled Objective"}
                     </p>
                   )}
@@ -226,18 +234,21 @@ export function StrategyWeekView({ week, editable = false }: Props) {
                       onClick={() => setRemoveObjective(dobj)}
                       aria-label={`Remove objective ${dobj.definingObjectiveTitle ?? ""}`}
                       data-cy={`remove-objective-${dobj.definingObjectiveId}`}
-                      className="inline-flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 inline-flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
                     >
                       <HiX className="h-3.5 w-3.5" aria-hidden />
                     </button>
                   ) : null}
                 </div>
-                <ul className="space-y-1.5">
+
+                {/* Outcomes — 1px solid --hairline-strong left rule with 16px padding-left, nested inside the Objective rule (DESIGN.md §9). */}
+                <div className="border-l border-neutral-300 dark:border-neutral-700 pl-4 space-y-3">
                   {dobj.outcomes.map((o) => (
-                    <li key={o.id} className="flex items-center gap-2 text-sm">
-                      <Badge tone={priorityTone(o.priorityTier)} size="xs">
-                        {o.priorityTier}
-                      </Badge>
+                    <div
+                      key={o.id}
+                      className="group flex items-center gap-3 text-[0.9375rem] leading-snug"
+                    >
+                      <PriorityIndicator tier={o.priorityTier} />
                       {editable ? (
                         <EditableTitle
                           value={o.title}
@@ -254,31 +265,31 @@ export function StrategyWeekView({ week, editable = false }: Props) {
                           onClick={() => setRemoveOutcome(o)}
                           aria-label={`Remove ${o.title}`}
                           data-cy={`remove-outcome-${o.id}`}
-                          className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                          className="ml-auto opacity-0 group-hover:opacity-100 focus-visible:opacity-100 inline-flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
                         >
                           <HiX className="h-3.5 w-3.5" aria-hidden />
                         </button>
                       ) : null}
-                    </li>
+                    </div>
                   ))}
-                </ul>
-                {editable && dobj.definingObjectiveId != null ? (
-                  <InlineAdd
-                    open={addingOutcomeDoId === dobj.definingObjectiveId}
-                    busy={creatingOutcome}
-                    cy="add-outcome"
-                    label="Add outcome"
-                    placeholder="New outcome…"
-                    value={outcomeTitle}
-                    onOpen={() => {
-                      setAddingOutcomeDoId(dobj.definingObjectiveId);
-                      setOutcomeTitle("");
-                    }}
-                    onChange={setOutcomeTitle}
-                    onCancel={() => setAddingOutcomeDoId(null)}
-                    onSubmit={() => submitAddOutcome(dobj.definingObjectiveId!)}
-                  />
-                ) : null}
+                  {editable && dobj.definingObjectiveId != null ? (
+                    <InlineAdd
+                      open={addingOutcomeDoId === dobj.definingObjectiveId}
+                      busy={creatingOutcome}
+                      cy="add-outcome"
+                      label="Add outcome"
+                      placeholder="New outcome…"
+                      value={outcomeTitle}
+                      onOpen={() => {
+                        setAddingOutcomeDoId(dobj.definingObjectiveId);
+                        setOutcomeTitle("");
+                      }}
+                      onChange={setOutcomeTitle}
+                      onCancel={() => setAddingOutcomeDoId(null)}
+                      onSubmit={() => submitAddOutcome(dobj.definingObjectiveId!)}
+                    />
+                  ) : null}
+                </div>
               </div>
             ))}
 
@@ -300,7 +311,7 @@ export function StrategyWeekView({ week, editable = false }: Props) {
               />
             ) : null}
           </div>
-        </Card>
+        </section>
       ))}
 
       <ConfirmDialog
@@ -349,6 +360,39 @@ export function StrategyWeekView({ week, editable = false }: Props) {
         onConfirm={confirmPivot}
       />
     </div>
+  );
+}
+
+/**
+ * Priority indicator primitive (DESIGN.md §11) — a 7px colored dot followed
+ * by the consumer-friendly High / Medium / Low label. Not a pill: no border,
+ * no background. Color carries meaning only on High/Medium; Low is muted
+ * neutral so it reads quieter than High, never heavier (DESIGN.md §10 priority
+ * table). API + DB keep the internal P0/P1/P2 codes; this is the UI layer.
+ */
+function PriorityIndicator({ tier }: { tier: string | null | undefined }) {
+  const dot =
+    tier === "P0"
+      ? "bg-rose-600 dark:bg-rose-500"
+      : tier === "P1"
+        ? "bg-amber-600 dark:bg-amber-500"
+        : "bg-neutral-400 dark:bg-neutral-600";
+  const text =
+    tier === "P0"
+      ? "text-neutral-900 dark:text-neutral-50"
+      : tier === "P1"
+        ? "text-neutral-700 dark:text-neutral-300"
+        : "text-neutral-500 dark:text-neutral-500";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap tabular-nums",
+        text,
+      )}
+    >
+      <span aria-hidden className={cn("inline-block h-[7px] w-[7px] rounded-full shrink-0", dot)} />
+      {priorityLabel(tier)}
+    </span>
   );
 }
 
@@ -533,7 +577,7 @@ function AddObjective({
         e.preventDefault();
         onSubmit();
       }}
-      className="space-y-2 border-l-2 border-dashed border-neutral-200 dark:border-neutral-800 pl-4"
+      className="space-y-2 border-l-2 border-dashed border-neutral-300 dark:border-neutral-700 pl-[18px]"
     >
       <input
         ref={inputRef}
