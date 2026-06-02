@@ -6,7 +6,143 @@
  * This file ALSO holds component-scoped container-query rules added in
  * Phase C (TeamRollupTable card view, IcDrillDrawer full-screen). Each
  * such block is fenced with a section header for navigability.
+ *
+ * Section F (Design foundation v0.1) adds:
+ *   - CSS custom properties mirroring DESIGN.md tokens so any consumer
+ *     (Flowbite, raw inline styles, future component CSS) can reference
+ *     them without importing the Tailwind config.
+ *   - .eyebrow / .font-display / .priority utilities used by the locked
+ *     left-rule cascade pattern (DESIGN.md §9).
+ *   - .depth-* depth primitives that codify the 4-level e0/e1/e2/e3 system
+ *     (DESIGN.md §6). e0–e2 use hairline borders only; only e3 gets shadow.
+ *   - .motion-* duration tokens for animations not covered by Tailwind's
+ *     transition utilities (e.g. keyframe animations).
+ *
+ * All additions are namespaced or scoped to #colign-root, never overriding
+ * existing utilities. The 320→1440 responsive contract is unaffected.
  */
+
+/* === Section F1: design tokens as CSS custom properties === */
+@layer base {
+  :root {
+    /* DESIGN.md §4 surfaces & text */
+    --canvas: #f8f8f7;
+    --surface: #ffffff;
+    --surface-tint: #f4f4f3;
+    --hairline: #e5e5e5;
+    --hairline-strong: #d4d4d4;
+    --text: #171717;
+    --text-soft: #525252;
+    --text-mute: #737373;
+    --text-faint: #a3a3a3;
+
+    /* DESIGN.md §4 semantic */
+    --success: #1a9659;
+    --warning: #c4831d;
+    --destructive: #c8334a;
+
+    /* DESIGN.md §7 motion */
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --motion-micro: 120ms;
+    --motion-state: 240ms;
+    --motion-layout: 400ms;
+  }
+
+  /* Dark-mode neutral inversion (DESIGN.md §4 — dim semantics ~15%).
+     Polish is out of scope for v0.1, but layout/regression coverage isn't,
+     so we keep the tokens defined and consistent. */
+  .dark {
+    --canvas: #0a0a0a;
+    --surface: #111111;
+    --surface-tint: #161616;
+    --hairline: #262626;
+    --hairline-strong: #404040;
+    --text: #fafafa;
+    --text-soft: #a3a3a3;
+    --text-mute: #737373;
+    --text-faint: #525252;
+  }
+}
+
+/* === Section F2: eyebrow + display type utilities === */
+@layer utilities {
+  /* DESIGN.md §3 eyebrow pattern. 11px, uppercase, tracking-wider, weight 500,
+     soft text color. Used above display headings on every major surface. */
+  #colign-root .eyebrow {
+    font-size: 0.6875rem;
+    line-height: 1;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--text-soft);
+  }
+
+  /* DESIGN.md §3 display font. Cabinet Grotesk for hero/display copy. */
+  #colign-root .font-display {
+    font-family: "Cabinet Grotesk", "Geist", "Inter", system-ui, -apple-system, "Segoe UI",
+      Roboto, sans-serif;
+  }
+}
+
+/* === Section F3: depth primitives === */
+@layer components {
+  /* DESIGN.md §6. Four levels — depth comes from layered surfaces with
+     hairline borders, NOT elevation. Only e3 (popovers) gets a shadow. */
+  #colign-root .depth-e0 {
+    background-color: var(--canvas);
+  }
+  #colign-root .depth-e1 {
+    background-color: var(--surface);
+  }
+  #colign-root .depth-e2 {
+    background-color: var(--surface);
+    border: 1px solid var(--hairline);
+  }
+  #colign-root .depth-e3 {
+    background-color: var(--surface);
+    border: 1px solid var(--hairline);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05), 0 1px 3px 0 rgb(0 0 0 / 0.04);
+  }
+}
+
+/* === Section F4: priority indicator (DESIGN.md §11) ===
+   A tiny inline marker — dot + label. NOT a pill. No background, no border.
+   Used in the locked left-rule cascade and IcDrillDrawer commit list. */
+@layer components {
+  #colign-root .priority {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1;
+  }
+  #colign-root .priority-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background-color: var(--text-faint);
+  }
+  #colign-root .priority.high {
+    color: var(--text);
+  }
+  #colign-root .priority.high .priority-dot {
+    background-color: var(--destructive);
+  }
+  #colign-root .priority.med {
+    color: var(--text-soft);
+  }
+  #colign-root .priority.med .priority-dot {
+    background-color: var(--warning);
+  }
+  #colign-root .priority.low {
+    color: var(--text-mute);
+  }
+  #colign-root .priority.low .priority-dot {
+    background-color: var(--text-faint);
+  }
+}
 
 /* === Section C8: TeamRollupTable container query === */
 @layer components {
