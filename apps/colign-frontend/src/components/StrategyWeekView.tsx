@@ -260,8 +260,10 @@ export function StrategyWeekView({ week, editable = false }: Props) {
                 </div>
 
                 {/* Outcomes — 1px solid --hairline-strong left rule with 16px padding-left, nested inside the Objective rule (DESIGN.md §9).
-                    Vertical rhythm: --s-md (16px) between outcomes per DESIGN.md §5 ("Generous over tight … the brand says calm"). */}
-                <div className="border-l border-neutral-300 dark:border-neutral-700 pl-4 space-y-4">
+                    Vertical rhythm: --s-md (16px) floor → opens toward --s-lg (24px) on wider screens via clamp so the cascade
+                    breathes at desktop instead of reading as a settings list (DESIGN.md §5: "Generous over tight when in doubt
+                    — the brand says calm"; comfortable, not compact). */}
+                <div className="border-l border-neutral-300 dark:border-neutral-700 pl-4 space-y-[clamp(1rem,0.75rem+0.75vw,1.5rem)]">
                   {dobj.outcomes.map((o) => (
                     <div
                       key={o.id}
@@ -456,12 +458,17 @@ function InlineAdd({
         type="button"
         onClick={onOpen}
         data-cy={cy}
-        className="group inline-flex items-center gap-2 pt-1 text-xs font-medium text-neutral-500 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
+        className="group inline-flex items-center gap-2 mt-3 text-xs font-medium text-neutral-500 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
       >
         {/* DESIGN.md §9: ghost add affordance — dashed-border circle plus, faint text.
             Circle is 20px so the dashed stroke renders with enough arc to read as
             dashed (sub-18px the stroke collapses to apparent-solid in most browsers).
-            Keep the 1px weight delicate — it's an invitation, not a CTA. */}
+            Keep the 1px weight delicate — it's an invitation, not a CTA.
+
+            Top margin lifts the adder off the last Outcome by a half-pillar beat
+            (mt-3 = 12px on top of the parent's space-y --s-md/--s-lg gap) so it
+            reads as a separate "invitation" affordance, not another list row
+            (DESIGN.md §2 "intentional structure"; §9 ghost-button posture). */}
         <span
           aria-hidden
           className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-dashed border-neutral-400 dark:border-neutral-600 group-hover:border-neutral-900 dark:group-hover:border-neutral-50"
@@ -606,12 +613,18 @@ function AddObjective({
         type="button"
         onClick={onOpen}
         data-cy="add-objective"
-        className="group inline-flex items-center gap-2 pt-2 text-xs font-medium text-neutral-500 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
+        className="group inline-flex items-center gap-2 mt-4 text-xs font-medium text-neutral-500 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
       >
         {/* DESIGN.md §9: ghost add affordance — dashed-border circle plus, faint text.
             Same 20px circle as the outcome adder so the two affordances feel like one
             primitive at two scopes (the inner one to its Objective, this one to the
-            Rally Cry tier). 18px collapsed to apparent-solid; 20px reads as dashed. */}
+            Rally Cry tier). 18px collapsed to apparent-solid; 20px reads as dashed.
+
+            mt-4 (16px) lifts the Rally-Cry-tier adder off the last Objective by a
+            clearer beat than the previous pt-2; combined with the parent's
+            clamp(2rem,1.25rem+2vw,3rem) space-y this lands the adder ~48–64px below
+            the last Objective so it reads as the §9 "invitation" beat, not another
+            row in the cascade. */}
         <span
           aria-hidden
           className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-dashed border-neutral-400 dark:border-neutral-600 group-hover:border-neutral-900 dark:group-hover:border-neutral-50"
