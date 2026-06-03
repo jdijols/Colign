@@ -13,10 +13,10 @@ import {
   useRenameRallyCryMutation,
 } from "@/api/strategy";
 import type { OutcomeRefDto } from "@/api/types";
-import { Badge, Button, Card, Spinner } from "@/components/ui";
+import { Button, Spinner } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/cn";
-import { priorityTone } from "@/lib/tokens";
+import { priorityLabel } from "@/lib/tokens";
 import { formatWeekOf, weekEnd } from "@/lib/weeks";
 
 interface Props {
@@ -155,68 +155,94 @@ export function StrategyWeekView({ week, editable = false }: Props) {
 
   if (groups.length === 0) {
     return (
-      <Card>
-        <div className="flex flex-col items-center text-center px-6 py-14">
-          <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-50">
-            No goals established yet
-          </h2>
-          <p className="mt-1.5 max-w-sm text-sm text-neutral-600 dark:text-neutral-400">
-            Nothing was in place as of the week of {formatWeekOf(week)}. Step forward to the week
-            your strategy was set.
-          </p>
-        </div>
-      </Card>
+      <div className="py-16 text-center" data-cy="strategy-week-empty">
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
+          Aiming for
+        </p>
+        <h2 className="mt-2 text-2xl font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
+          No goals established yet
+        </h2>
+        <p className="mt-3 mx-auto max-w-sm text-sm text-neutral-600 dark:text-neutral-400">
+          Nothing was in place as of the week of {formatWeekOf(week)}. Step forward to the week your
+          strategy was set.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4" data-cy="strategy-week-view">
+    // Multiple Rally Cry groups are rare but when they appear, separate them at
+    // the --s-pillar rhythm (DESIGN.md §5). Inside each group, the Rally-Cry-to-
+    // Objectives gap also lands on --s-pillar so the cascade reads as an editorial
+    // spread, not a form — "Generous over tight when in doubt; the brand says calm."
+    <div className="space-y-[clamp(3rem,1.5rem+4vw,6rem)]" data-cy="strategy-week-view">
       {groups.map((rc) => (
-        <Card key={rc.rallyCryId ?? rc.rallyCryTitle ?? "rc"}>
-          <div className="px-5 py-4 space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-neutral-600">Rally Cry</p>
-                {editable && rc.rallyCryId != null ? (
-                  <EditableTitle
-                    value={rc.rallyCryTitle ?? "Untitled Rally Cry"}
-                    onSave={(t) => renameRallyCry({ id: rc.rallyCryId!, title: t })}
-                    className="mt-0.5 text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50"
-                    cy={`rename-rally-cry-${rc.rallyCryId}`}
-                  />
-                ) : (
-                  <h2 className="mt-0.5 text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
-                    {rc.rallyCryTitle ?? "Untitled Rally Cry"}
-                  </h2>
-                )}
-              </div>
-              {editable && rc.rallyCryId != null ? (
-                <button
-                  type="button"
-                  onClick={() => setPivotTarget(rc)}
-                  data-cy="pivot-rally-cry"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded px-1.5 py-1"
-                >
-                  <HiOutlineSwitchHorizontal className="h-3.5 w-3.5" aria-hidden /> Pivot
-                </button>
-              ) : null}
-            </div>
+        <section
+          key={rc.rallyCryId ?? rc.rallyCryTitle ?? "rc"}
+          className="space-y-[clamp(2.5rem,1.25rem+3.5vw,5rem)]"
+        >
+          {/* Rally Cry — top-of-tree, no card boxing (DESIGN.md §9: containment from rule weights alone).
+              Title leads on its own line; Pivot is a quiet ghost inline action below it (DESIGN.md §11:
+              destructive-adjacent secondary action shouldn't compete with the eyebrow for first read). */}
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 dark:text-neutral-400">
+              Aiming for
+            </p>
+            {/* Font stack puts Cabinet Grotesk (DESIGN.md §3: editorial display face)
+                ahead of Geist so the Rally Cry picks it up the moment foundation loads
+                the Fontshare stylesheet. Falls back gracefully to Geist 500 today. */}
+            {editable && rc.rallyCryId != null ? (
+              <EditableTitle
+                value={rc.rallyCryTitle ?? "Untitled Rally Cry"}
+                onSave={(t) => renameRallyCry({ id: rc.rallyCryId!, title: t })}
+                className="mt-2 font-['Cabinet_Grotesk',_Geist,_system-ui,_sans-serif] text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
+                cy={`rename-rally-cry-${rc.rallyCryId}`}
+              />
+            ) : (
+              <h2 className="mt-2 font-['Cabinet_Grotesk',_Geist,_system-ui,_sans-serif] text-2xl sm:text-[1.75rem] leading-tight font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
+                {rc.rallyCryTitle ?? "Untitled Rally Cry"}
+              </h2>
+            )}
+            {editable && rc.rallyCryId != null ? (
+              // Quiet ghost action below the display title (DESIGN.md §11) —
+              // mt-4 so the Cabinet Grotesk Rally Cry has room to breathe and
+              // the Pivot link sits clearly subordinate to the title.
+              <button
+                type="button"
+                onClick={() => setPivotTarget(rc)}
+                data-cy="pivot-rally-cry"
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
+              >
+                <HiOutlineSwitchHorizontal className="h-3.5 w-3.5" aria-hidden />
+                <span>Pivot Rally Cry</span>
+              </button>
+            ) : null}
+          </div>
 
+          {/* Objectives — 2px solid --text left rule with 18px padding-left (DESIGN.md §9).
+              Objective-to-Objective rhythm sits between --s-xl (32px) and a small
+              --s-2xl (48px) so each Objective reads as its own anchored section, not
+              another list row (DESIGN.md §5: "Generous over tight when in doubt — the
+              brand says calm"). Outcomes inside each Objective keep --s-md (16px) so
+              the inner group still feels grouped. */}
+          <div className="space-y-[clamp(2rem,1.25rem+2vw,3rem)]">
             {rc.objectives.map((dobj) => (
               <div
                 key={dobj.definingObjectiveId ?? dobj.definingObjectiveTitle ?? "do"}
-                className="border-l-2 border-neutral-200 dark:border-neutral-800 pl-4 space-y-2"
+                className="border-l-2 border-neutral-900 dark:border-neutral-50 pl-[18px] space-y-4"
               >
-                <div className="flex items-center gap-2">
+                <div className="group flex items-center gap-2">
+                  {/* Same Cabinet-Grotesk-first stack on the Objective tier so the cascade's
+                      two display rows pick up the editorial face together once loaded. */}
                   {editable && dobj.definingObjectiveId != null ? (
                     <EditableTitle
                       value={dobj.definingObjectiveTitle ?? "Untitled Objective"}
                       onSave={(t) => renameObjective({ id: dobj.definingObjectiveId!, title: t })}
-                      className="text-sm font-medium text-neutral-800 dark:text-neutral-200"
+                      className="font-['Cabinet_Grotesk',_Geist,_system-ui,_sans-serif] text-xl leading-snug font-medium tracking-tight text-neutral-900 dark:text-neutral-50"
                       cy={`rename-objective-${dobj.definingObjectiveId}`}
                     />
                   ) : (
-                    <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                    <p className="font-['Cabinet_Grotesk',_Geist,_system-ui,_sans-serif] text-xl leading-snug font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
                       {dobj.definingObjectiveTitle ?? "Untitled Objective"}
                     </p>
                   )}
@@ -226,18 +252,24 @@ export function StrategyWeekView({ week, editable = false }: Props) {
                       onClick={() => setRemoveObjective(dobj)}
                       aria-label={`Remove objective ${dobj.definingObjectiveTitle ?? ""}`}
                       data-cy={`remove-objective-${dobj.definingObjectiveId}`}
-                      className="inline-flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 inline-flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
                     >
                       <HiX className="h-3.5 w-3.5" aria-hidden />
                     </button>
                   ) : null}
                 </div>
-                <ul className="space-y-1.5">
+
+                {/* Outcomes — 1px solid --hairline-strong left rule with 16px padding-left, nested inside the Objective rule (DESIGN.md §9).
+                    Vertical rhythm: --s-md (16px) floor → opens toward --s-lg (24px) on wider screens via clamp so the cascade
+                    breathes at desktop instead of reading as a settings list (DESIGN.md §5: "Generous over tight when in doubt
+                    — the brand says calm"; comfortable, not compact). */}
+                <div className="border-l border-neutral-300 dark:border-neutral-700 pl-4 space-y-[clamp(1rem,0.75rem+0.75vw,1.5rem)]">
                   {dobj.outcomes.map((o) => (
-                    <li key={o.id} className="flex items-center gap-2 text-sm">
-                      <Badge tone={priorityTone(o.priorityTier)} size="xs">
-                        {o.priorityTier}
-                      </Badge>
+                    <div
+                      key={o.id}
+                      className="group flex items-center gap-3 text-[0.9375rem] leading-snug"
+                    >
+                      <PriorityIndicator tier={o.priorityTier} />
                       {editable ? (
                         <EditableTitle
                           value={o.title}
@@ -254,31 +286,31 @@ export function StrategyWeekView({ week, editable = false }: Props) {
                           onClick={() => setRemoveOutcome(o)}
                           aria-label={`Remove ${o.title}`}
                           data-cy={`remove-outcome-${o.id}`}
-                          className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                          className="ml-auto opacity-0 group-hover:opacity-100 focus-visible:opacity-100 inline-flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
                         >
                           <HiX className="h-3.5 w-3.5" aria-hidden />
                         </button>
                       ) : null}
-                    </li>
+                    </div>
                   ))}
-                </ul>
-                {editable && dobj.definingObjectiveId != null ? (
-                  <InlineAdd
-                    open={addingOutcomeDoId === dobj.definingObjectiveId}
-                    busy={creatingOutcome}
-                    cy="add-outcome"
-                    label="Add outcome"
-                    placeholder="New outcome…"
-                    value={outcomeTitle}
-                    onOpen={() => {
-                      setAddingOutcomeDoId(dobj.definingObjectiveId);
-                      setOutcomeTitle("");
-                    }}
-                    onChange={setOutcomeTitle}
-                    onCancel={() => setAddingOutcomeDoId(null)}
-                    onSubmit={() => submitAddOutcome(dobj.definingObjectiveId!)}
-                  />
-                ) : null}
+                  {editable && dobj.definingObjectiveId != null ? (
+                    <InlineAdd
+                      open={addingOutcomeDoId === dobj.definingObjectiveId}
+                      busy={creatingOutcome}
+                      cy="add-outcome"
+                      label="Add outcome"
+                      placeholder="New outcome…"
+                      value={outcomeTitle}
+                      onOpen={() => {
+                        setAddingOutcomeDoId(dobj.definingObjectiveId);
+                        setOutcomeTitle("");
+                      }}
+                      onChange={setOutcomeTitle}
+                      onCancel={() => setAddingOutcomeDoId(null)}
+                      onSubmit={() => submitAddOutcome(dobj.definingObjectiveId!)}
+                    />
+                  ) : null}
+                </div>
               </div>
             ))}
 
@@ -300,7 +332,7 @@ export function StrategyWeekView({ week, editable = false }: Props) {
               />
             ) : null}
           </div>
-        </Card>
+        </section>
       ))}
 
       <ConfirmDialog
@@ -352,6 +384,46 @@ export function StrategyWeekView({ week, editable = false }: Props) {
   );
 }
 
+/**
+ * Priority indicator primitive (DESIGN.md §11) — a 7px colored dot followed
+ * by the consumer-friendly High / Medium / Low label. Not a pill: no border,
+ * no background. Color carries meaning only on High/Medium; Low is muted
+ * neutral so it reads quieter than High, never heavier (DESIGN.md §10 priority
+ * table). API + DB keep the internal P0/P1/P2 codes; this is the UI layer.
+ *
+ * Dot colors are the DESIGN.md §4 tuned semantic hex values — explicitly
+ * "tuned away from Tailwind defaults — quieter, less candy." Never bind to
+ * rose-* / amber-* utilities here; those read enterprise/Jira, not editorial.
+ *   --destructive  #c8334a  → High
+ *   --warning      #c4831d  → Medium
+ *   --text-faint   #a3a3a3  → Low
+ */
+function PriorityIndicator({ tier }: { tier: string | null | undefined }) {
+  const dot =
+    tier === "P0"
+      ? "bg-[#c8334a]"
+      : tier === "P1"
+        ? "bg-[#c4831d]"
+        : "bg-[#a3a3a3] dark:bg-[#737373]";
+  const text =
+    tier === "P0"
+      ? "text-neutral-900 dark:text-neutral-50"
+      : tier === "P1"
+        ? "text-neutral-700 dark:text-neutral-300"
+        : "text-neutral-500 dark:text-neutral-500";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap tabular-nums",
+        text,
+      )}
+    >
+      <span aria-hidden className={cn("inline-block h-[7px] w-[7px] rounded-full shrink-0", dot)} />
+      {priorityLabel(tier)}
+    </span>
+  );
+}
+
 /** Inline "+ Label" that expands to a single text input + Add/Cancel. */
 function InlineAdd({
   open,
@@ -386,9 +458,24 @@ function InlineAdd({
         type="button"
         onClick={onOpen}
         data-cy={cy}
-        className="inline-flex items-center gap-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
+        className="group inline-flex items-center gap-2 mt-3 text-xs font-medium text-neutral-500 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
       >
-        <HiPlus className="h-3.5 w-3.5" aria-hidden /> {label}
+        {/* DESIGN.md §9: ghost add affordance — dashed-border circle plus, faint text.
+            Circle is 20px so the dashed stroke renders with enough arc to read as
+            dashed (sub-18px the stroke collapses to apparent-solid in most browsers).
+            Keep the 1px weight delicate — it's an invitation, not a CTA.
+
+            Top margin lifts the adder off the last Outcome by a half-pillar beat
+            (mt-3 = 12px on top of the parent's space-y --s-md/--s-lg gap) so it
+            reads as a separate "invitation" affordance, not another list row
+            (DESIGN.md §2 "intentional structure"; §9 ghost-button posture). */}
+        <span
+          aria-hidden
+          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-dashed border-neutral-400 dark:border-neutral-600 group-hover:border-neutral-900 dark:group-hover:border-neutral-50"
+        >
+          <HiPlus className="h-3 w-3" aria-hidden />
+        </span>
+        {label}
       </button>
     );
   }
@@ -398,7 +485,7 @@ function InlineAdd({
         e.preventDefault();
         onSubmit();
       }}
-      className="flex items-center gap-2"
+      className="flex items-center gap-2 pt-1"
     >
       <input
         ref={inputRef}
@@ -422,6 +509,11 @@ function InlineAdd({
  * Click-to-rename title. In-place: committing PUTs the new title, so it shows in
  * every week (the row's structure + effective range are unchanged). Enter or
  * blur saves; Escape cancels. Only rendered in the current-week editor.
+ *
+ * Hover affordance is intentionally quiet (DESIGN.md §2: "Calm, restrained,
+ * never busy") — a faint background tint on the display tier rather than a
+ * dotted underline, which competes with the Cabinet Grotesk type at display
+ * sizes. Title attribute + cursor still communicate "click to rename."
  */
 function EditableTitle({
   value,
@@ -459,7 +551,7 @@ function EditableTitle({
         data-cy={cy}
         className={cn(
           className,
-          "text-left rounded hover:underline decoration-dotted underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
+          "text-left rounded-md -mx-1 px-1 transition-colors duration-[120ms] hover:bg-neutral-100/70 dark:hover:bg-neutral-800/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
         )}
       >
         {value}
@@ -521,9 +613,25 @@ function AddObjective({
         type="button"
         onClick={onOpen}
         data-cy="add-objective"
-        className="inline-flex items-center gap-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
+        className="group inline-flex items-center gap-2 mt-4 text-xs font-medium text-neutral-500 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded"
       >
-        <HiPlus className="h-3.5 w-3.5" aria-hidden /> Add objective
+        {/* DESIGN.md §9: ghost add affordance — dashed-border circle plus, faint text.
+            Same 20px circle as the outcome adder so the two affordances feel like one
+            primitive at two scopes (the inner one to its Objective, this one to the
+            Rally Cry tier). 18px collapsed to apparent-solid; 20px reads as dashed.
+
+            mt-4 (16px) lifts the Rally-Cry-tier adder off the last Objective by a
+            clearer beat than the previous pt-2; combined with the parent's
+            clamp(2rem,1.25rem+2vw,3rem) space-y this lands the adder ~48–64px below
+            the last Objective so it reads as the §9 "invitation" beat, not another
+            row in the cascade. */}
+        <span
+          aria-hidden
+          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-dashed border-neutral-400 dark:border-neutral-600 group-hover:border-neutral-900 dark:group-hover:border-neutral-50"
+        >
+          <HiPlus className="h-3 w-3" aria-hidden />
+        </span>
+        Add objective
       </button>
     );
   }
@@ -533,7 +641,7 @@ function AddObjective({
         e.preventDefault();
         onSubmit();
       }}
-      className="space-y-2 border-l-2 border-dashed border-neutral-200 dark:border-neutral-800 pl-4"
+      className="space-y-2 border-l-2 border-dashed border-neutral-300 dark:border-neutral-700 pl-[18px]"
     >
       <input
         ref={inputRef}

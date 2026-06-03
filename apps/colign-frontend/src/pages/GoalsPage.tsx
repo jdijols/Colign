@@ -15,8 +15,13 @@ export function GoalsPage() {
   const [week, setWeek] = useState<string>(() => thisWeek);
 
   return (
-    <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6">
-      <WeekNavigator week={week} onWeekChange={setWeek} eyebrow="Goals" />
+    // Page rhythm uses --s-pillar (DESIGN.md §5: clamp(3rem, 1.5rem + 4vw, 6rem))
+    // for the major section break between the Week-of header and the strategy
+    // cascade. Responsive clamp opens up on wider screens — calm editorial, not a
+    // settings list (DESIGN.md §5: "Generous over tight when in doubt").
+    <div className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-[clamp(3rem,1.5rem+4vw,6rem)]">
+      {/* No page-level eyebrow — the in-cascade "Aiming for" leads the surface (DESIGN.md §3, §10: consumer-friendly tone, no route-name labels). */}
+      <WeekNavigator week={week} onWeekChange={setWeek} />
       <StrategyWeekView week={week} editable={week === thisWeek} />
     </div>
   );
