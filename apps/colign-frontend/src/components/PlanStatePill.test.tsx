@@ -20,14 +20,17 @@ describe("PlanStatePill", () => {
     expect(screen.getByText(new RegExp(label, "i"))).toBeInTheDocument();
   });
 
-  it("renders a different tone class per state", () => {
+  it("renders a different dot tone per state", () => {
+    // DESIGN.md §11 — every state shares the same hairline-pill chrome; only
+    // the leading 6px dot's color differs. The dot is the first child of the
+    // pill (an aria-hidden <span>).
     const { container: draftEl } = render(<PlanStatePill state="DRAFT" />);
-    const draftClass = draftEl.firstElementChild?.className ?? "";
+    const draftDotClass = draftEl.firstElementChild?.firstElementChild?.className ?? "";
     cleanup();
 
     const { container: reconciledEl } = render(<PlanStatePill state="RECONCILED" />);
-    const reconciledClass = reconciledEl.firstElementChild?.className ?? "";
+    const reconciledDotClass = reconciledEl.firstElementChild?.firstElementChild?.className ?? "";
 
-    expect(draftClass).not.toEqual(reconciledClass);
+    expect(draftDotClass).not.toEqual(reconciledDotClass);
   });
 });

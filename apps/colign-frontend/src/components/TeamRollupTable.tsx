@@ -127,6 +127,15 @@ export function TeamRollupTable({ onSelectMember }: Props) {
   const from = data && data.totalElements > 0 ? page * perPage + 1 : 0;
   const to = data ? Math.min((page + 1) * perPage, data.totalElements) : 0;
 
+  // DESIGN.md §12 polish — don't ship a column that is always "—". The
+  // "vs. last week" column has no value until at least one row has been
+  // reconciled. Suppressing the column entirely (header + cell) avoids the
+  // dead-grid-weight feel and the visual padding-with-nothing it created on
+  // a brand-new team. The mobile card already handles this naturally — the
+  // DeltaCell renders "—" inside the meta line, which we keep hidden below
+  // for the same reason.
+  const hasAnyDelta = (data?.content ?? []).some((m) => deltaHours(m.currentPlan?.commits) != null);
+
   return (
     <div className="space-y-3 team-rollup-container" style={{ containerType: "inline-size" }}>
       {/* Sort chip row — visible only in card mode (container < 640px) via
@@ -197,7 +206,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                 <TH>Week of</TH>
                 <TH>Status</TH>
                 <TH>High-priority alignment</TH>
-                <TH className="hidden md:table-cell">vs. last week</TH>
+                {hasAnyDelta ? <TH className="hidden md:table-cell">vs. last week</TH> : null}
                 <TH>Commits</TH>
                 <TH className="text-right">
                   <span className="sr-only">Open</span>
@@ -207,13 +216,16 @@ export function TeamRollupTable({ onSelectMember }: Props) {
             <TBody>
               {isFetching && !data ? (
                 <TR hover={false}>
-                  <TD colSpan={7} className="py-8 text-center text-neutral-600">
+                  <TD colSpan={hasAnyDelta ? 7 : 6} className="py-8 text-center text-neutral-600">
                     <Spinner size="sm" /> Loading team…
                   </TD>
                 </TR>
               ) : (data?.content ?? []).length === 0 ? (
                 <TR hover={false}>
-                  <TD colSpan={7} className="py-8 text-center text-sm text-neutral-600">
+                  <TD
+                    colSpan={hasAnyDelta ? 7 : 6}
+                    className="py-8 text-center text-sm text-neutral-600"
+                  >
                     No direct reports to show.
                   </TD>
                 </TR>
@@ -259,7 +271,12 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                       <TD className="w-52">
                         {plan ? (
                           <div className="flex items-center gap-2">
-                            <div className="h-1.5 w-24 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                            {/* DESIGN.md §9 alignment instrument: thin ticks
+                                at the 40% (warning) and 70% (success)
+                                thresholds so a manager can read the red /
+                                amber / green zones at a glance, not just
+                                infer from the fill color. */}
+                            <div className="relative h-1.5 w-24 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden alignment-track">
                               <div
                                 className={cn("h-1.5 rounded-full", tier.bar)}
                                 style={{
@@ -271,6 +288,16 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                                 aria-valuemax={100}
                                 aria-label={`${m.displayName} high-priority alignment ${plan.alignment.alignmentPct}%`}
                               />
+                              <span
+                                aria-hidden
+                                className="absolute top-0 h-1.5 w-px bg-neutral-400/70 dark:bg-neutral-500/60"
+                                style={{ left: "40%" }}
+                              />
+                              <span
+                                aria-hidden
+                                className="absolute top-0 h-1.5 w-px bg-neutral-400/70 dark:bg-neutral-500/60"
+                                style={{ left: "70%" }}
+                              />
                             </div>
                             <span className={cn("text-xs font-medium tabular-nums", tier.label)}>
                               {plan.alignment.alignmentPct}%
@@ -280,9 +307,11 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                           <span className="text-xs text-neutral-400">—</span>
                         )}
                       </TD>
-                      <TD className="hidden md:table-cell" data-cy="team-row-delta">
-                        <DeltaCell delta={deltaHours(plan?.commits)} />
-                      </TD>
+                      {hasAnyDelta ? (
+                        <TD className="hidden md:table-cell" data-cy="team-row-delta">
+                          <DeltaCell delta={deltaHours(plan?.commits)} />
+                        </TD>
+                      ) : null}
                       <TD className="tabular-nums text-sm">
                         {plan ? plan.commits.length : <span className="text-neutral-400">—</span>}
                       </TD>
@@ -388,7 +417,9 @@ function TeamRollupCard({
           is a data-dense surface; lean on a strict grid, not flex-wrap. */}
       {plan ? (
         <div className="mt-3 flex items-center gap-3">
-          <div className="h-1.5 flex-1 min-w-0 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+          {/* DESIGN.md §9 — same tick treatment as the desktop row so the
+              red / amber / green zones are readable on touch surfaces too. */}
+          <div className="relative h-1.5 flex-1 min-w-0 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden alignment-track">
             <div
               className={cn("h-1.5 rounded-full", tier.bar)}
               style={{
@@ -399,6 +430,16 @@ function TeamRollupCard({
               aria-valuemin={0}
               aria-valuemax={100}
               aria-label={`${member.displayName} high-priority alignment ${plan.alignment.alignmentPct}%`}
+            />
+            <span
+              aria-hidden
+              className="absolute top-0 h-1.5 w-px bg-neutral-400/70 dark:bg-neutral-500/60"
+              style={{ left: "40%" }}
+            />
+            <span
+              aria-hidden
+              className="absolute top-0 h-1.5 w-px bg-neutral-400/70 dark:bg-neutral-500/60"
+              style={{ left: "70%" }}
             />
           </div>
           <span className={cn("text-xs font-medium tabular-nums shrink-0", tier.label)}>
