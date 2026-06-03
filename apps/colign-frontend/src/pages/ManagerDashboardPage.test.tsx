@@ -91,6 +91,9 @@ describe("ManagerDashboardPage", () => {
     hoisted.getManagerTeam.mockReturnValue(mockQueryResult(onePage));
     renderWithRouter(<ManagerDashboardPage />);
     expect(screen.queryByText(/no teammates yet/i)).not.toBeInTheDocument();
-    expect(screen.getByText("Direct reports")).toBeInTheDocument();
+    // "Direct reports" appears twice — as the InlineStat label and as the
+    // h2 section heading above the rollup table. Either is sufficient signal
+    // that the rollup rendered instead of the empty state.
+    expect(screen.getAllByText("Direct reports").length).toBeGreaterThan(0);
   });
 });
