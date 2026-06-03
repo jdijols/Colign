@@ -20,6 +20,12 @@ import { SidebarShell } from "@/components/SidebarShell";
  * left-rail sidebar (workspace pill at top, four flat routes in the middle,
  * user chip at the bottom) with the routed page rendered to its right.
  * Narrow-viewport drawer collapse is handled inside SidebarShell.
+ *
+ * DESIGN.md: the shell is the canonical mount point for the "disciplined
+ * editorial" baseline — the canvas background, sidebar surface, and antialias
+ * settings live on the `<div id="colign-root">` and `<body>` (see index.css).
+ * This component itself stays presentation-free; it only routes data into
+ * SidebarShell and wires the Outlet. Visual tokens flow from SidebarShell.
  */
 export function AppShell() {
   const dispatch = useAppDispatch();
