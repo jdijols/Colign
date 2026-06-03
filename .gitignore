@@ -35,6 +35,9 @@ hs_err_pid*.log
 !.env.example
 application-local.yml
 application-local.properties
+# Mock JWT signing key for local dev — regenerate locally via
+# `scripts/README.md` keygen instructions. NEVER commit.
+scripts/colign-mock-private.pem
 
 # --- Test artifacts ---
 .nyc_output/
