@@ -89,6 +89,12 @@ export function ManagerDashboardPage() {
 
   return (
     <div className="p-6 sm:p-8 max-w-7xl mx-auto">
+      {/* DESIGN.md §3 eyebrow → display heading → supporting line rhythm.
+          §5 calls for comfortable-not-compact vertical space: ~8px (mt-2)
+          between eyebrow and headline (the eyebrow is a deliberate prelude,
+          not a separate block), then ~12-16px (mt-3) between the headline
+          and the subhead so the supporting line reads as a follow-on rather
+          than crowding the display heading. */}
       <header>
         <p className="text-[10px] uppercase tracking-wider text-neutral-600 font-medium">
           Manager dashboard
@@ -96,8 +102,13 @@ export function ManagerDashboardPage() {
         <h1 className="mt-2 text-fluid-3xl font-light tracking-tight text-neutral-900 dark:text-neutral-50">
           My team — this week
         </h1>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-          Plans across your direct reports, with high-priority alignment per IC.
+        {/* DESIGN.md §10 — consumer-friendly tone, Notion-adjacent. "Per IC"
+            is internal-data jargon; plain language ("how much of each week
+            is aligned to high-priority outcomes") matches the editorial
+            register the system is asking for. */}
+        <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">
+          Plans across your direct reports, with how much of each week is aligned to high-priority
+          outcomes.
         </p>
       </header>
 

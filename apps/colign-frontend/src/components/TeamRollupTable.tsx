@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { HiArrowSmRight, HiArrowSmUp, HiArrowSmDown } from "react-icons/hi";
 import { useGetManagerTeamQuery } from "@/api/team";
-import type { TeamMemberDto, WeeklyCommitDto } from "@/api/types";
+import type { PlanState, TeamMemberDto, WeeklyCommitDto } from "@/api/types";
 import { PlanStatePill } from "@/components/PlanStatePill";
 import {
   Badge,
@@ -16,8 +16,32 @@ import {
   TH,
   TD,
 } from "@/components/ui";
-import { alignmentTier } from "@/lib/tokens";
+import { alignmentTier, type AlignmentTier } from "@/lib/tokens";
 import { cn } from "@/lib/cn";
+
+/**
+ * Per-row tier for the alignment bar/label. Wraps the global `alignmentTier`
+ * helper so the destructive (rose) tier only fires when there is a real signal
+ * of misalignment — i.e. the manager has Submitted / Reconciling / Reconciled
+ * their plan with <40% on high-priority outcomes. A brand-new Draft with 0%
+ * is "no signal yet", not a failure state; rendering it in rose conflates
+ * "manager hasn't done the work yet" with "manager has aligned 0 of N
+ * commits". This swaps that case for a muted, no-tone treatment so the
+ * per-row bar reads neutral until there's something to evaluate. The hero
+ * numeral on ManagerDashboardPage handles the team-level equivalent via its
+ * `hasAnyPlan` / `total > 0` branches; this keeps the row-level surface in
+ * lockstep editorially.
+ */
+const NEUTRAL_TIER: AlignmentTier = {
+  tone: "neutral",
+  bar: "bg-neutral-300 dark:bg-neutral-700",
+  label: "text-neutral-500 dark:text-neutral-400",
+};
+
+function rowAlignmentTier(state: PlanState | undefined, pct: number): AlignmentTier {
+  if (state === "DRAFT" && pct === 0) return NEUTRAL_TIER;
+  return alignmentTier(pct);
+}
 
 /**
  * Sum of (actual − planned) effort hours across the commits that were
@@ -196,7 +220,7 @@ export function TeamRollupTable({ onSelectMember }: Props) {
               ) : (
                 data?.content.map((m) => {
                   const plan = m.currentPlan;
-                  const tier = alignmentTier(plan?.alignment.alignmentPct ?? 0);
+                  const tier = rowAlignmentTier(plan?.state, plan?.alignment.alignmentPct ?? 0);
                   return (
                     <TR
                       key={m.userId}
@@ -328,7 +352,7 @@ function TeamRollupCard({
   onSelect: (m: TeamMemberDto) => void;
 }) {
   const plan = member.currentPlan;
-  const tier = alignmentTier(plan?.alignment.alignmentPct ?? 0);
+  const tier = rowAlignmentTier(plan?.state, plan?.alignment.alignmentPct ?? 0);
   return (
     <div
       role="button"
@@ -343,6 +367,8 @@ function TeamRollupCard({
       }}
       className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-white dark:bg-neutral-950 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
     >
+      {/* Row 1 — identity. Avatar + name + email; no other competing content on
+          this row so the eye lands on "who" first. */}
       <div className="flex items-center gap-2.5 min-w-0">
         <div className="h-7 w-7 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-semibold text-neutral-600 dark:text-neutral-300">
           {initials(member.displayName)}
@@ -356,6 +382,33 @@ function TeamRollupCard({
           </div>
         </div>
       </div>
+      {/* Row 2 — the alignment instrument. Full-width bar with % label inline
+          on the right, so the read is "who → how aligned" on a vertical axis
+          instead of diagonal across a wrapped chip row. DESIGN.md §13 — this
+          is a data-dense surface; lean on a strict grid, not flex-wrap. */}
+      {plan ? (
+        <div className="mt-3 flex items-center gap-3">
+          <div className="h-1.5 flex-1 min-w-0 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+            <div
+              className={cn("h-1.5 rounded-full", tier.bar)}
+              style={{
+                width: `${Math.max(0, Math.min(100, plan.alignment.alignmentPct))}%`,
+              }}
+              role="progressbar"
+              aria-valuenow={plan.alignment.alignmentPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`${member.displayName} high-priority alignment ${plan.alignment.alignmentPct}%`}
+            />
+          </div>
+          <span className={cn("text-xs font-medium tabular-nums shrink-0", tier.label)}>
+            {plan.alignment.alignmentPct}%
+          </span>
+        </div>
+      ) : null}
+      {/* Row 3 — secondary chips. State, commit count, delta sit together as
+          supporting metadata, with a fixed order so wrapping (if any) never
+          re-prioritises them in the eye. */}
       <div className="mt-3 flex items-center gap-3 flex-wrap">
         {plan ? (
           <PlanStatePill state={plan.state} size="xs" />
@@ -373,26 +426,6 @@ function TeamRollupCard({
           <span className="text-xs shrink-0">
             <DeltaCell delta={deltaHours(plan.commits)} />
           </span>
-        ) : null}
-        {plan ? (
-          <div className="flex items-center gap-2 ml-auto shrink-0">
-            <div className="h-1.5 w-20 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-              <div
-                className={cn("h-1.5 rounded-full", tier.bar)}
-                style={{
-                  width: `${Math.max(0, Math.min(100, plan.alignment.alignmentPct))}%`,
-                }}
-                role="progressbar"
-                aria-valuenow={plan.alignment.alignmentPct}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label={`${member.displayName} high-priority alignment ${plan.alignment.alignmentPct}%`}
-              />
-            </div>
-            <span className={cn("text-xs font-medium tabular-nums", tier.label)}>
-              {plan.alignment.alignmentPct}%
-            </span>
-          </div>
         ) : null}
       </div>
       <Button
