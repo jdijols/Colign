@@ -96,6 +96,21 @@ export function priorityTone(tier: string | null | undefined): StatusTone {
   return "neutral";
 }
 
+/**
+ * Consumer-friendly label for a priority tier (DESIGN.md §10). The internal
+ * data model is P0/P1/P2 but every user-facing surface must render the
+ * Notion-adjacent "High / Medium / Low" wording — never the internal codes.
+ *
+ * Returns the tier string unchanged for unknown / unmapped values so existing
+ * call sites that pre-translate keep working.
+ */
+export function priorityLabel(tier: string | null | undefined): string {
+  if (tier === "P0") return "High";
+  if (tier === "P1") return "Medium";
+  if (tier === "P2") return "Low";
+  return tier ?? "";
+}
+
 export function chessTagTone(code: string | null | undefined): StatusTone {
   if (code === "OFFENSE") return "success";
   if (code === "DEFENSE") return "warning";
