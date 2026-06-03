@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>colign — design system preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <!-- Geist + Geist Mono via Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100;300;400;500;600;700;900&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Cabinet Grotesk via Fontshare -->
+  <link href="https://api.fontshare.com/v2/css?f%5B%5D=cabinet-grotesk@300,400,500,700,800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* === Tokens (colign design system) === */
+      --canvas: #f8f8f7;
+      --surface: #ffffff;
+      --surface-elev: #ffffff;
+      --hairline: #e5e5e5;
+      --hairline-strong: #d4d4d4;
+      --text: #171717;
+      --text-soft: #525252;
+      --text-mute: #737373;
+      --text-faint: #a3a3a3;
+
+      --success: #1a9659;
+      --success-bg: #ecfaf2;
+      --warning: #c4831d;
+      --warning-bg: #fbf5e9;
+      --destructive: #c8334a;
+      --destructive-bg: #fdeef1;
+
+      /* Type */
+      --display: 'Cabinet Grotesk', 'Geist', system-ui, sans-serif;
+      --body: 'Geist', system-ui, sans-serif;
+      --mono: 'Geist Mono', ui-monospace, monospace;
+
+      /* Type scale (clamp for fluid) */
+      --t-eyebrow: 0.6875rem;     /* 11px — uppercase tracking-wider */
+      --t-xs: 0.75rem;            /* 12px */
+      --t-sm: 0.8125rem;          /* 13px */
+      --t-base: 0.9375rem;        /* 15px */
+      --t-md: 1rem;               /* 16px */
+      --t-lg: 1.125rem;           /* 18px */
+      --t-xl: 1.375rem;           /* 22px */
+      --t-2xl: 1.75rem;           /* 28px */
+      --t-display-sm: clamp(2rem, 1.5rem + 2vw, 2.75rem);
+      --t-display:    clamp(2.75rem, 1.8rem + 4vw, 4.5rem);
+      --t-display-lg: clamp(3.75rem, 2.5rem + 5vw, 6rem);
+
+      /* Spacing scale (4px base) */
+      --s-2xs: 0.25rem; --s-xs: 0.5rem; --s-sm: 0.75rem;
+      --s-md: 1rem; --s-lg: 1.5rem; --s-xl: 2rem;
+      --s-2xl: 3rem; --s-3xl: 4rem;
+      --s-pillar: clamp(3rem, 1.5rem + 4vw, 6rem);
+
+      /* Radius */
+      --r-sm: 4px; --r-md: 6px; --r-lg: 8px; --r-xl: 12px; --r-pill: 9999px;
+
+      /* Depth */
+      --e2-border: 1px solid var(--hairline);
+      --e3-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.05);
+
+      /* Motion */
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      --d-micro: 120ms;
+      --d-state: 240ms;
+      --d-layout: 400ms;
+    }
+
+    [data-theme="dark"] {
+      --canvas: #0a0a0a;
+      --surface: #171717;
+      --surface-elev: #1f1f1f;
+      --hairline: #2a2a2a;
+      --hairline-strong: #3a3a3a;
+      --text: #fafafa;
+      --text-soft: #a3a3a3;
+      --text-mute: #737373;
+      --text-faint: #525252;
+
+      --success-bg: #0e2a1c;
+      --warning-bg: #2a1f0e;
+      --destructive-bg: #2a0f15;
+      --e3-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: var(--canvas);
+      color: var(--text);
+      font-family: var(--body);
+      font-size: var(--t-base);
+      font-feature-settings: 'cv11', 'ss01';
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background var(--d-state) var(--ease), color var(--d-state) var(--ease);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+
+    /* === Section frame === */
+    .doc { max-width: 80rem; margin: 0 auto; padding: var(--s-pillar) var(--s-xl) var(--s-3xl); }
+    .eyebrow {
+      font-size: var(--t-eyebrow); text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--text-soft); font-weight: 500;
+    }
+    .section { margin-bottom: var(--s-pillar); }
+    .section-head { margin-bottom: var(--s-xl); }
+    .h-section {
+      font-family: var(--display); font-weight: 500; font-size: var(--t-2xl);
+      letter-spacing: -0.015em; color: var(--text); margin-top: var(--s-xs);
+    }
+    .h-sub {
+      font-size: var(--t-base); color: var(--text-soft); margin-top: var(--s-xs);
+      max-width: 50ch;
+    }
+
+    /* === Top header === */
+    .topbar {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--canvas); border-bottom: 1px solid var(--hairline);
+      backdrop-filter: blur(8px);
+    }
+    .topbar-inner {
+      max-width: 80rem; margin: 0 auto; padding: var(--s-md) var(--s-xl);
+      display: flex; align-items: center; justify-content: space-between; gap: var(--s-md);
+    }
+    .brand { display: flex; align-items: center; gap: var(--s-sm); }
+    .brand-bars { display: flex; flex-direction: column; gap: 3px; }
+    .brand-bars > i {
+      display: block; height: 3px; background: var(--text); border-radius: 1px;
+    }
+    .brand-bars > i:nth-child(1) { width: 22px; }
+    .brand-bars > i:nth-child(2) { width: 14px; }
+    .brand-bars > i:nth-child(3) { width: 8px; }
+    .brand-name {
+      font-family: var(--body); font-weight: 600; font-size: var(--t-md);
+      letter-spacing: -0.015em; color: var(--text);
+    }
+    .topbar-meta {
+      font-size: var(--t-xs); color: var(--text-mute); display: flex; gap: var(--s-md); align-items: center;
+    }
+    .theme-toggle {
+      font-family: var(--body); font-size: var(--t-xs); color: var(--text-soft);
+      background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--r-pill);
+      padding: 4px 10px; cursor: pointer; transition: background var(--d-micro) var(--ease);
+    }
+    .theme-toggle:hover { background: var(--hairline); color: var(--text); }
+
+    /* === Hero === */
+    .hero { margin-bottom: var(--s-pillar); }
+    .hero .eyebrow { margin-bottom: var(--s-md); }
+    .hero h1 {
+      font-family: var(--display); font-weight: 500; letter-spacing: -0.025em;
+      font-size: var(--t-display-lg); line-height: 0.95; color: var(--text);
+      margin-bottom: var(--s-lg);
+    }
+    .hero h1 .light { font-weight: 300; color: var(--text-soft); }
+    .hero p {
+      font-size: var(--t-lg); color: var(--text-soft); max-width: 56ch;
+      line-height: 1.5;
+    }
+
+    /* === Cards === */
+    .card {
+      background: var(--surface); border-radius: var(--r-lg); padding: var(--s-xl);
+    }
+    .card-elev { border: var(--e2-border); }
+    .card-muted { background: transparent; border: var(--e2-border); }
+
+    /* === Color swatches === */
+    .swatch-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--s-md);
+    }
+    .swatch {
+      border-radius: var(--r-md); overflow: hidden; border: var(--e2-border);
+      display: flex; flex-direction: column;
+    }
+    .swatch-color { height: 80px; }
+    .swatch-meta {
+      padding: var(--s-sm) var(--s-md); display: flex; flex-direction: column; gap: 2px;
+      background: var(--surface);
+    }
+    .swatch-name { font-size: var(--t-sm); font-weight: 500; color: var(--text); }
+    .swatch-hex { font-family: var(--mono); font-size: var(--t-xs); color: var(--text-mute); }
+
+    /* === Type specimen === */
+    .type-row {
+      display: grid; grid-template-columns: 9rem 1fr;
+      align-items: baseline; gap: var(--s-lg); padding: var(--s-md) 0;
+      border-bottom: 1px dashed var(--hairline);
+    }
+    .type-row:last-child { border-bottom: none; }
+    .type-meta { color: var(--text-mute); font-size: var(--t-xs); font-family: var(--mono); }
+    .type-sample { color: var(--text); }
+    .type-sample.display { font-family: var(--display); }
+    .type-sample.body    { font-family: var(--body); }
+    .type-sample.mono    { font-family: var(--mono); }
+
+    /* === Alignment bar instrument === */
+    .align-instrument {
+      background: var(--surface); border-radius: var(--r-lg); border: var(--e2-border);
+      padding: var(--s-xl) var(--s-xl) var(--s-lg);
+      display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--s-xl);
+    }
+    .align-bar-wrap { position: relative; }
+    .align-eyebrow { margin-bottom: var(--s-md); }
+    .align-bar {
+      position: relative; height: 14px; background: var(--canvas);
+      border: 1px solid var(--hairline); border-radius: var(--r-pill); overflow: hidden;
+    }
+    .align-fill {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 50%;
+      background: var(--warning); border-radius: var(--r-pill);
+      animation: fillIn 700ms var(--ease) both;
+    }
+    @keyframes fillIn {
+      from { width: 0%; }
+      to   { width: 50%; }
+    }
+    .align-tick {
+      position: absolute; top: -4px; bottom: -4px; width: 1px; background: var(--text-faint);
+    }
+    .align-tick-label {
+      position: absolute; top: 22px; font-size: 10px; font-family: var(--mono); color: var(--text-mute);
+      transform: translateX(-50%);
+    }
+    .align-meta {
+      display: flex; gap: var(--s-md); margin-top: var(--s-md);
+      font-size: var(--t-xs); color: var(--text-mute);
+    }
+    .align-meta strong { font-weight: 500; color: var(--text-soft); }
+    .align-number {
+      font-family: var(--body); font-weight: 300; font-size: 4rem; line-height: 1;
+      letter-spacing: -0.04em; color: var(--text); font-variant-numeric: tabular-nums;
+      display: flex; align-items: baseline; gap: 2px;
+    }
+    .align-number .pct { font-size: 1.5rem; font-weight: 400; color: var(--text-soft); }
+    .align-caption {
+      margin-top: var(--s-xs); font-size: var(--t-xs); color: var(--text-mute);
+      text-align: right;
+    }
+
+    /* === Pills / Badges === */
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: var(--r-pill);
+      font-size: var(--t-xs); font-weight: 500; font-family: var(--body);
+      border: 1px solid var(--hairline); background: var(--surface); color: var(--text-soft);
+    }
+    .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-faint); }
+    .pill.draft .pill-dot   { background: var(--text-soft); }
+    .pill.locked .pill-dot  { background: var(--success); }
+    .pill.recon .pill-dot   { background: var(--warning); }
+    .pill.miss .pill-dot    { background: var(--destructive); }
+
+    /* === Buttons === */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 16px; border-radius: var(--r-md); font-size: var(--t-sm); font-weight: 500;
+      font-family: var(--body); cursor: pointer; border: 1px solid transparent;
+      transition: background var(--d-micro) var(--ease), color var(--d-micro) var(--ease),
+                  border-color var(--d-micro) var(--ease), transform var(--d-micro) var(--ease);
+      min-height: 40px;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary {
+      background: var(--text); color: var(--canvas);
+    }
+    .btn-primary:hover { background: #000; }
+    [data-theme="dark"] .btn-primary { background: var(--text); color: var(--canvas); }
+    [data-theme="dark"] .btn-primary:hover { background: #fff; }
+    .btn-secondary {
+      background: var(--surface); color: var(--text); border-color: var(--hairline);
+    }
+    .btn-secondary:hover { background: var(--canvas); border-color: var(--hairline-strong); }
+    .btn-ghost {
+      background: transparent; color: var(--text-soft);
+    }
+    .btn-ghost:hover { color: var(--text); background: var(--surface); }
+    .btn-lg { padding: 14px 20px; font-size: var(--t-md); min-height: 48px; }
+
+    /* === Sidebar mockup === */
+    .app-mock {
+      display: grid; grid-template-columns: 240px 1fr;
+      background: var(--canvas); border: var(--e2-border); border-radius: var(--r-lg);
+      overflow: hidden; min-height: 720px;
+    }
+    .sidebar {
+      background: var(--surface); border-right: var(--e2-border);
+      padding: var(--s-md) var(--s-sm); display: flex; flex-direction: column;
+    }
+    .sb-workspace {
+      display: flex; align-items: center; gap: var(--s-sm); padding: var(--s-sm) var(--s-sm);
+      border-radius: var(--r-md); cursor: pointer;
+    }
+    .sb-workspace:hover { background: var(--canvas); }
+    .sb-avatar {
+      width: 28px; height: 28px; border-radius: var(--r-sm); background: var(--text);
+      color: var(--canvas); display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: var(--t-xs);
+    }
+    .sb-name { font-size: var(--t-sm); font-weight: 500; color: var(--text); }
+    .sb-divider { height: 1px; background: var(--hairline); margin: var(--s-md) var(--s-sm); }
+    .sb-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .sb-item {
+      display: flex; align-items: center; gap: var(--s-sm); padding: 8px var(--s-sm);
+      border-radius: var(--r-md); color: var(--text-soft); font-size: var(--t-sm); font-weight: 500;
+      cursor: pointer; transition: background var(--d-micro) var(--ease);
+    }
+    .sb-item:hover { background: var(--canvas); color: var(--text); }
+    .sb-item.active { background: var(--canvas); color: var(--text); }
+    .sb-item.active::before {
+      content: ""; width: 3px; height: 16px; background: var(--text); border-radius: 2px;
+      margin-left: -6px; margin-right: 3px;
+    }
+    .sb-icon { width: 16px; height: 16px; display: inline-block; opacity: 0.7; }
+    .sb-user {
+      display: flex; align-items: center; gap: var(--s-sm); padding: var(--s-sm);
+      border-radius: var(--r-md); border-top: 1px solid var(--hairline);
+      margin-top: var(--s-md);
+    }
+    .sb-user .sb-avatar { background: var(--text-soft); }
+    .sb-user-name { font-size: var(--t-sm); font-weight: 500; color: var(--text); line-height: 1.2; }
+    .sb-user-role { font-size: 10px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.1em; }
+
+    /* === Main area === */
+    .main {
+      padding: var(--s-xl) var(--s-2xl);
+      display: flex; flex-direction: column; gap: var(--s-xl);
+    }
+    .strategy-anchor {
+      display: inline-flex; align-items: center; gap: var(--s-sm); padding: 8px var(--s-md);
+      border: var(--e2-border); border-radius: var(--r-pill); background: var(--surface);
+      font-size: var(--t-xs); color: var(--text-soft);
+      align-self: flex-start;
+    }
+    .strategy-anchor .eyebrow { font-size: 10px; margin: 0; }
+    .strategy-anchor .rally {
+      font-weight: 500; color: var(--text); font-size: var(--t-sm); letter-spacing: -0.01em;
+    }
+    .strategy-anchor .sep { color: var(--text-faint); }
+
+    .plan-hero { margin-top: var(--s-md); }
+    .plan-hero .eyebrow { margin-bottom: var(--s-sm); }
+    .plan-hero h2 {
+      font-family: var(--display); font-weight: 500; letter-spacing: -0.025em;
+      font-size: var(--t-display); line-height: 1; color: var(--text);
+    }
+
+    .plan-meta { display: flex; gap: var(--s-md); align-items: center; margin-top: var(--s-md); }
+
+    /* Commits card */
+    .commits-card {
+      background: var(--surface); border: var(--e2-border); border-radius: var(--r-lg);
+      padding: 0;
+    }
+    .commits-head {
+      padding: var(--s-lg) var(--s-xl); border-bottom: 1px solid var(--hairline);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .commits-title {
+      font-family: var(--display); font-weight: 500; font-size: var(--t-xl);
+      letter-spacing: -0.015em; color: var(--text);
+    }
+    .commits-empty {
+      padding: var(--s-pillar) var(--s-xl); text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: var(--s-lg);
+    }
+    .commits-empty p {
+      font-size: var(--t-lg); color: var(--text-soft); max-width: 36ch;
+      line-height: 1.5;
+    }
+    .commits-empty p strong { color: var(--text); font-weight: 500; }
+
+    /* Action card (muted) */
+    .action-card {
+      background: transparent; border: 1px dashed var(--hairline); border-radius: var(--r-lg);
+      padding: var(--s-lg) var(--s-xl);
+      display: flex; align-items: center; justify-content: space-between; gap: var(--s-lg);
+      flex-wrap: wrap;
+    }
+    .action-card p {
+      font-size: var(--t-sm); color: var(--text-soft); max-width: 50ch;
+    }
+    .action-card p strong { font-weight: 500; color: var(--text); }
+    .action-card .actions { display: flex; gap: var(--s-sm); }
+
+    /* Containment idiom — example */
+    .containment {
+      border-left: 1px solid var(--hairline);
+      padding-left: var(--s-lg); margin-left: var(--s-md);
+      display: flex; flex-direction: column; gap: var(--s-md);
+    }
+    .commit-row {
+      display: grid; grid-template-columns: 1fr auto; gap: var(--s-md); align-items: start;
+      padding: var(--s-sm) 0; border-bottom: 1px dashed var(--hairline);
+    }
+    .commit-row:last-child { border-bottom: none; }
+    .commit-title { font-size: var(--t-sm); font-weight: 500; color: var(--text); }
+    .commit-meta { font-size: var(--t-xs); color: var(--text-mute); margin-top: 2px; }
+    .commit-outcome { font-size: 10px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 500; }
+
+    /* Mini three-bar mark inside the commit row to reinforce idiom */
+    .mini-mark { display: inline-flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+    .mini-mark > i {
+      display: block; height: 2px; background: var(--text-faint); border-radius: 1px;
+    }
+    .mini-mark > i:nth-child(1) { width: 12px; }
+    .mini-mark > i:nth-child(2) { width: 7px; }
+    .mini-mark > i:nth-child(3) { width: 4px; }
+
+    /* Footer */
+    .foot { text-align: center; padding: var(--s-pillar) 0 var(--s-xl); color: var(--text-faint); font-size: var(--t-xs); }
+
+    /* Tooling tag inside type-meta */
+    code { font-family: var(--mono); font-size: var(--t-xs); color: var(--text-soft); }
+  </style>
+</head>
+<body>
+
+<!-- ============== Top bar ============== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-bars" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="brand-name">colign</div>
+      <span class="eyebrow" style="margin-left: var(--s-md);">design system preview</span>
+    </div>
+    <div class="topbar-meta">
+      <span>v0.1 — Disciplined editorial</span>
+      <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+    </div>
+  </div>
+</header>
+
+<main class="doc">
+
+  <!-- ============== Hero ============== -->
+  <section class="hero">
+    <p class="eyebrow">colign design system — preview</p>
+    <h1>
+      Aligned weeks. <span class="light">Visible strategy.</span>
+    </h1>
+    <p>
+      A monochrome design system for a tool whose product story is structural alignment.
+      Energy comes from confident type, layered depth without shadows, generous whitespace,
+      and eased motion. No accent color is introduced — the discipline is the brand.
+    </p>
+  </section>
+
+  <!-- ============== Tokens — color ============== -->
+  <section class="section">
+    <div class="section-head">
+      <p class="eyebrow">Tokens · 01</p>
+      <h2 class="h-section">Color</h2>
+      <p class="h-sub">Monochrome scale + semantic-only color. Semantic shades are tuned away from Tailwind defaults — quieter, more confident.</p>
+    </div>
+
+    <p class="eyebrow" style="margin-top: var(--s-lg); margin-bottom: var(--s-md);">Surfaces &amp; text</p>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background:#f8f8f7; border-bottom: 1px solid var(--hairline)"></div><div class="swatch-meta"><span class="swatch-name">Canvas</span><span class="swatch-hex">#f8f8f7</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#ffffff; border-bottom: 1px solid var(--hairline)"></div><div class="swatch-meta"><span class="swatch-name">Surface</span><span class="swatch-hex">#ffffff</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#e5e5e5"></div><div class="swatch-meta"><span class="swatch-name">Hairline</span><span class="swatch-hex">#e5e5e5</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#525252"></div><div class="swatch-meta"><span class="swatch-name">Text · soft</span><span class="swatch-hex">#525252</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#171717"></div><div class="swatch-meta"><span class="swatch-name">Text · primary</span><span class="swatch-hex">#171717</span></div></div>
+    </div>
+
+    <p class="eyebrow" style="margin-top: var(--s-xl); margin-bottom: var(--s-md);">Semantic — used only where it carries meaning</p>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background:#1a9659"></div><div class="swatch-meta"><span class="swatch-name">Success</span><span class="swatch-hex">#1a9659 · alignment ≥ 70%</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#c4831d"></div><div class="swatch-meta"><span class="swatch-name">Warning</span><span class="swatch-hex">#c4831d · alignment 40–69%</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#c8334a"></div><div class="swatch-meta"><span class="swatch-name">Destructive</span><span class="swatch-hex">#c8334a · alignment &lt; 40%</span></div></div>
+    </div>
+  </section>
+
+  <!-- ============== Tokens — type ============== -->
+  <section class="section">
+    <div class="section-head">
+      <p class="eyebrow">Tokens · 02</p>
+      <h2 class="h-section">Typography</h2>
+      <p class="h-sub">Cabinet Grotesk for display moments (week headers, big numbers). Geist for body, UI, and tabular data. Geist Mono for code.</p>
+    </div>
+
+    <div class="card card-elev">
+      <div class="type-row">
+        <div class="type-meta"><code>display-lg / 500</code><br><code>Cabinet Grotesk</code></div>
+        <div class="type-sample display" style="font-size: var(--t-display-lg); font-weight:500; line-height:0.95; letter-spacing:-0.025em;">Week of June 1</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><code>display / 300</code><br><code>Cabinet Grotesk Thin</code></div>
+        <div class="type-sample display" style="font-size: var(--t-display); font-weight:300; line-height:0.95; letter-spacing:-0.025em; color: var(--text-soft);">Manager dashboard</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><code>h-section / 500</code><br><code>Cabinet Grotesk</code></div>
+        <div class="type-sample display" style="font-size: var(--t-2xl); font-weight:500; letter-spacing:-0.015em;">Commits · 2</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><code>body-lg / 400</code><br><code>Geist</code></div>
+        <div class="type-sample body" style="font-size: var(--t-lg); color: var(--text-soft);">Pick a deliverable that advances your strategic Outcomes this week.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><code>body / 400</code><br><code>Geist</code></div>
+        <div class="type-sample body" style="font-size: var(--t-base);">When you’re done editing, <strong style="font-weight:500;">submit the plan</strong> for the week — or skip ahead and reconcile in one step.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><code>eyebrow / 500</code><br><code>Geist · upper</code></div>
+        <div class="type-sample body eyebrow">My weekly plan · Aiming for</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><code>data / 300</code><br><code>Geist · tabular</code></div>
+        <div class="type-sample body" style="font-size: 4rem; font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1;">50<span style="font-size: 1.75rem; font-weight: 400; color: var(--text-soft);">%</span></div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><code>mono</code><br><code>Geist Mono</code></div>
+        <div class="type-sample mono" style="font-size: var(--t-sm); color: var(--text-soft);">design/foundation · commit 22808d0 · cycle 3/5</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== The Alignment instrument ============== -->
+  <section class="section">
+    <div class="section-head">
+      <p class="eyebrow">Signature · 01</p>
+      <h2 class="h-section">The Alignment instrument</h2>
+      <p class="h-sub">colign’s most distinctive UI element gets a bespoke treatment. Tick marks at 40% and 70% (the warning / success thresholds) show range without needing legend.</p>
+    </div>
+
+    <div class="align-instrument">
+      <div>
+        <p class="eyebrow align-eyebrow">High-priority alignment</p>
+        <div class="align-bar-wrap">
+          <div class="align-bar">
+            <div class="align-fill"></div>
+            <div class="align-tick" style="left: 40%;"></div>
+            <div class="align-tick" style="left: 70%;"></div>
+          </div>
+          <span class="align-tick-label" style="left: 40%;">40</span>
+          <span class="align-tick-label" style="left: 70%;">70</span>
+        </div>
+        <div class="align-meta" style="margin-top: var(--s-lg);">
+          <span><strong>1/2</strong> commits on P0/P1</span>
+          <span style="color: var(--text-faint);">·</span>
+          <span>Threshold: <strong>≥70%</strong></span>
+        </div>
+      </div>
+      <div>
+        <div class="align-number">50<span class="pct">%</span></div>
+        <div class="align-caption">this week</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== Realistic WeeklyPlanPage mockup ============== -->
+  <section class="section">
+    <div class="section-head">
+      <p class="eyebrow">Surface mockup · 01</p>
+      <h2 class="h-section">Weekly plan — Sam Manager, empty state</h2>
+      <p class="h-sub">The design system applied to <code>WeeklyPlanPage</code> as Sam would see it (no commits yet). Hero header, bespoke Alignment instrument, empty-state hero CTA, action card.</p>
+    </div>
+
+    <div class="app-mock">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sb-workspace">
+          <div class="sb-avatar">E</div>
+          <div class="sb-name">Engineering</div>
+        </div>
+        <div class="sb-divider"></div>
+        <nav class="sb-nav">
+          <a class="sb-item"><span class="sb-icon">▭</span> Dashboard</a>
+          <a class="sb-item"><span class="sb-icon">⚐</span> Goals</a>
+          <a class="sb-item"><span class="sb-icon">⌥</span> Commits</a>
+          <a class="sb-item active"><span class="sb-icon">▤</span> Plan</a>
+          <a class="sb-item"><span class="sb-icon">✓</span> Reconcile</a>
+          <div class="sb-divider"></div>
+          <a class="sb-item"><span class="sb-icon">⊞</span> Manager</a>
+          <a class="sb-item"><span class="sb-icon">⚙</span> Settings</a>
+        </nav>
+        <div class="sb-user">
+          <div class="sb-avatar">S</div>
+          <div>
+            <div class="sb-user-name">Sam Manager</div>
+            <div class="sb-user-role">Manager</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <div class="main">
+        <div class="strategy-anchor">
+          <span class="eyebrow">Aiming for</span>
+          <span class="rally">Ship faster, support stronger</span>
+          <span class="sep">·</span>
+          <span>2 Objectives · 5 Outcomes</span>
+        </div>
+
+        <div class="plan-hero">
+          <p class="eyebrow">My weekly plan</p>
+          <h2>Week of <span style="font-weight:300; color: var(--text-soft);">June 1</span></h2>
+        </div>
+
+        <div class="plan-meta">
+          <span class="pill draft"><span class="pill-dot"></span> Draft</span>
+        </div>
+
+        <!-- Alignment instrument -->
+        <div class="align-instrument" style="margin-top: 0;">
+          <div>
+            <p class="eyebrow align-eyebrow">High-priority alignment</p>
+            <div class="align-bar-wrap">
+              <div class="align-bar">
+                <div class="align-fill" style="width: 0%; background: var(--text-faint); animation: none;"></div>
+                <div class="align-tick" style="left: 40%;"></div>
+                <div class="align-tick" style="left: 70%;"></div>
+              </div>
+              <span class="align-tick-label" style="left: 40%;">40</span>
+              <span class="align-tick-label" style="left: 70%;">70</span>
+            </div>
+            <div class="align-meta" style="margin-top: var(--s-lg);">
+              <span><strong>0/0</strong> commits on P0/P1</span>
+              <span style="color: var(--text-faint);">·</span>
+              <span>Threshold: <strong>≥70%</strong></span>
+            </div>
+          </div>
+          <div>
+            <div class="align-number" style="color: var(--text-faint);">—<span class="pct">%</span></div>
+            <div class="align-caption">no commits yet</div>
+          </div>
+        </div>
+
+        <!-- Commits empty state -->
+        <div class="commits-card">
+          <div class="commits-head">
+            <div class="commits-title">Commits · 0</div>
+          </div>
+          <div class="commits-empty">
+            <p>Pick a deliverable that advances <strong>“Ship faster, support stronger”</strong> this week.</p>
+            <button class="btn btn-primary btn-lg" type="button">+ Make your first commit</button>
+          </div>
+        </div>
+
+        <!-- Action card -->
+        <div class="action-card">
+          <p>When you’re done editing, <strong>submit the plan</strong> for the week — or skip ahead and reconcile in one step.</p>
+          <div class="actions">
+            <button class="btn btn-secondary" type="button">Submit plan</button>
+            <button class="btn btn-primary" type="button">Submit &amp; start reconciling →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== Containment idiom mockup ============== -->
+  <section class="section">
+    <div class="section-head">
+      <p class="eyebrow">Signature · 02</p>
+      <h2 class="h-section">Containment as visual primitive</h2>
+      <p class="h-sub">The 3-bar logomark idiom (Rally Cry → Objective → Outcome) repeats in micro form throughout. Commits indent under their Outcome via a hairline rail — the structural alignment becomes visible at a glance.</p>
+    </div>
+
+    <div class="card card-elev">
+      <div class="containment">
+        <p class="commit-outcome">Outcome · O3 · Reduce week-1 churn</p>
+        <div class="commit-row">
+          <div>
+            <div class="commit-title">Ship onboarding wizard v2</div>
+            <div class="commit-meta">Outcome · P0 · OFFENSE · 8h planned</div>
+          </div>
+          <span class="pill"><span class="pill-dot"></span> Planned</span>
+        </div>
+        <div class="commit-row">
+          <div>
+            <div class="commit-title">Tune auth cache hit rate</div>
+            <div class="commit-meta">Outcome · P2 · MAINTENANCE · 4h planned</div>
+          </div>
+          <span class="pill"><span class="pill-dot"></span> Planned</span>
+        </div>
+      </div>
+
+      <div class="containment" style="margin-top: var(--s-lg);">
+        <p class="commit-outcome">Outcome · O1 · Cut support ticket median to &lt;24h</p>
+        <div class="commit-row">
+          <div>
+            <div class="commit-title">Build runbook for top-5 ticket categories</div>
+            <div class="commit-meta">Outcome · P1 · OFFENSE · 6h planned</div>
+          </div>
+          <span class="pill locked"><span class="pill-dot"></span> Done</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== Buttons + pills + cards ============== -->
+  <section class="section">
+    <div class="section-head">
+      <p class="eyebrow">Components · 01</p>
+      <h2 class="h-section">Primitives</h2>
+      <p class="h-sub">Buttons, pills, cards. All hairline; no shadows above <code>e3</code>.</p>
+    </div>
+
+    <div class="card card-elev">
+      <p class="eyebrow" style="margin-bottom: var(--s-sm);">Buttons</p>
+      <div style="display:flex; gap: var(--s-sm); flex-wrap: wrap; margin-bottom: var(--s-lg);">
+        <button class="btn btn-primary">Primary</button>
+        <button class="btn btn-secondary">Secondary</button>
+        <button class="btn btn-ghost">Ghost</button>
+        <button class="btn btn-primary btn-lg">+ Make your first commit</button>
+      </div>
+
+      <p class="eyebrow" style="margin-bottom: var(--s-sm);">Plan-state pills</p>
+      <div style="display:flex; gap: var(--s-sm); flex-wrap: wrap; margin-bottom: var(--s-lg);">
+        <span class="pill draft"><span class="pill-dot"></span> Draft</span>
+        <span class="pill locked"><span class="pill-dot"></span> Submitted</span>
+        <span class="pill recon"><span class="pill-dot"></span> Reconciling</span>
+        <span class="pill miss"><span class="pill-dot"></span> Missed</span>
+      </div>
+
+      <p class="eyebrow" style="margin-bottom: var(--s-sm);">Elevation levels</p>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-md);">
+        <div style="padding: var(--s-md); background: var(--canvas);" class="card">e0 · canvas</div>
+        <div style="padding: var(--s-md); background: var(--surface);" class="card">e1 · surface</div>
+        <div style="padding: var(--s-md); background: var(--surface); border: var(--e2-border);" class="card">e2 · elevated</div>
+        <div style="padding: var(--s-md); background: var(--surface); border: var(--e2-border); box-shadow: var(--e3-shadow);" class="card">e3 · popover</div>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">colign · design system preview · v0.1 · 2026-06-02 · monochrome by design</p>
+</main>
+
+<script>
+  function toggleTheme() {
+    const root = document.documentElement;
+    const next = root.dataset.theme === "dark" ? "light" : "dark";
+    root.dataset.theme = next;
+    try { localStorage.setItem("colign-preview-theme", next); } catch (e) {}
+  }
+  try {
+    const saved = localStorage.getItem("colign-preview-theme");
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+</script>
+</body>
+</html>
