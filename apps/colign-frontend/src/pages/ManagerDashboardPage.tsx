@@ -99,8 +99,13 @@ export function ManagerDashboardPage() {
         <p className="text-[10px] uppercase tracking-wider text-neutral-600 font-medium">
           Manager dashboard
         </p>
+        {/* DESIGN.md §3 — examples lead with a confident second line ("Aiming
+            for / Rally Cry", "My weekly plan / Week of June 1"). The em-dash
+            pause read as throat-clearing; the cleaner phrasing carries the
+            same beat without the typographic stutter, and matches the
+            cadence of the other surface headings. */}
         <h1 className="mt-2 text-fluid-3xl font-light tracking-tight text-neutral-900 dark:text-neutral-50">
-          My team — this week
+          My team this week
         </h1>
         {/* DESIGN.md §10 — consumer-friendly tone, Notion-adjacent. "Per IC"
             is internal-data jargon; plain language ("how much of each week

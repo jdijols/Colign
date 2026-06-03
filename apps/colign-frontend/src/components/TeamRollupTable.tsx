@@ -208,7 +208,11 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                 <TH>High-priority alignment</TH>
                 {hasAnyDelta ? <TH className="hidden md:table-cell">vs. last week</TH> : null}
                 <TH>Commits</TH>
-                <TH className="text-right">
+                {/* DESIGN.md §11 — desktop rows are already clickable; the
+                    quiet right-edge chevron is the only click cue we need.
+                    Drops the redundant ghost "Review" button per critic
+                    feedback so each row carries one affordance, not two. */}
+                <TH className="w-8 text-right">
                   <span className="sr-only">Open</span>
                 </TH>
               </tr>
@@ -242,8 +246,13 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                       data-clickable="true"
                     >
                       <TD className="whitespace-nowrap">
+                        {/* DESIGN.md §5 — comfortable, not compact. Avatar
+                            bumped from 7x7 / 10px initials to 9x9 / 11px so
+                            the circle reads as a person rather than a
+                            pictogram. Gap kept at 2.5 (10px) so the cluster
+                            still reads as a single identity unit. */}
                         <div className="flex items-center gap-2.5">
-                          <div className="h-7 w-7 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-semibold text-neutral-600 dark:text-neutral-300">
+                          <div className="h-9 w-9 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[11px] font-semibold text-neutral-600 dark:text-neutral-300">
                             {initials(m.displayName)}
                           </div>
                           <div className="leading-tight">
@@ -316,18 +325,18 @@ export function TeamRollupTable({ onSelectMember }: Props) {
                         {plan ? plan.commits.length : <span className="text-neutral-400">—</span>}
                       </TD>
                       <TD className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectMember(m);
-                          }}
-                          leftIcon={<HiArrowSmRight className="h-3.5 w-3.5" />}
-                          aria-label={`Review ${m.displayName}'s week`}
-                        >
-                          Review
-                        </Button>
+                        {/* Quiet chevron-only affordance — the entire row is
+                            already clickable (cursor-pointer + onClick), so
+                            the secondary ghost button was duplicating the
+                            click target and competing with the row's data
+                            for visual weight. The chevron sits at low
+                            contrast and brightens on row hover via the
+                            parent's TR hover state. */}
+                        <HiArrowSmRight
+                          className="ml-auto h-4 w-4 text-neutral-400 dark:text-neutral-500"
+                          aria-hidden
+                        />
+                        <span className="sr-only">Open {m.displayName}&apos;s week</span>
                       </TD>
                     </TR>
                   );
@@ -397,9 +406,10 @@ function TeamRollupCard({
       className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4 bg-white dark:bg-neutral-950 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
     >
       {/* Row 1 — identity. Avatar + name + email; no other competing content on
-          this row so the eye lands on "who" first. */}
+          this row so the eye lands on "who" first. DESIGN.md §5 — avatar at
+          9x9 / 11px so the circle reads as a person, not a pictogram. */}
       <div className="flex items-center gap-2.5 min-w-0">
-        <div className="h-7 w-7 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-semibold text-neutral-600 dark:text-neutral-300">
+        <div className="h-9 w-9 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[11px] font-semibold text-neutral-600 dark:text-neutral-300">
           {initials(member.displayName)}
         </div>
         <div className="leading-tight flex-1 min-w-0">
